@@ -441,8 +441,10 @@ int main(int argc, char **argv)
 
 void display_dice(caca_game &game, player *player)
 {
+    char buf[BUFSIZ + 1] = {0};
     auto dice = player->dice();
-    game.put(80, 20, "Dice rolled ('d#' to keep):");
+    snprintf(buf, BUFSIZ, "Roll %d of 3. (Use 'd#' to keep):", player->roll_count());
+    game.put(80, 20, buf);
     int x = 82;
 
     game.put(80, 22, "#  1 │ 2 │ 3 │ 4 │ 5");
