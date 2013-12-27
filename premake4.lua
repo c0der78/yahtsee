@@ -37,7 +37,7 @@ solution "yahtzee"
     		"main.cpp"
     	}
     	links {
-    		"arg3dice", "caca"
+    		"arg3", "caca"
     	}
 
     project "yahtest"
@@ -46,7 +46,7 @@ solution "yahtzee"
     		"**.test.cpp"
     	}
     	links {
-    		"arg3dice", "caca"
+    		"arg3", "caca"
     	}
     	configuration "Debug"
 	    	postbuildcommands {

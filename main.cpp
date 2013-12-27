@@ -99,6 +99,14 @@ public:
         return caca_get_event(display_, CACA_EVENT_KEY_PRESS, &event_, -1) != 0;
     }
 
+    void waitForKeyPress()
+    {
+        if (display_ == NULL) return;
+
+        while (caca_get_event(display_, CACA_EVENT_KEY_PRESS, &event_, -1) == 0)
+            usleep(50000);
+    }
+
     game_state state() const
     {
         return state_;
@@ -121,27 +129,88 @@ public:
         switch (state_)
         {
         case ASK_NAME:
-
             caca_put_str(canvas_, 80, 20, "What is your name? ");
-
             caca_gotoxy(canvas_, 80, 22);
             break;
 
         default:
             caca_put_str(canvas_, 80, 20, "Command: ");
-
             caca_gotoxy(canvas_, 80, 22);
             break;
         }
 
     }
 
-    void refresh()
+    void refresh(bool reset = false)
     {
-        Player *player = Engine::instance()->currentPlayer();
+        if (reset)
+        {
+            clear();
+        }
+
+        player *player = engine::instance()->current_player();
 
         if (player != NULL)
-            put(45, 2, player->name().c_str());
+        {
+            if (reset)
+                player->reset();
+
+            put(50, 2, player->name().c_str());
+
+            int y = 8;
+
+            scoresheet::value_type total_score = 0;
+
+            for (int i = 0; i <= Constants::NUM_DICE; i++, y += 2)
+            {
+                auto score = player->score().upper_score(i + 1);
+
+                put(46, y, std::to_string(score).c_str());
+
+                total_score += score;
+            }
+
+            put(46, y, std::to_string(total_score).c_str());
+
+            put(46, y + 2, std::to_string(total_score > 63 ? 35 : 0).c_str());
+
+            auto lower_score_total = total_score;
+            if (total_score > 63)
+                lower_score_total += 35;
+
+            put(46, y + 4, std::to_string(lower_score_total).c_str());
+
+            total_score = 0;
+
+            y  += 8;
+
+            for (auto type = scoresheet::FIRST_TYPE; type < scoresheet::MAX_TYPE; type++)
+            {
+                auto score = player->score().lower_score(type);
+
+                put(46, y, std::to_string(score).c_str());
+
+                total_score += score;
+
+                switch (type)
+                {
+                default:
+                    y += 2;
+                    break;
+                case scoresheet::STRAIGHT_SMALL:
+                case scoresheet::STRAIGHT_BIG:
+                case scoresheet::YACHT:
+                    y += 3;
+                    break;
+                }
+            }
+
+            put(46, y, std::to_string(total_score).c_str());
+
+            put(46, y + 2, std::to_string(lower_score_total).c_str());
+
+            put(46, y + 4, std::to_string(total_score + lower_score_total).c_str());
+        }
 
         caca_refresh_display(display_);
 
@@ -153,7 +222,7 @@ public:
 
         setCursor(0, 0);
 
-        caca_import_canvas_from_file(canvas_, "template.txt", "utf8");
+        caca_import_canvas_from_memory(canvas_, canvas_buffer_, canvas_buffer_size_, "caca");
 
         setCursor(80, 20);
 
@@ -213,7 +282,7 @@ private:
     ostringstream buf_;
 };
 
-void display_dice(caca_game &, Player *);
+void display_dice(caca_game &, player *);
 
 int main(int argc, char **argv)
 {
@@ -234,7 +303,7 @@ int main(int argc, char **argv)
             {
                 string name = game.getBuffer();
 
-                Engine::instance()->addPlayer(name);
+                engine::instance()->add_player(name);
 
                 game.setState(PLAYING);
 
@@ -256,27 +325,111 @@ int main(int argc, char **argv)
             continue;
         }
 
-        auto player = Engine::instance()->currentPlayer();
+        auto player = engine::instance()->current_player();
 
-        switch (game.readInput())
+        char input = game.readInput();
+
+        switch (input)
         {
         case 'r':
-            player->roll();
-            game.newFrame();
-            display_dice(game, player);
-            game.refresh();
-            break;
-        case 'd':
-        {
-            if (game.hasKeyPress())
+            if (player->roll_count() < 3)
             {
-                int d = game.readInput() - '0' - 1;
-                player->keepDie(d);
+                player->roll();
+                game.newFrame();
                 display_dice(game, player);
                 game.refresh();
             }
+            else
+            {
+                game.put(80, 28, "You must choose a score after three rolls.");
+                game.refresh();
+            }
+            break;
+        case 'd':
+        {
+            game.waitForKeyPress();
+
+            int d = game.readInput() - '0' - 1;
+            player->keep_die(d);
+            display_dice(game, player);
+            game.refresh();
+
             break;
         }
+        case 'f':
+            player->score().lower_score(scoresheet::FULL_HOUSE, player->calculate_lower_score(scoresheet::FULL_HOUSE));
+            game.refresh(true);
+            break;
+        case 'k':
+        {
+            game.waitForKeyPress();
+
+            int n = game.readInput() - '0';
+
+            if (n == 3)
+            {
+                player->score().lower_score(scoresheet::KIND_THREE, player->calculate_lower_score(scoresheet::KIND_THREE));
+                game.refresh(true);
+            }
+            else if (n == 4)
+            {
+                player->score().lower_score(scoresheet::KIND_FOUR, player->calculate_lower_score(scoresheet::KIND_FOUR));
+                game.refresh(true);
+            }
+
+            break;
+        }
+        case 's':
+        {
+            game.waitForKeyPress();
+
+            int n = game.readInput() - '0';
+
+            if (n == 4)
+            {
+                player->score().lower_score(scoresheet::STRAIGHT_SMALL, player->calculate_lower_score(scoresheet::STRAIGHT_SMALL));
+                game.refresh(true);
+            }
+            else if (n == 5)
+            {
+                player->score().lower_score(scoresheet::STRAIGHT_BIG, player->calculate_lower_score(scoresheet::STRAIGHT_BIG));
+                game.refresh(true);
+            }
+
+            break;
+        }
+        case 'y':
+            player->score().lower_score(scoresheet::YACHT, player->calculate_lower_score(scoresheet::YACHT));
+            game.refresh(true);
+            break;
+        case 'c':
+            player->score().lower_score(scoresheet::CHANCE, player->calculate_lower_score(scoresheet::CHANCE));
+            game.refresh(true);
+            break;
+        case '1':
+            player->score().upper_score(1, player->calculate_upper_score(1));
+            game.refresh(true);
+            break;
+        case '2':
+            player->score().upper_score(2, player->calculate_upper_score(2));
+            game.refresh(true);
+            break;
+        case '3':
+            player->score().upper_score(3, player->calculate_upper_score(3));
+            game.refresh(true);
+            break;
+        case '4':
+            player->score().upper_score(4, player->calculate_upper_score(4));
+            game.refresh(true);
+            break;
+        case '5':
+            player->score().upper_score(5, player->calculate_upper_score(5));
+            game.refresh(true);
+            break;
+        case '6':
+            player->score().upper_score(6, player->calculate_upper_score(6));
+            game.refresh(true);
+            break;
         case 'q':
             game.setState(QUIT);
             break;
@@ -286,7 +439,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void display_dice(caca_game &game, Player *player)
+void display_dice(caca_game &game, player *player)
 {
     auto dice = player->dice();
     game.put(80, 20, "Dice rolled ('d#' to keep):");
@@ -294,7 +447,7 @@ void display_dice(caca_game &game, Player *player)
 
     game.put(80, 22, "#  1 │ 2 │ 3 │ 4 │ 5");
     game.put(80, 23, "  ───┴───┴───┴───┴───");
-    game.put(80, 24, "d ");
+    game.put(80, 24, "  ");
     for (auto value : dice)
     {
         game.put(x++, 24, value.keep() ? '*' : ' ');

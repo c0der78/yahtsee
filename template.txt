@@ -1,9 +1,9 @@
 ┌─────────────────────────────────────────────────────────────────────────┐                                                             
-│  ▖  ▖    ▐    ▗                                                         │   Menu:
-│  ▝▖▞  ▄▖ ▐▗▖ ▗▟▄ ▗▄▄  ▄▖  ▄▖      PLAYER:                               │       'r' : roll dice       'k3': score three of a kind 
-│   ▜▘ ▝ ▐ ▐▘▐  ▐    ▞ ▐▘▐ ▐▘▐                                            │       '1' : score aces      'k4': score four of a kind
-│   ▐  ▗▀▜ ▐ ▐  ▐   ▞  ▐▀▀ ▐▀▀      SCORE CARD                            │       '2' : score twos      'f' : score full house
-│   ▐  ▝▄▜ ▐ ▐  ▝▄ ▐▄▄ ▝▙▞ ▝▙▞                                            │       '3' : score threes    's4': score small straight
+│ __  __      __    __                                                    │   Menu:
+│ \ \/ /___ _/ /_  / /_____  ___  ___     PLAYER:                         │       'r' : roll dice       'k3': score three of a kind 
+│  \  / __ `/ __ \/ __/_  / / _ \/ _ \                                    │       '1' : score aces      'k4': score four of a kind
+│  / / /_/ / / / / /_  / /_/  __/  __/                                    │       '2' : score twos      'f' : score full house
+│ /_/\__,_/_/ /_/\__/ /___/\___/\___/     SCORE CARD                      │       '3' : score threes    's4': score small straight
 │                                             #1   #2   #3   #4   #5   #6 │       '4' : score fours     's5': score large straight
 ╞═══════════════╤═══════════════════════════╤════╤════╤════╤════╤════╤════╡       '5' : score fives     'y' : score yahtzee 
 │ Aces   ⚀ = 1  │ Count and add only Aces   │    │    │    │    │    │    │       '6' : score sixes     'c' : score chance
