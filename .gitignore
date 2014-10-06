@@ -1,4 +1,4 @@
-bin
-obj
-*.make
-Makefile
+autoscan.log
+*.cache
+*~
+
