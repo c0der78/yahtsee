@@ -1,5 +1,7 @@
 SUBDIRS = arg3dice 
 
+AM_CPPFLAGS = @AM_CPPFLAGS@ -Iarg3dice/src
+
 bin_PROGRAMS = terminal-yahtzee
 
 terminal_yahtzee_SOURCES = main.cpp
