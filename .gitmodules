@@ -1,0 +1,6 @@
+[submodule "src/arg3dice"]
+	path = src/arg3dice
+	url = http://github.com/c0der78/arg3dice.git
+[submodule "arg3dice"]
+        path = arg3dice
+        url = http://github.com/c0der78/arg3dice.git

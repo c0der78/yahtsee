@@ -26,6 +26,16 @@ AC_CHECK_HEADERS([stdlib.h])
 AC_CHECK_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
+AC_CHECK_PROG(GIT_CHECK,git,yes)
+if test x"$GIT_CHECK" != x"yes" ; then
+    AC_MSG_ERROR([Required program 'git' not found.])
+else
+    git submodule update --init --recursive
+fi
+
+AC_CONFIG_SUBDIRS([src/arg3dice])
+
 # Checks for library functions.
 AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile])
+
 AC_OUTPUT
