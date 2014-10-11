@@ -29,7 +29,6 @@ public:
 
     void on_start()
     {
-
         set_state(ASK_NAME);
     }
 
@@ -153,10 +152,8 @@ public:
         }
     }
 
-    void state_ask_name()
+    void state_ask_name(int ch)
     {
-        int ch = read_input();
-
         if (ch == CACA_KEY_RETURN)
         {
             string name = get_buffer();
@@ -314,6 +311,99 @@ public:
         }
     }
 
+    void on_resize(int width, int height)
+    {
+    }
+
+    void on_quit()
+    {
+        state_ = QUIT;
+    }
+
+    void on_key_press(int input)
+    {
+        if (state() == ASK_NAME)
+        {
+            state_ask_name(input);
+
+            return;
+        }
+
+        auto player = engine::instance()->current_player();
+
+        switch (tolower(input))
+        {
+        case 'r':
+            action_roll(player);
+            break;
+        case 'f':
+            action_full_house(player);
+            break;
+        case 'k':
+        case 't':
+        case 's':
+            add_to_buffer(input);
+            break;
+        case 'y':
+            action_yaht(player);
+            break;
+        case 'c':
+            action_chance(player);
+            break;
+
+        case 'q':
+            set_state(QUIT);
+            break;
+        default:
+
+            if (input >= '0' && input <= '9')
+            {
+                auto buffer = get_buffer();
+
+                if (buffer.length() > 0)
+                {
+                    switch (tolower(buffer[0]))
+                    {
+                    case 'k':
+                    {
+                        if (input == '3')
+                        {
+                            action_three_of_a_kind(player);
+                        }
+                        else if (input == '4')
+                        {
+                            action_four_of_a_kind(player);
+                        }
+                        break;
+                    }
+                    case 's':
+                    {
+                        action_score(player, input - '0');
+                        break;
+                    }
+                    case 't':
+                    {
+                        if (input == '4')
+                        {
+                            action_small_straight(player);
+                        }
+                        else if (input == '5')
+                        {
+                            action_large_straight(player);
+                        }
+
+                    }
+                    }
+
+                    clear_buffer();
+                }
+                else
+                {
+                    action_select_die(player, input - '0' - 1);
+                }
+            }
+        }
+    }
 
 private:
 

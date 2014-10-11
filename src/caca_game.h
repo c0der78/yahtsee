@@ -52,28 +52,58 @@ public:
             exit(1);
         }
 
-        on_start();
-
         caca_set_frame(canvas_, frame_);
+
+        on_start();
 
         prompt();
 
         caca_refresh_display(display_);
     }
 
-    bool has_key_press()
+    void update()
     {
-        if (display_ == NULL) return false;
+        if (display_ == NULL) return;
 
-        return caca_get_event(display_, CACA_EVENT_KEY_PRESS, &event_, -1) != 0;
+        if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, -1) != 0)
+        {
+            if (caca_get_event_type(&event_) & CACA_EVENT_QUIT)
+            {
+                on_quit();
+                return;
+            }
+
+            if (caca_get_event_type(&event_) & CACA_EVENT_RESIZE)
+            {
+                int height = caca_get_event_resize_height(&event_);
+                int width = caca_get_event_resize_width(&event_);
+
+                caca_import_canvas_from_memory(canvas_, canvas_buffer_, canvas_buffer_size_, "caca");
+
+                on_resize(width, height);
+
+                prompt();
+
+                caca_refresh_display(display_);
+            }
+
+            if (caca_get_event_type(&event_) & CACA_EVENT_KEY_RELEASE)
+            {
+                int input = caca_get_event_key_ch(&event_);
+
+                on_key_press(input);
+            }
+        }
+
     }
 
-    int read_input()
-    {
-        return caca_get_event_key_ch(&event_);
-    }
+    virtual void on_quit() = 0;
 
-    virtual void on_start() {}
+    virtual void on_resize(int width, int height) = 0;
+
+    virtual void on_key_press(int input) = 0;
+
+    virtual void on_start() = 0;
 
     virtual void prompt() = 0;
 
