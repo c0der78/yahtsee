@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include "yaht/engine.h"
+#include <arg3dice/yaht/engine.h>
 
 #include "caca.h"
 

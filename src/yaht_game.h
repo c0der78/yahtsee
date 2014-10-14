@@ -1,7 +1,7 @@
 
 #include "caca_game.h"
 
-#include "yaht/engine.h"
+#include <arg3dice/yaht/engine.h>
 
 using namespace arg3::yaht;
 
