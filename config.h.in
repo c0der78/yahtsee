@@ -1,10 +1,16 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the <caca.h> header file. */
+#undef HAVE_CACA_H
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `caca' library (-lcaca). */
+#undef HAVE_LIBCACA
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -29,9 +35,6 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if the system has the type `_Bool'. */
-#undef HAVE__BOOL
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

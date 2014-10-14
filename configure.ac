@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 AC_INIT([terminal-yahtzee], [0.1], [c0der78@gmail.com])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -20,12 +20,17 @@ else
 fi
 
 # Checks for libraries.
+AC_CHECK_LIB([caca], [caca_create_display])
+
+if test x"$ac_cv_lib_caca_caca_create_display" != x"yes" ; then
+	AC_MSG_ERROR([libcaca is required])
+fi
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdlib.h])
+AC_CHECK_HEADERS([stdlib.h caca.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_CHECK_HEADER_STDBOOL
+#AC_CHECK_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 AC_CHECK_PROG(GIT_CHECK,git,yes)

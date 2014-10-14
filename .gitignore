@@ -4,10 +4,8 @@ autoscan.log
 Makefile
 test_terminal_yahtzee
 .libs
-config.sub
 config.status
 autoscan.log config.log
-config.guess
 *.log
 config.h
 libtool
