@@ -1,3 +1,3 @@
 SUBDIRS = src
 
-
+ACLOCAL_FLAGS = -I m4
