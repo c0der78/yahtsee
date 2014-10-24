@@ -9,28 +9,38 @@
 
 #include <arg3net/http_client.h>
 #include <arg3/util.h>
+#include <cassert>
 
 using namespace std;
 
 using namespace arg3;
 
+static const char *GAME_TYPE = "yahtsee";
+
 int main(int argc, char **argv)
 {
     yaht_game game;
 
-    net::http_client ipinfo("ipinfo.io");
+    srand(time(0));
 
-    string response = ipinfo.get("ip").response();
+    int port = (rand() % 99999) + 1024;
 
-    string host = arg3::trim(response);
+    char buf[BUFSIZ + 1] = {0};
 
-    net::http_client api("localhost:1337");
+    cout << "Registering game..." << endl;
 
-    string payload = "{\"type\": \"yahtsee\", \"host\":\"" + host + "\", \"port\":6335}\n";
+    net::http_client api("arg3connect.herokuapp.com");
+    //net::http_client api("localhost:1337");
+
+    snprintf(buf, BUFSIZ, "{\"type\": \"%s\", \"port\":%d}\n", GAME_TYPE, port);
 
     api.add_header("Content-Type", "application/json");
 
-    api.set_payload(payload).post("api/v1/games/register");
+    api.set_payload(buf).post("api/v1/games/register");
+
+    assert(api.response_code() == 200);
+
+    string gameId = api.response();
 
     game.start();
 
@@ -38,8 +48,16 @@ int main(int argc, char **argv)
     {
         game.update();
 
-        //usleep(100);
+        usleep(100);
     }
+
+    game.reset();
+
+    cout << "Unregistering game..." << endl;
+
+    api.set_payload(gameId).post("api/v1/games/unregister");
+
+    assert(api.response_code() == 200);
 
     return 0;
 }
