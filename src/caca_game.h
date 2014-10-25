@@ -1,4 +1,36 @@
 #include "alert_box.h"
+#include <vector>
+#include <stack>
+#include <thread>
+
+class game_event
+{
+public:
+    game_event(unsigned millis, function<void()> callback) : millis_(millis), callback_(callback), ready_(false)
+    {
+        run();
+    }
+    bool ready() const
+    {
+        return ready_;
+    }
+    void perform()
+    {
+        callback_();
+    }
+private:
+    void run()
+    {
+        std::thread([&]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(millis_));
+            ready_ = true;
+        }).detach();
+    }
+    unsigned millis_;
+    function<void()> callback_;
+    bool ready_;
+};
 
 class caca_game
 {
@@ -58,7 +90,7 @@ public:
     {
         if (display_ == NULL) return;
 
-        if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, -1) != 0)
+        if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, 0) != 0)
         {
             if (caca_get_event_type(&event_) & CACA_EVENT_QUIT)
             {
@@ -86,6 +118,21 @@ public:
             }
         }
 
+        auto it = timed_events_.begin();
+
+        while (it != timed_events_.end())
+        {
+            if (it->ready())
+            {
+                it->perform();
+
+                it = timed_events_.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
     }
 
     virtual void on_quit() = 0;
@@ -110,7 +157,6 @@ public:
         refresh_display(reset);
 
         caca_refresh_display(display_);
-
     }
 
     void clear()
@@ -121,7 +167,10 @@ public:
 
         init_canvas(canvas_);
 
-        set_cursor(80, 20);
+        while (!alert_boxes_.empty())
+            alert_boxes_.pop();
+
+        //set_cursor(80, 20);
 
         prompt();
     }
@@ -158,7 +207,12 @@ public:
         alert_boxes_.top().display();
     }
 
-    void has_alert() const
+    alert_box displayed_alert() const
+    {
+        return alert_boxes_.top();
+    }
+
+    bool has_alert() const
     {
         return alert_boxes_.size() > 0;
     }
@@ -166,6 +220,12 @@ public:
     void pop_alert()
     {
         alert_boxes_.pop();
+
+        if (alert_boxes_.size() > 0)
+        {
+            alert_boxes_.top().display();
+        }
+        caca_refresh_display(display_);
     }
 
     void new_frame()
@@ -173,7 +233,10 @@ public:
         caca_create_frame(canvas_, ++frame_);
     }
 
-
+    void pop_frame()
+    {
+        caca_set_frame(canvas_, --frame_);
+    }
     int frames() const
     {
         return frame_;
@@ -195,6 +258,11 @@ public:
     {
         return buf_.str();
     }
+
+    void add_event(unsigned millis, function<void()> callback)
+    {
+        timed_events_.emplace_back(millis, callback);
+    }
 protected:
 
     virtual void init_canvas(caca_canvas_t *canvas) = 0;
@@ -206,4 +274,5 @@ private:
     caca_event_t event_;
     ostringstream buf_;
     stack<alert_box> alert_boxes_;
+    vector <game_event> timed_events_;
 };

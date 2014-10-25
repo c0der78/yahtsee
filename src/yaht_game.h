@@ -7,30 +7,25 @@ using namespace arg3::yaht;
 
 typedef enum
 {
-    ASK_NAME,
     PLAYING,
     ROLLING_DICE,
     DISPLAY_MENU,
-    QUIT
+    ASK_NAME,
+    QUIT,
+    QUIT_CONFIRM
 } game_state;
 
 typedef enum
 {
-    NORMAL,
     HORIZONTAL,
     VERTICAL,
     MINIMAL
 } display_mode;
 
-#define MENU_W 60
-#define MENU_H 15
-#define MENU_X 8
-#define MENU_Y 20
-
 class yaht_game : public caca_game
 {
 public:
-    yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), upperbuf_size_(0), lowerbuf_size_(0), menubuf_size_(0), display_mode_(NORMAL)
+    yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), upperbuf_size_(0), lowerbuf_size_(0), menubuf_size_(0), display_mode_(VERTICAL)
     {}
 
     void reset()
@@ -66,6 +61,9 @@ public:
 
     void set_state(game_state value)
     {
+        if (value > state_)
+            last_state_ = state_;
+
         state_ = value;
 
         new_frame();
@@ -81,31 +79,19 @@ public:
         switch (state_)
         {
         case ASK_NAME:
-            display_alert(MENU_X, MENU_Y, MENU_W, MENU_H, [&](const alert_box &)
+            display_alert([&](const alert_box & a)
             {
-                put(x + (MENU_W / 2) - 10, y + (MENU_H / 2) - 1, "What is your name? ");
-                set_cursor(x + (MENU_W / 2) - 10, y + (MENU_H / 2));
+                put(a.center_x() - 10, a.center_y() - 1, "What is your name? ");
+                set_cursor(a.center_x() - 10, a.center_y());
             });
             break;
         case ROLLING_DICE:
-            display_alert(MENU_X, MENU_Y, MENU_W, MENU_H, [&](const alert_box & box)
+            display_alert([&](const alert_box & box)
             {
-
-                player *player = engine::instance()->current_player();
-
-                if (player->roll_count() < 3)
-                {
-                    player->roll();
-                    new_frame();
-                    display_dice(player, box.x(), box.y());
-                    refresh();
-                }
-                else
-                {
-                    box.center("You must choose a score after three rolls.");
-                }
-                refresh();
+                display_dice(engine::instance()->current_player(), box.x(), box.y());
             });
+
+        case DISPLAY_MENU:
         default:
             break;
         }
@@ -119,7 +105,7 @@ public:
 
     void refresh_display(bool reset)
     {
-        if (has_alert()) return;
+        //if (has_alert()) return;
 
         player *player = engine::instance()->current_player();
 
@@ -131,28 +117,11 @@ public:
             put(50, 2, player->name().c_str());
 
             int y = 8;
+            int x = 46;
 
             scoresheet::value_type total_score = 0;
 
-            for (int i = 0; i <= Constants::NUM_DICE; i++, y += 2)
-            {
-                auto score = player->score().upper_score(i + 1);
-
-                put(46, y, std::to_string(score).c_str());
-
-                total_score += score;
-            }
-
-            put(46, y, std::to_string(total_score).c_str());
-
-            put(46, y + 2, std::to_string(total_score > 63 ? 35 : 0).c_str());
-
-            auto lower_score_total = total_score;
-
-            if (total_score > 63)
-                lower_score_total += 35;
-
-            put(46, y + 4, std::to_string(lower_score_total).c_str());
+            lower_score_total = display_upper_scores(player->score(), x , y );
 
             switch (display_mode_)
             {
@@ -160,7 +129,8 @@ public:
                 display_lower_scores(player->score(), lower_score_total, 46, y + 8);
                 break;
             case HORIZONTAL:
-                display_lower_scores(player->score(), lower_score_total, 122, 3);
+                display_lower_scores(player->score(), lower_score_total, 122, 1);
+                break;
             }
 
         }
@@ -170,18 +140,21 @@ public:
 
     void display_already_scored()
     {
-        alert_boxes
-        put(80, 28, "You've already scored that.");
-        refresh();
+        display_alert([&](const alert_box & a)
+        {
+            a.center("You've already scored that.");
+        });
     }
 
     void display_dice(player *player, int x, int y)
     {
         char buf[BUFSIZ + 1] = {0};
-        snprintf(buf, BUFSIZ, "Roll %d of 3. (Use '#' to keep):", player->roll_count());
+        snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
 
         x += 13;
-        y += 5;
+        y += 4;
+
+        int xs = x;
 
         put(x, y, buf);
 
@@ -190,18 +163,21 @@ public:
 
         put(x, y++, "#  1 │ 2 │ 3 │ 4 │ 5");
         put(x, y++, "  ───┴───┴───┴───┴───");
-        put(x, y++, "  ");
+        put(x++, y, "  ");
         for (size_t i = 0; i < player->die_count(); i++)
         {
-            put(x++, y, player->is_kept(i) ? '*' : ' ');
+            put(++x, y, player->is_kept(i) ? '*' : ' ');
 
-            put(x++, y, to_string(player->d1e(i).value()).c_str());
+            put(++x, y, to_string(player->d1e(i).value()).c_str());
 
             x += 2;
         }
+        y += 2;
+
+        put(xs, y, "Press '?' for help on how to score.");
     }
 
-    void state_ask_name(int ch)
+    void action_ask_name(int ch)
     {
         if (ch == CACA_KEY_RETURN)
         {
@@ -211,7 +187,7 @@ public:
 
             set_state(PLAYING);
 
-            alert_box_ = nullptr;
+            pop_alert();
 
             clear_buffer();
 
@@ -222,6 +198,7 @@ public:
             add_to_buffer(ch);
 
             int x = get_cursor_x();
+
             int y = get_cursor_y();
 
             put(x + 1, y, ch);
@@ -232,6 +209,41 @@ public:
         refresh();
     }
 
+    void action_display_dice()
+    {
+        display_alert([&](const alert_box & box)
+        {
+            display_dice(engine::instance()->current_player(), box.x(), box.y());
+
+        });
+    }
+
+    void action_roll_dice()
+    {
+        player *player = engine::instance()->current_player();
+
+        if (player->roll_count() < 3)
+        {
+            player->roll();
+
+            new_frame();
+
+            action_display_dice();
+        }
+        else
+        {
+            display_alert([&](const alert_box & box)
+            {
+                box.center("You must choose a score after three rolls.");
+            });
+            add_event(2000, [&]()
+            {
+                pop_alert();
+
+                action_display_dice();
+            });
+        }
+    }
 
     void action_select_die(player *player, int d)
     {
@@ -240,68 +252,18 @@ public:
         else
             player->keep_die(d, true);
 
-        display_dice(player, MENU_X, MENU_Y);
-        refresh();
+        auto box = displayed_alert();
+
+        box.display();
     }
 
 
-    void action_full_house(player *player)
+    void action_lower_score(player *player, scoresheet::type type)
     {
-        if (!player->score().lower_score(scoresheet::FULL_HOUSE))
+        if (!player->score().lower_score(type))
         {
-            player->score().lower_score(scoresheet::FULL_HOUSE, player->calculate_lower_score(scoresheet::FULL_HOUSE));
-            refresh(true);
-        }
-        else
-        {
-            display_already_scored();
-        }
-    }
-
-    void action_yaht(player *player)
-    {
-        if (!player->score().lower_score(scoresheet::YACHT))
-        {
-            player->score().lower_score(scoresheet::YACHT, player->calculate_lower_score(scoresheet::YACHT));
-            refresh(true);
-        }
-        else
-        {
-            display_already_scored();
-        }
-    }
-
-    void action_chance(player *player)
-    {
-        if (!player->score().lower_score(scoresheet::CHANCE))
-        {
-            player->score().lower_score(scoresheet::CHANCE, player->calculate_lower_score(scoresheet::CHANCE));
-            refresh(true);
-        }
-        else
-        {
-            display_already_scored();
-        }
-    }
-
-    void action_three_of_a_kind(player *player)
-    {
-        if (!player->score().lower_score(scoresheet::KIND_THREE))
-        {
-            player->score().lower_score(scoresheet::KIND_THREE, player->calculate_lower_score(scoresheet::KIND_THREE));
-            refresh(true);
-        }
-        else
-        {
-            display_already_scored();
-        }
-    }
-
-    void action_four_of_a_kind(player *player)
-    {
-        if (!player->score().lower_score(scoresheet::KIND_FOUR))
-        {
-            player->score().lower_score(scoresheet::KIND_FOUR, player->calculate_lower_score(scoresheet::KIND_FOUR));
+            player->score().lower_score(type, player->calculate_lower_score(type));
+            set_state(PLAYING);
             refresh(true);
         }
         else
@@ -316,6 +278,8 @@ public:
         {
             player->score().upper_score(n, player->calculate_upper_score(n));
 
+            set_state(PLAYING);
+
             refresh(true);
         }
         else
@@ -324,30 +288,12 @@ public:
         }
     }
 
-    void action_small_straight(player *player)
+    void action_confirm_quit()
     {
-        if (!player->score().lower_score(scoresheet::STRAIGHT_SMALL))
+        display_alert([&](const alert_box & box)
         {
-            player->score().lower_score(scoresheet::STRAIGHT_SMALL, player->calculate_lower_score(scoresheet::STRAIGHT_SMALL));
-            refresh(true);
-        }
-        else
-        {
-            display_already_scored();
-        }
-    }
-
-    void action_large_straight(player *player)
-    {
-        if (!player->score().lower_score(scoresheet::STRAIGHT_BIG))
-        {
-            player->score().lower_score(scoresheet::STRAIGHT_BIG, player->calculate_lower_score(scoresheet::STRAIGHT_BIG));
-            refresh(true);
-        }
-        else
-        {
-            display_already_scored();
-        }
+            box.center("Are you sure you want to quit? (Y/n)");
+        });
     }
 
     void on_resize(int width, int height)
@@ -361,28 +307,44 @@ public:
 
     void on_key_press(int input)
     {
-        if (state() == ASK_NAME)
+        switch (state())
+        {
+        case ASK_NAME:
         {
             if ( input == CACA_KEY_ESCAPE)
             {
                 set_state(QUIT);
             }
-            else
+            else if (isnumber(input) || isalpha(input) || input == CACA_KEY_RETURN)
             {
-                state_ask_name(input);
+                action_ask_name(input);
             }
             return;
         }
 
-        if (state() == DISPLAY_MENU)
+        case DISPLAY_MENU:
         {
             if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
             {
-                set_state(PLAYING);
-                alert_box_ = nullptr;
-                refresh(true);
+                set_state(last_state_);
+                pop_alert();
             }
             return;
+        }
+        case QUIT_CONFIRM:
+        {
+            if (tolower(input) == 'n')
+            {
+                pop_alert();
+                set_state(last_state_);
+            }
+            else
+            {
+                set_state(QUIT);
+            }
+            return;
+        }
+        default: break;
         }
 
         auto player = engine::instance()->current_player();
@@ -390,14 +352,11 @@ public:
         switch (tolower(input))
         {
         case 'r':
-            alert_box_ = alert(MENU_W, MENU_H, [&](const alert_box & box, int x, int y)
-            {
-                action_roll(player, x, y);
-            });
-            alert_box_->display(MENU_X, MENU_Y);
+            set_state(ROLLING_DICE);
+            action_roll_dice();
             break;
         case 'f':
-            action_full_house(player);
+            action_lower_score(player, scoresheet::FULL_HOUSE);
             break;
         case CACA_KEY_UP:
         {
@@ -419,7 +378,24 @@ public:
             refresh(true);
             break;
         }
+        case CACA_KEY_LEFT:
+        case CACA_KEY_RIGHT:
+        {
+            if (display_mode_ == MINIMAL)
+            {
+                if (minimalbuf_ == upperbuf_)
+                {
+                    minimalbuf_ = lowerbuf_;
+                }
+                else
+                {
+                    minimalbuf_ = upperbuf_;
+                }
+            }
+            break;
+        }
         case '?':
+            set_state(DISPLAY_MENU);
             display_menu();
             break;
         case 'k':
@@ -428,14 +404,15 @@ public:
             add_to_buffer(input);
             break;
         case 'y':
-            action_yaht(player);
+            action_lower_score(player, scoresheet::YACHT);
             break;
         case 'c':
-            action_chance(player);
+            action_lower_score(player, scoresheet::CHANCE);
             break;
         case CACA_KEY_ESCAPE:
         case 'q':
-            set_state(QUIT);
+            set_state(QUIT_CONFIRM);
+            action_confirm_quit();
             break;
         default:
 
@@ -451,11 +428,11 @@ public:
                     {
                         if (input == '3')
                         {
-                            action_three_of_a_kind(player);
+                            action_lower_score(player, scoresheet::KIND_THREE);
                         }
                         else if (input == '4')
                         {
-                            action_four_of_a_kind(player);
+                            action_lower_score(player, scoresheet::KIND_FOUR);
                         }
                         break;
                     }
@@ -468,11 +445,11 @@ public:
                     {
                         if (input == '4')
                         {
-                            action_small_straight(player);
+                            action_lower_score(player, scoresheet::STRAIGHT_SMALL);
                         }
                         else if (input == '5')
                         {
-                            action_large_straight(player);
+                            action_lower_score(player, scoresheet::STRAIGHT_BIG);
                         }
 
                     }
@@ -538,17 +515,73 @@ protected:
     }
 private:
 
+    int get_alert_x() const
+    {
+        switch (display_mode_)
+        {
+        default:
+            return 8;
+        case HORIZONTAL:
+            return 48;
+        }
+    }
+
+    int get_alert_y() const
+    {
+        switch (display_mode_)
+        {
+        default:
+            return 20;
+        case HORIZONTAL: return 8;
+        }
+    }
+
+    int get_alert_w() const
+    {
+        return 60;
+    }
+    int get_alert_h() const
+    {
+        return 15;
+    }
+
+    void display_alert(function<void(const alert_box &a)> funk)
+    {
+        caca_game::display_alert(get_alert_x(), get_alert_y(), get_alert_w(), get_alert_h(), funk);
+    }
+
     void display_menu()
     {
-        state_ = DISPLAY_MENU;
-
-        alert_box_ = alert(MENU_W, MENU_H, [&](const alert_box & box, int x, int y)
+        display_alert([&](const alert_box & a)
         {
-            caca_import_area_from_memory(box.canvas(), x + 4, y + 3, menubuf_, menubuf_size_, "caca");
+            caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, menubuf_, menubuf_size_, "caca");
         });
-
-        alert_box_->display(MENU_X, MENU_Y);
     }
+
+    void display_upper_scores(const scoresheet &score, scoresheet::value_type lower_score_total, int x, int y)
+    {
+        for (int i = 0; i <= Constants::NUM_DICE; i++, y += 2)
+        {
+            auto score = score.upper_score(i + 1);
+
+            put(x, y, std::to_string(score).c_str());
+
+            total_score += score;
+        }
+
+        put(x, y, std::to_string(total_score).c_str());
+
+        put(x, y + 2, std::to_string(total_score > 63 ? 35 : 0).c_str());
+
+        auto lower_score_total = total_score;
+
+        if (total_score > 63)
+            lower_score_total += 35;
+
+        put(x, y + 4, std::to_string(lower_score_total).c_str());
+
+    }
+
     void display_lower_scores(const scoresheet &score, scoresheet::value_type lower_score_total, int x, int y)
     {
         scoresheet::value_type total_score = 0;
@@ -583,8 +616,8 @@ private:
         put(x, y + 4, std::to_string(total_score + lower_score_total).c_str());
     }
 
-    void *upperbuf_, *lowerbuf_, *menubuf_;
+    void *upperbuf_, *lowerbuf_, *menubuf_, *minimalbuf_;
     size_t upperbuf_size_, lowerbuf_size_, menubuf_size_;
-    game_state state_;
+    game_state state_, last_state_;
     display_mode display_mode_;
 };

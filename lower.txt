@@ -22,4 +22,4 @@
 ╞═══════════════════════════════════════════╪════╪════╪════╪════╪════╪════╡
 │ Grand Total                               │    │    │    │    │    │    │
 ╘═══════════════════════════════════════════╧════╧════╧════╧════╧════╧════╛
-  Type '?' to show the available command options, or ↓ ↑ to cycle views.
+    Type '?' to show command options.   Use ↓ ↑ to cycle views modes.

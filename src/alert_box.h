@@ -46,15 +46,30 @@ public:
 
     void center(const string &text) const
     {
-        int x = ((x_ + width_) / 2) - (text.length() / 2);
-        int y = ((y_ + height_) / 2);
+        int x = center_x() - (text.length() / 2);
+        int y = center_y();
 
-        caca_put_str(canvas_, x, y, value);
+        caca_put_str(canvas_, x, y, text.c_str());
     }
+    void center_x(int y, const string &text) const 
+    {
+        int x = center_x() - (text.length() / 2);
+
+        caca_put_str(canvas_, x, y, text.c_str());
+    }
+
+    int center_y() const {
+        return y_ + (height_ / 2);
+    }
+
+    int center_x() const {
+        return x_ + (width_ / 2);
+    }
+
 private:
     caca_canvas_t *canvas_;
     caca_display_t *display_;
-    int x_, int y_;
+    int x_, y_;
     int width_, height_;
-    function<void(const alert_box &, int, int)> callback_;
+    function<void(const alert_box &)> callback_;
 };

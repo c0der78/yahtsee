@@ -8,7 +8,7 @@
 #include "yaht_game.h"
 
 #include <arg3net/http_client.h>
-#include <arg3/util.h>
+#include <arg3/str_util.h>
 #include <cassert>
 
 using namespace std;

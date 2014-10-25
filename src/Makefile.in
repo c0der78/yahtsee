@@ -289,7 +289,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 yahtsee_SOURCES = main.cpp
-yahtsee_LDFLAGS = -lcaca -larg3dice-0.2 -larg3net-0.2 -larg3str-0.1
+yahtsee_LDFLAGS = -lcaca -larg3dice-0.2 -larg3net-0.2 -larg3str-0.1 -lpthread
 all: all-am
 
 .SUFFIXES:
