@@ -2,16 +2,16 @@
 class caca_game
 {
 public:
-    caca_game() : frame_(1), canvas_buffer_size_(0), canvas_(NULL), display_(NULL)
+    caca_game() : frame_(1), canvas_(NULL), display_(NULL)
     {
     }
 
-    ~caca_game()
+    virtual ~caca_game()
     {
         reset();
     }
 
-    void reset()
+    virtual void reset()
     {
         frame_ = 1;
 
@@ -26,12 +26,6 @@ public:
             display_ = NULL;
         }
 
-        if (canvas_buffer_ != NULL)
-        {
-            free(canvas_buffer_);
-            canvas_buffer_ = NULL;
-            canvas_buffer_size_ = 0;
-        }
     }
 
     void start()
@@ -40,10 +34,6 @@ public:
 
         canvas_ = caca_create_canvas(0, 0);
 
-        caca_import_canvas_from_file(canvas_, "template.txt", "utf8");
-
-        canvas_buffer_ = caca_export_canvas_to_memory(canvas_, "caca", &canvas_buffer_size_);
-
         display_ = caca_create_display(canvas_);
 
         if (display_ == NULL)
@@ -51,6 +41,8 @@ public:
             cerr << "Failed to create display" << endl;
             exit(1);
         }
+
+        init_canvas(canvas_);
 
         caca_set_frame(canvas_, frame_);
 
@@ -77,8 +69,6 @@ public:
             {
                 int height = caca_get_event_resize_height(&event_);
                 int width = caca_get_event_resize_width(&event_);
-
-                caca_import_canvas_from_memory(canvas_, canvas_buffer_, canvas_buffer_size_, "caca");
 
                 on_resize(width, height);
 
@@ -128,12 +118,11 @@ public:
 
         set_cursor(0, 0);
 
-        caca_import_canvas_from_memory(canvas_, canvas_buffer_, canvas_buffer_size_, "caca");
+        init_canvas(canvas_);
 
         set_cursor(80, 20);
 
         prompt();
-
     }
 
     void set_cursor(int x, int y)
@@ -178,11 +167,13 @@ public:
     {
         return buf_.str();
     }
+protected:
+
+    virtual void init_canvas(caca_canvas_t *canvas) = 0;
+
 private:
     int frame_;
-    size_t canvas_buffer_size_;
     caca_canvas_t *canvas_;
-    void *canvas_buffer_;
     caca_display_t *display_;
     caca_event_t event_;
     ostringstream buf_;

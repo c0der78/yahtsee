@@ -12,9 +12,46 @@ typedef enum
     QUIT
 } game_state;
 
+typedef enum
+{
+    NORMAL,
+    HORIZONTAL,
+    VERTICAL,
+    MINIMAL
+} display_mode;
+
 class yaht_game : public caca_game
 {
 public:
+    yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), upperbuf_size_(0), lowerbuf_size_(0), menubuf_size_(0), display_mode_(NORMAL)
+    {}
+
+    void reset()
+    {
+        caca_game::reset();
+
+
+        if (upperbuf_ != NULL)
+        {
+            free(upperbuf_);
+            upperbuf_ = NULL;
+            upperbuf_size_ = 0;
+        }
+
+        if (lowerbuf_ != NULL)
+        {
+            free(lowerbuf_);
+            lowerbuf_ = NULL;
+            lowerbuf_size_ = 0;
+        }
+
+        if (menubuf_ != NULL)
+        {
+            free(menubuf_);
+            menubuf_ = NULL;
+            menubuf_size_ = 0;
+        }
+    }
     game_state state() const
     {
         return state_;
@@ -89,38 +126,15 @@ public:
 
             put(46, y + 4, std::to_string(lower_score_total).c_str());
 
-            total_score = 0;
-
-            y  += 8;
-
-            for (int i = scoresheet::FIRST_TYPE; i < scoresheet::MAX_TYPE; i++)
+            switch (display_mode_)
             {
-                scoresheet::type type = static_cast<scoresheet::type>(i);
-
-                auto score = player->score().lower_score(type);
-
-                put(46, y, std::to_string(score).c_str());
-
-                total_score += score;
-
-                switch (type)
-                {
-                default:
-                    y += 2;
-                    break;
-                case scoresheet::STRAIGHT_SMALL:
-                case scoresheet::STRAIGHT_BIG:
-                case scoresheet::YACHT:
-                    y += 3;
-                    break;
-                }
+            default:
+                display_lower_scores(player->score(), lower_score_total, 46, y + 8);
+                break;
+            case HORIZONTAL:
+                display_lower_scores(player->score(), lower_score_total, 122, 3);
             }
 
-            put(46, y, std::to_string(total_score).c_str());
-
-            put(46, y + 2, std::to_string(lower_score_total).c_str());
-
-            put(46, y + 4, std::to_string(total_score + lower_score_total).c_str());
         }
 
     }
@@ -324,8 +338,14 @@ public:
     {
         if (state() == ASK_NAME)
         {
-            state_ask_name(input);
-
+            if ( input == CACA_KEY_ESCAPE)
+            {
+                set_state(QUIT);
+            }
+            else
+            {
+                state_ask_name(input);
+            }
             return;
         }
 
@@ -339,6 +359,10 @@ public:
         case 'f':
             action_full_house(player);
             break;
+        case 'h':
+            set_display_mode(HORIZONTAL);
+            refresh(true);
+            break;
         case 'k':
         case 't':
         case 's':
@@ -350,7 +374,7 @@ public:
         case 'c':
             action_chance(player);
             break;
-
+        case CACA_KEY_ESCAPE:
         case 'q':
             set_state(QUIT);
             break;
@@ -405,7 +429,95 @@ public:
         }
     }
 
+protected:
+
+    void init_canvas(caca_canvas_t *canvas)
+    {
+        caca_canvas_t *temp = caca_create_canvas(0, 0);
+
+        caca_import_canvas_from_file(temp, "upper.txt", "utf8");
+
+        upperbuf_ = caca_export_canvas_to_memory(temp, "caca", &upperbuf_size_);
+
+        caca_free_canvas(temp);
+
+        temp = caca_create_canvas(0, 0);
+
+        caca_import_canvas_from_file(temp, "lower.txt", "utf8");
+
+        lowerbuf_ = caca_export_canvas_to_memory(temp, "caca", &lowerbuf_size_);
+
+        caca_free_canvas(temp);
+
+        temp = caca_create_canvas(0, 0);
+
+        caca_import_canvas_from_file(temp, "menu.txt", "utf8");
+
+        menubuf_ = caca_export_canvas_to_memory(temp, "caca", &menubuf_size_);
+
+        caca_free_canvas(temp);
+
+        switch (display_mode_)
+        {
+        default:
+            caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 76, 0,  menubuf_, menubuf_size_, "caca");
+            break;
+        case HORIZONTAL:
+            caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 76, 2, lowerbuf_, lowerbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 0, 27, menubuf_, menubuf_size_, "caca");
+            break;
+        case VERTICAL:
+            caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 0, 52, menubuf_, menubuf_size_, "caca");
+            break;
+        }
+    }
+    void set_display_mode(display_mode mode)
+    {
+        display_mode_ = mode;
+    }
 private:
 
+    void display_lower_scores(const scoresheet &score, scoresheet::value_type lower_score_total, int x, int y)
+    {
+        scoresheet::value_type total_score = 0;
+
+        for (int i = scoresheet::FIRST_TYPE; i < scoresheet::MAX_TYPE; i++)
+        {
+            scoresheet::type type = static_cast<scoresheet::type>(i);
+
+            auto value = score.lower_score(type);
+
+            put(x, y, std::to_string(value).c_str());
+
+            total_score += value;
+
+            switch (type)
+            {
+            default:
+                y += 2;
+                break;
+            case scoresheet::STRAIGHT_SMALL:
+            case scoresheet::STRAIGHT_BIG:
+            case scoresheet::YACHT:
+                y += 3;
+                break;
+            }
+        }
+
+        put(x, y, std::to_string(total_score).c_str());
+
+        put(x, y + 2, std::to_string(lower_score_total).c_str());
+
+        put(x, y + 4, std::to_string(total_score + lower_score_total).c_str());
+    }
+
+    void *upperbuf_, *lowerbuf_, *menubuf_;
+    size_t upperbuf_size_, lowerbuf_size_, menubuf_size_;
     game_state state_;
+    display_mode display_mode_;
 };

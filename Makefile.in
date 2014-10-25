@@ -319,6 +319,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = src
 ACLOCAL_FLAGS = -I m4
+EXTRA_DIST = upper.txt lower.txt menu.txt fullscreen.txt
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
