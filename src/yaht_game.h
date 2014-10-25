@@ -9,6 +9,7 @@ typedef enum
 {
     ASK_NAME,
     PLAYING,
+    DISPLAY_MENU,
     QUIT
 } game_state;
 
@@ -19,6 +20,11 @@ typedef enum
     VERTICAL,
     MINIMAL
 } display_mode;
+
+#define MENU_W 55
+#define MENU_H 12
+#define MENU_X 10
+#define MENU_Y 20
 
 class yaht_game : public caca_game
 {
@@ -74,13 +80,14 @@ public:
         switch (state_)
         {
         case ASK_NAME:
-            put(80, 20, "What is your name? ");
-            set_cursor(80, 22);
+            alert_box_ = alert(MENU_W, MENU_H, [&](const alert_box &, int x, int y)
+            {
+                put(x + (MENU_W / 2) - 10, y + (MENU_H / 2) - 1, "What is your name? ");
+                set_cursor(x + (MENU_W / 2) - 10, y + (MENU_H / 2));
+            });
+            alert_box_->display(MENU_X, MENU_Y);
             break;
-
         default:
-            put(80, 20, "Command: ");
-            set_cursor(80, 22);
             break;
         }
 
@@ -176,17 +183,22 @@ public:
 
             set_state(PLAYING);
 
+            alert_box_ = nullptr;
+
             clear_buffer();
 
             clear();
         }
         else
         {
-            int len = add_to_buffer(ch);
+            add_to_buffer(ch);
 
-            put(80 + len - 1, 22, ch);
+            int x = get_cursor_x();
+            int y = get_cursor_y();
 
-            set_cursor(80 + len, 22);
+            put(x + 1, y, ch);
+
+            set_cursor(x + 1, y);
         }
 
         refresh();
@@ -349,6 +361,17 @@ public:
             return;
         }
 
+        if (state() == DISPLAY_MENU)
+        {
+            if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
+            {
+                set_state(PLAYING);
+                alert_box_ = nullptr;
+                refresh(true);
+            }
+            return;
+        }
+
         auto player = engine::instance()->current_player();
 
         switch (tolower(input))
@@ -359,9 +382,28 @@ public:
         case 'f':
             action_full_house(player);
             break;
-        case 'h':
-            set_display_mode(HORIZONTAL);
+        case CACA_KEY_UP:
+        {
+            int mode = display_mode_;
+            if (++mode > MINIMAL)
+                display_mode_ = NORMAL;
+            else
+                display_mode_ = static_cast<display_mode>(mode);
             refresh(true);
+            break;
+        }
+        case CACA_KEY_DOWN:
+        {
+            int mode = display_mode_;
+            if (--mode < NORMAL)
+                display_mode_ = MINIMAL;
+            else
+                display_mode_ = static_cast<display_mode>(mode);
+            refresh(true);
+            break;
+        }
+        case '?':
+            display_menu();
             break;
         case 'k':
         case 't':
@@ -462,17 +504,14 @@ protected:
         default:
             caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
             caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
-            caca_import_area_from_memory(canvas, 76, 0,  menubuf_, menubuf_size_, "caca");
             break;
         case HORIZONTAL:
             caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
-            caca_import_area_from_memory(canvas, 76, 2, lowerbuf_, lowerbuf_size_, "caca");
-            caca_import_area_from_memory(canvas, 0, 27, menubuf_, menubuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 76, 0, lowerbuf_, lowerbuf_size_, "caca");
             break;
         case VERTICAL:
             caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
             caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
-            caca_import_area_from_memory(canvas, 0, 52, menubuf_, menubuf_size_, "caca");
             break;
         }
     }
@@ -482,6 +521,17 @@ protected:
     }
 private:
 
+    void display_menu()
+    {
+        state_ = DISPLAY_MENU;
+
+        alert_box_ = alert(MENU_W, MENU_H, [&](const alert_box & box, int x, int y)
+        {
+            caca_import_area_from_memory(box.canvas(), x + 1, y + 1, menubuf_, menubuf_size_, "caca");
+        });
+
+        alert_box_->display(MENU_X, MENU_Y);
+    }
     void display_lower_scores(const scoresheet &score, scoresheet::value_type lower_score_total, int x, int y)
     {
         scoresheet::value_type total_score = 0;
@@ -520,4 +570,5 @@ private:
     size_t upperbuf_size_, lowerbuf_size_, menubuf_size_;
     game_state state_;
     display_mode display_mode_;
+    shared_ptr<alert_box> alert_box_;
 };

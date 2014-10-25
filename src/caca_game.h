@@ -1,3 +1,4 @@
+#include "alert_box.h"
 
 class caca_game
 {
@@ -130,6 +131,16 @@ public:
         caca_gotoxy(canvas_, x, y);
     }
 
+    int get_cursor_x() const
+    {
+        return caca_wherex(canvas_);
+    }
+
+    int get_cursor_y() const
+    {
+        return caca_wherey(canvas_);
+    }
+
     void put(int x, int y, const char *value)
     {
         caca_put_str(canvas_, x, y, value);
@@ -140,9 +151,15 @@ public:
         caca_put_char(canvas_, x, y, value);
     }
 
+    shared_ptr<alert_box> alert(int width, int height, function<void(const alert_box &, int, int)> callback)
+    {
+        return make_shared<alert_box>(canvas_, display_, width, height, callback);
+    }
+
     void new_frame()
     {
         caca_create_frame(canvas_, ++frame_);
+
     }
 
 
