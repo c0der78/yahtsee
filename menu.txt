@@ -1,10 +1,9 @@
-Menu:
- 'r'  : roll dice       'k3': score three of a kind 
- 's1' : score aces      'k4': score four of a kind
- 's2' : score twos      'f' : score full house
- 's3' : score threes    't4': score small straight
- 's4' : score fours     't5': score large straight
- 's5' : score fives     'y' : score yahtzee 
- 's6' : score sixes     'c' : score chance
- 'n'  : new game        'q' : quit
-  ← → : cycle view modes
+'r'  : roll dice       'k3': score three of a kind 
+'s1' : score aces      'k4': score four of a kind
+'s2' : score twos      'f' : score full house
+'s3' : score threes    't4': score small straight
+'s4' : score fours     't5': score large straight
+'s5' : score fives     'y' : score yahtzee 
+'s6' : score sixes     'c' : score chance
+'n'  : new game        'q' : quit
+ ← → : cycle view modes

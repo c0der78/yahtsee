@@ -78,7 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = terminal-yahtzee$(EXEEXT)
+bin_PROGRAMS = yahtsee$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -95,17 +95,16 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_terminal_yahtzee_OBJECTS = main.$(OBJEXT)
-terminal_yahtzee_OBJECTS = $(am_terminal_yahtzee_OBJECTS)
-terminal_yahtzee_LDADD = $(LDADD)
+am_yahtsee_OBJECTS = main.$(OBJEXT)
+yahtsee_OBJECTS = $(am_yahtsee_OBJECTS)
+yahtsee_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-terminal_yahtzee_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(terminal_yahtzee_LDFLAGS) \
-	$(LDFLAGS) -o $@
+yahtsee_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(yahtsee_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -140,8 +139,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(terminal_yahtzee_SOURCES)
-DIST_SOURCES = $(terminal_yahtzee_SOURCES)
+SOURCES = $(yahtsee_SOURCES)
+DIST_SOURCES = $(yahtsee_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -289,8 +288,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-terminal_yahtzee_SOURCES = main.cpp
-terminal_yahtzee_LDFLAGS = -lcaca -larg3dice-0.2 -larg3net-0.2 -larg3str-0.1
+yahtsee_SOURCES = main.cpp
+yahtsee_LDFLAGS = -lcaca -larg3dice-0.2 -larg3net-0.2 -larg3str-0.1
 all: all-am
 
 .SUFFIXES:
@@ -375,9 +374,9 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-terminal-yahtzee$(EXEEXT): $(terminal_yahtzee_OBJECTS) $(terminal_yahtzee_DEPENDENCIES) $(EXTRA_terminal_yahtzee_DEPENDENCIES) 
-	@rm -f terminal-yahtzee$(EXEEXT)
-	$(AM_V_CXXLD)$(terminal_yahtzee_LINK) $(terminal_yahtzee_OBJECTS) $(terminal_yahtzee_LDADD) $(LIBS)
+yahtsee$(EXEEXT): $(yahtsee_OBJECTS) $(yahtsee_DEPENDENCIES) $(EXTRA_yahtsee_DEPENDENCIES) 
+	@rm -f yahtsee$(EXEEXT)
+	$(AM_V_CXXLD)$(yahtsee_LINK) $(yahtsee_OBJECTS) $(yahtsee_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

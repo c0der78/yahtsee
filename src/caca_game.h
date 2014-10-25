@@ -151,15 +151,26 @@ public:
         caca_put_char(canvas_, x, y, value);
     }
 
-    shared_ptr<alert_box> alert(int width, int height, function<void(const alert_box &, int, int)> callback)
+    void display_alert(int x, int y, int width, int height, function<void(const alert_box &)> callback)
     {
-        return make_shared<alert_box>(canvas_, display_, width, height, callback);
+        alert_boxes_.emplace(canvas_, display_, x, y, width, height, callback);
+
+        alert_boxes_.top().display();
+    }
+
+    void has_alert() const
+    {
+        return alert_boxes_.size() > 0;
+    }
+
+    void pop_alert()
+    {
+        alert_boxes_.pop();
     }
 
     void new_frame()
     {
         caca_create_frame(canvas_, ++frame_);
-
     }
 
 
@@ -194,4 +205,5 @@ private:
     caca_display_t *display_;
     caca_event_t event_;
     ostringstream buf_;
+    stack<alert_box> alert_boxes_;
 };

@@ -9,6 +9,7 @@ typedef enum
 {
     ASK_NAME,
     PLAYING,
+    ROLLING_DICE,
     DISPLAY_MENU,
     QUIT
 } game_state;
@@ -21,9 +22,9 @@ typedef enum
     MINIMAL
 } display_mode;
 
-#define MENU_W 55
-#define MENU_H 12
-#define MENU_X 10
+#define MENU_W 60
+#define MENU_H 15
+#define MENU_X 8
 #define MENU_Y 20
 
 class yaht_game : public caca_game
@@ -80,13 +81,31 @@ public:
         switch (state_)
         {
         case ASK_NAME:
-            alert_box_ = alert(MENU_W, MENU_H, [&](const alert_box &, int x, int y)
+            display_alert(MENU_X, MENU_Y, MENU_W, MENU_H, [&](const alert_box &)
             {
                 put(x + (MENU_W / 2) - 10, y + (MENU_H / 2) - 1, "What is your name? ");
                 set_cursor(x + (MENU_W / 2) - 10, y + (MENU_H / 2));
             });
-            alert_box_->display(MENU_X, MENU_Y);
             break;
+        case ROLLING_DICE:
+            display_alert(MENU_X, MENU_Y, MENU_W, MENU_H, [&](const alert_box & box)
+            {
+
+                player *player = engine::instance()->current_player();
+
+                if (player->roll_count() < 3)
+                {
+                    player->roll();
+                    new_frame();
+                    display_dice(player, box.x(), box.y());
+                    refresh();
+                }
+                else
+                {
+                    box.center("You must choose a score after three rolls.");
+                }
+                refresh();
+            });
         default:
             break;
         }
@@ -100,6 +119,8 @@ public:
 
     void refresh_display(bool reset)
     {
+        if (has_alert()) return;
+
         player *player = engine::instance()->current_player();
 
         if (player != NULL)
@@ -149,25 +170,32 @@ public:
 
     void display_already_scored()
     {
+        alert_boxes
         put(80, 28, "You've already scored that.");
         refresh();
     }
 
-    void display_dice(player *player)
+    void display_dice(player *player, int x, int y)
     {
         char buf[BUFSIZ + 1] = {0};
         snprintf(buf, BUFSIZ, "Roll %d of 3. (Use '#' to keep):", player->roll_count());
-        put(80, 20, buf);
-        int x = 82;
 
-        put(80, 22, "#  1 │ 2 │ 3 │ 4 │ 5");
-        put(80, 23, "  ───┴───┴───┴───┴───");
-        put(80, 24, "  ");
+        x += 13;
+        y += 5;
+
+        put(x, y, buf);
+
+        x += 2;
+        y += 2;
+
+        put(x, y++, "#  1 │ 2 │ 3 │ 4 │ 5");
+        put(x, y++, "  ───┴───┴───┴───┴───");
+        put(x, y++, "  ");
         for (size_t i = 0; i < player->die_count(); i++)
         {
-            put(x++, 24, player->is_kept(i) ? '*' : ' ');
+            put(x++, y, player->is_kept(i) ? '*' : ' ');
 
-            put(x++, 24, to_string(player->d1e(i).value()).c_str());
+            put(x++, y, to_string(player->d1e(i).value()).c_str());
 
             x += 2;
         }
@@ -212,25 +240,10 @@ public:
         else
             player->keep_die(d, true);
 
-        display_dice(player);
+        display_dice(player, MENU_X, MENU_Y);
         refresh();
     }
 
-    void action_roll(player *player)
-    {
-        if (player->roll_count() < 3)
-        {
-            player->roll();
-            new_frame();
-            display_dice(player);
-            refresh();
-        }
-        else
-        {
-            put(80, 28, "You must choose a score after three rolls.");
-            refresh();
-        }
-    }
 
     void action_full_house(player *player)
     {
@@ -377,7 +390,11 @@ public:
         switch (tolower(input))
         {
         case 'r':
-            action_roll(player);
+            alert_box_ = alert(MENU_W, MENU_H, [&](const alert_box & box, int x, int y)
+            {
+                action_roll(player, x, y);
+            });
+            alert_box_->display(MENU_X, MENU_Y);
             break;
         case 'f':
             action_full_house(player);
@@ -527,7 +544,7 @@ private:
 
         alert_box_ = alert(MENU_W, MENU_H, [&](const alert_box & box, int x, int y)
         {
-            caca_import_area_from_memory(box.canvas(), x + 1, y + 1, menubuf_, menubuf_size_, "caca");
+            caca_import_area_from_memory(box.canvas(), x + 4, y + 3, menubuf_, menubuf_size_, "caca");
         });
 
         alert_box_->display(MENU_X, MENU_Y);
@@ -570,5 +587,4 @@ private:
     size_t upperbuf_size_, lowerbuf_size_, menubuf_size_;
     game_state state_;
     display_mode display_mode_;
-    shared_ptr<alert_box> alert_box_;
 };
