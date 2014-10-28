@@ -7,10 +7,10 @@ using namespace arg3::yaht;
 
 typedef enum
 {
+    ASK_NAME,
     PLAYING,
     ROLLING_DICE,
     DISPLAY_MENU,
-    ASK_NAME,
     QUIT,
     QUIT_CONFIRM
 } game_state;
@@ -22,10 +22,12 @@ typedef enum
     MINIMAL
 } display_mode;
 
+static const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
+
 class yaht_game : public caca_game
 {
 public:
-    yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), upperbuf_size_(0), lowerbuf_size_(0), menubuf_size_(0), display_mode_(VERTICAL)
+    yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), upperbuf_size_(0), lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), display_mode_(MINIMAL)
     {}
 
     void reset()
@@ -59,10 +61,16 @@ public:
         return state_;
     }
 
+    void recover_state()
+    {
+        state_ = last_state_;
+
+        new_frame();
+    }
+
     void set_state(game_state value)
     {
-        if (value > state_)
-            last_state_ = state_;
+        last_state_ = state_;
 
         state_ = value;
 
@@ -105,32 +113,45 @@ public:
 
     void refresh_display(bool reset)
     {
-        //if (has_alert()) return;
-
         player *player = engine::instance()->current_player();
 
-        if (player != NULL)
+        if (player != NULL && state_ == PLAYING)
         {
             if (reset)
                 player->reset();
 
-            put(50, 2, player->name().c_str());
-
-            int y = 8;
             int x = 46;
 
-            scoresheet::value_type total_score = 0;
-
-            lower_score_total = display_upper_scores(player->score(), x , y );
+            put(50, 2, player->name().c_str());
 
             switch (display_mode_)
             {
-            default:
-                display_lower_scores(player->score(), lower_score_total, 46, y + 8);
+            case MINIMAL:
+                if (minimalLower_)
+                {
+                    display_lower_scores(player->score(), player->calculate_total_upper_score(), x, 9);
+                    put(0, 32, HELP);
+                }
+                else
+                {
+                    display_upper_scores(player->score(), x , 9 );
+                    put(0, 27, HELP);
+                }
                 break;
+            case VERTICAL:
+            {
+                scoresheet::value_type lower_score_total = lower_score_total = display_upper_scores(player->score(), x , 9 );
+                display_lower_scores(player->score(), lower_score_total, 46, 28);
+                put(0, 51, HELP);
+                break;
+            }
             case HORIZONTAL:
-                display_lower_scores(player->score(), lower_score_total, 122, 1);
+            {
+                scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
+                display_lower_scores(player->score(), lower_score_total, 122, 2);
+                put(76, 25, HELP);
                 break;
+            }
             }
 
         }
@@ -143,6 +164,12 @@ public:
         display_alert([&](const alert_box & a)
         {
             a.center("You've already scored that.");
+        });
+        add_event(2000, [&]()
+        {
+            pop_alert();
+
+            action_display_dice();
         });
     }
 
@@ -288,6 +315,59 @@ public:
         }
     }
 
+    void action_score_best(player *player)
+    {
+        auto best_upper = player->calculate_best_upper_score();
+
+        auto best_lower = player->calculate_best_lower_score();
+
+        if (best_upper.second > best_lower.second)
+        {
+
+            if (!player->score().upper_score(best_upper.first))
+            {
+                player->score().upper_score(best_upper.first, best_upper.second);
+
+                set_state(PLAYING);
+
+                refresh(true);
+            }
+            else
+            {
+                display_already_scored();
+            }
+
+        }
+        else if (best_lower.second > 0)
+        {
+            if (!player->score().lower_score(best_lower.first))
+            {
+                player->score().lower_score(best_lower.first, best_lower.second);
+
+                set_state(PLAYING);
+
+                refresh(true);
+            }
+            else
+            {
+                display_already_scored();
+            }
+        }
+        else
+        {
+            display_alert([&](const alert_box & box)
+            {
+                box.center("No best score found!");
+            });
+            add_event(2000, [&]()
+            {
+                pop_alert();
+
+                action_display_dice();
+            });
+        }
+    }
+
     void action_confirm_quit()
     {
         display_alert([&](const alert_box & box)
@@ -310,7 +390,6 @@ public:
         switch (state())
         {
         case ASK_NAME:
-        {
             if ( input == CACA_KEY_ESCAPE)
             {
                 set_state(QUIT);
@@ -319,84 +398,125 @@ public:
             {
                 action_ask_name(input);
             }
-            return;
-        }
+            break;
 
         case DISPLAY_MENU:
-        {
             if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
             {
-                set_state(last_state_);
+                recover_state();
                 pop_alert();
+                refresh(state_ == PLAYING);
             }
-            return;
-        }
+            break;
+
         case QUIT_CONFIRM:
-        {
             if (tolower(input) == 'n')
             {
                 pop_alert();
-                set_state(last_state_);
+                recover_state();
+                refresh(state_ == PLAYING);
             }
             else
             {
                 set_state(QUIT);
             }
+            break;
+
+        case ROLLING_DICE:
+            handle_rolling_command(input);
+            break;
+        default:
+            handle_normal_command(input);
+            break;
+
+        }
+    }
+
+protected:
+
+    void handle_normal_command(int input)
+    {
+        // check non ascii commands
+        switch (input)
+        {
+        case CACA_KEY_UP:
+        {
+            int mode = display_mode_;
+            if (mode == MINIMAL)
+                display_mode_ = HORIZONTAL;
+            else
+                display_mode_ = static_cast<display_mode>(++mode);
+            refresh(true);
             return;
         }
-        default: break;
+        case CACA_KEY_DOWN:
+        {
+            int mode = display_mode_;
+            if (mode == HORIZONTAL)
+                display_mode_ = MINIMAL;
+            else
+                display_mode_ = static_cast<display_mode>(--mode);
+            refresh(true);
+            return;
+        }
+        case CACA_KEY_LEFT:
+        case CACA_KEY_RIGHT:
+            if (display_mode_ == MINIMAL)
+            {
+                minimalLower_ = !minimalLower_;
+                refresh(true);
+            }
+            return;
+
+        case CACA_KEY_ESCAPE:
+            set_state(QUIT_CONFIRM);
+            action_confirm_quit();
+            return;
         }
 
-        auto player = engine::instance()->current_player();
-
+        //check ascii commands in lower case
         switch (tolower(input))
         {
         case 'r':
             set_state(ROLLING_DICE);
             action_roll_dice();
             break;
-        case 'f':
-            action_lower_score(player, scoresheet::FULL_HOUSE);
-            break;
-        case CACA_KEY_UP:
-        {
-            int mode = display_mode_;
-            if (++mode > MINIMAL)
-                display_mode_ = NORMAL;
-            else
-                display_mode_ = static_cast<display_mode>(mode);
-            refresh(true);
-            break;
-        }
-        case CACA_KEY_DOWN:
-        {
-            int mode = display_mode_;
-            if (--mode < NORMAL)
-                display_mode_ = MINIMAL;
-            else
-                display_mode_ = static_cast<display_mode>(mode);
-            refresh(true);
-            break;
-        }
-        case CACA_KEY_LEFT:
-        case CACA_KEY_RIGHT:
-        {
-            if (display_mode_ == MINIMAL)
-            {
-                if (minimalbuf_ == upperbuf_)
-                {
-                    minimalbuf_ = lowerbuf_;
-                }
-                else
-                {
-                    minimalbuf_ = upperbuf_;
-                }
-            }
-            break;
-        }
         case '?':
             set_state(DISPLAY_MENU);
             display_menu();
+            break;
+        case 'q':
+            set_state(QUIT_CONFIRM);
+            action_confirm_quit();
+            break;
+        default: break;
+
+        }
+    }
+    void handle_rolling_command(int input)
+    {
+        if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
+        {
+            set_state(PLAYING);
+            pop_alert();
+            refresh(true);
+        }
+
+        auto player = engine::instance()->current_player();
+
+        switch (tolower(input))
+        {
+
+        case '?':
+            set_state(DISPLAY_MENU);
+            display_menu();
+            break;
+        case 'r':
+            set_state(ROLLING_DICE);
+            action_roll_dice();
+            break;
+        case 'f':
+            action_lower_score(player, scoresheet::FULL_HOUSE);
             break;
         case 'k':
         case 't':
@@ -409,14 +529,27 @@ public:
         case 'c':
             action_lower_score(player, scoresheet::CHANCE);
             break;
-        case CACA_KEY_ESCAPE:
-        case 'q':
-            set_state(QUIT_CONFIRM);
-            action_confirm_quit();
+        case 'b':
+            if (state() == ROLLING_DICE)
+            {
+                auto buffer = get_buffer();
+
+                if (buffer.length() > 0)
+                {
+                    switch (tolower(buffer[0]))
+                    {
+                    case 's':
+                        action_score_best(player);
+                        break;
+                    }
+
+                    buffer.clear();
+                }
+            }
             break;
         default:
 
-            if (input >= '0' && input <= '9')
+            if (isdigit(input))
             {
                 auto buffer = get_buffer();
 
@@ -425,7 +558,6 @@ public:
                     switch (tolower(buffer[0]))
                     {
                     case 'k':
-                    {
                         if (input == '3')
                         {
                             action_lower_score(player, scoresheet::KIND_THREE);
@@ -435,14 +567,10 @@ public:
                             action_lower_score(player, scoresheet::KIND_FOUR);
                         }
                         break;
-                    }
                     case 's':
-                    {
                         action_score(player, input - '0');
                         break;
-                    }
                     case 't':
-                    {
                         if (input == '4')
                         {
                             action_lower_score(player, scoresheet::STRAIGHT_SMALL);
@@ -451,8 +579,7 @@ public:
                         {
                             action_lower_score(player, scoresheet::STRAIGHT_BIG);
                         }
-
-                    }
+                        break;
                     }
 
                     clear_buffer();
@@ -462,10 +589,9 @@ public:
                     action_select_die(player, input - '0' - 1);
                 }
             }
+            break;
         }
     }
-
-protected:
 
     void init_canvas(caca_canvas_t *canvas)
     {
@@ -493,19 +619,30 @@ protected:
 
         caca_free_canvas(temp);
 
+        temp = caca_create_canvas(0, 0);
+
+        caca_import_canvas_from_file(temp, "header.txt", "utf8");
+
+        headerbuf_ = caca_export_canvas_to_memory(temp, "caca", &headerbuf_size_);
+
+        caca_free_canvas(temp);
+
         switch (display_mode_)
         {
-        default:
-            caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
+        case VERTICAL:
+            caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbuf_size_, "caca");
             caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
             break;
         case HORIZONTAL:
-            caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
-            caca_import_area_from_memory(canvas, 76, 0, lowerbuf_, lowerbuf_size_, "caca");
+
+            caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 76, 1, lowerbuf_, lowerbuf_size_, "caca");
             break;
-        case VERTICAL:
-            caca_import_area_from_memory(canvas, 0, 0, upperbuf_, upperbuf_size_, "caca");
-            caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
+        case MINIMAL:
+            caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbuf_size_, "caca");
+            caca_import_area_from_memory(canvas, 0, 8, minimalLower_ ? lowerbuf_ : upperbuf_, minimalLower_ ? lowerbuf_size_ : upperbuf_size_, "caca");
             break;
         }
     }
@@ -530,8 +667,9 @@ private:
     {
         switch (display_mode_)
         {
-        default:
+        case VERTICAL:
             return 20;
+        case MINIMAL:
         case HORIZONTAL: return 8;
         }
     }
@@ -558,15 +696,17 @@ private:
         });
     }
 
-    void display_upper_scores(const scoresheet &score, scoresheet::value_type lower_score_total, int x, int y)
+    scoresheet::value_type display_upper_scores(const scoresheet &score, int x, int y)
     {
+        scoresheet::value_type total_score = 0;
+
         for (int i = 0; i <= Constants::NUM_DICE; i++, y += 2)
         {
-            auto score = score.upper_score(i + 1);
+            auto value = score.upper_score(i + 1);
 
-            put(x, y, std::to_string(score).c_str());
+            put(x, y, std::to_string(value).c_str());
 
-            total_score += score;
+            total_score += value;
         }
 
         put(x, y, std::to_string(total_score).c_str());
@@ -579,6 +719,8 @@ private:
             lower_score_total += 35;
 
         put(x, y + 4, std::to_string(lower_score_total).c_str());
+
+        return lower_score_total;
 
     }
 
@@ -616,8 +758,9 @@ private:
         put(x, y + 4, std::to_string(total_score + lower_score_total).c_str());
     }
 
-    void *upperbuf_, *lowerbuf_, *menubuf_, *minimalbuf_;
-    size_t upperbuf_size_, lowerbuf_size_, menubuf_size_;
+    void *upperbuf_, *lowerbuf_, *menubuf_, *headerbuf_;
+    size_t upperbuf_size_, lowerbuf_size_, menubuf_size_, headerbuf_size_;
     game_state state_, last_state_;
     display_mode display_mode_;
+    bool minimalLower_;
 };
