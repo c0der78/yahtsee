@@ -635,7 +635,6 @@ protected:
             caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
             break;
         case HORIZONTAL:
-
             caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbuf_size_, "caca");
             caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbuf_size_, "caca");
             caca_import_area_from_memory(canvas, 76, 1, lowerbuf_, lowerbuf_size_, "caca");
