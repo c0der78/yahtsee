@@ -21,19 +21,13 @@ Multiplayer?
 - implement client mode w/ protocol
 
 
-#### ScreenShots
+#### Screenshots
 
-#### Vertical Mode, Rolling a Hand with Selected Dice
+![Vertical Mode](vertical_rolling.png?raw=true "Vertical Mode")
 
-[Vertical Mode](vertical_rolling.png?raw=true "Vertical Mode")
+![Horizontal Mode w/ Selected Dice](horizontal_rolling.png?raw=true "Horizontal Mode")
 
-#### Horizontal Mode, Rolling a Hand
-
-[Horizontal Mode](horizontal_rolling.png?raw=true "Horizontal Mode")
-
-#### Minimal Mode, Displaying Help
-
-[Minimal Mode](minimal_help.png?raw=true "Minimal Mode")
+![Minimal Mode w/ Help Screen](minimal_help.png?raw=true "Minimal Mode")
 
 
 
