@@ -504,6 +504,49 @@ protected:
 
         auto player = engine::instance()->current_player();
 
+
+        if (isdigit(input))
+        {
+            auto buffer = get_buffer();
+
+            if (buffer.length() > 0)
+            {
+                switch (tolower(buffer[0]))
+                {
+                case 'k':
+                    if (input == '3')
+                    {
+                        action_lower_score(player, scoresheet::KIND_THREE);
+                    }
+                    else if (input == '4')
+                    {
+                        action_lower_score(player, scoresheet::KIND_FOUR);
+                    }
+                    break;
+                case 's':
+                    action_score(player, input - '0');
+                    break;
+                case 't':
+                    if (input == '4')
+                    {
+                        action_lower_score(player, scoresheet::STRAIGHT_SMALL);
+                    }
+                    else if (input == '5')
+                    {
+                        action_lower_score(player, scoresheet::STRAIGHT_BIG);
+                    }
+                    break;
+                }
+
+                clear_buffer();
+            }
+            else
+            {
+                action_select_die(player, input - '0' - 1);
+            }
+            return;
+        }
+
         switch (tolower(input))
         {
 
@@ -544,49 +587,6 @@ protected:
                     }
 
                     buffer.clear();
-                }
-            }
-            break;
-        default:
-
-            if (isdigit(input))
-            {
-                auto buffer = get_buffer();
-
-                if (buffer.length() > 0)
-                {
-                    switch (tolower(buffer[0]))
-                    {
-                    case 'k':
-                        if (input == '3')
-                        {
-                            action_lower_score(player, scoresheet::KIND_THREE);
-                        }
-                        else if (input == '4')
-                        {
-                            action_lower_score(player, scoresheet::KIND_FOUR);
-                        }
-                        break;
-                    case 's':
-                        action_score(player, input - '0');
-                        break;
-                    case 't':
-                        if (input == '4')
-                        {
-                            action_lower_score(player, scoresheet::STRAIGHT_SMALL);
-                        }
-                        else if (input == '5')
-                        {
-                            action_lower_score(player, scoresheet::STRAIGHT_BIG);
-                        }
-                        break;
-                    }
-
-                    clear_buffer();
-                }
-                else
-                {
-                    action_select_die(player, input - '0' - 1);
                 }
             }
             break;

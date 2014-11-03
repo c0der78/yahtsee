@@ -29,8 +29,17 @@ int main(int argc, char **argv)
 
     cout << "Registering game..." << endl;
 
-    net::http_client api("arg3connect.herokuapp.com");
-    //net::http_client api("localhost:1337");
+    net::http_client api("connect.arg3.com");
+
+    api.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
+
+    api.add_header("X-Application-Token", "78ed4bfb42f54c9fa7ac62873d37228e");
+
+    // net::http_client api("localhost:1337");
+
+    // api.add_header("X-Application-Id", "8846b98d082d440b8d6024d723d7bc24");
+
+    // api.add_header("X-Application-Token", "ac8afc408f284eedad323e1ddd5c17e4");
 
     snprintf(buf, BUFSIZ, "{\"type\": \"%s\", \"port\":%d}\n", GAME_TYPE, port);
 
