@@ -95,7 +95,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_yahtsee_OBJECTS = main.$(OBJEXT)
+am_yahtsee_OBJECTS = main.$(OBJEXT) yaht_game.$(OBJEXT) \
+	game_state.$(OBJEXT) caca_game.$(OBJEXT) alert_box.$(OBJEXT)
 yahtsee_OBJECTS = $(am_yahtsee_OBJECTS)
 yahtsee_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -288,7 +289,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-yahtsee_SOURCES = main.cpp
+yahtsee_SOURCES = main.cpp yaht_game.cpp game_state.cpp caca_game.cpp alert_box.cpp
 yahtsee_LDFLAGS = -lcaca -larg3dice-0.2 -larg3net-0.2 -larg3str-0.1 -lpthread
 all: all-am
 
@@ -384,7 +385,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alert_box.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caca_game.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/game_state.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yaht_game.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

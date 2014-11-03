@@ -1,75 +1,37 @@
+#include <functional>
+#include <caca.h>
+
+using namespace std;
 
 class alert_box
 {
 public:
 
-    alert_box(caca_canvas_t *canvas, caca_display_t *display, int x, int y, int width, int height, function<void(const alert_box &)> callback) :
-        canvas_(canvas), display_(display), x_(x), y_(y), width_(width), height_(height), callback_(callback)
-    {
-    }
+    alert_box(caca_canvas_t *canvas, caca_display_t *display, int x, int y, int width, int height, std::function<void(const alert_box &)> callback);
 
-    void display()
-    {
-        caca_fill_box(canvas_, x_, y_, width_, height_, ' ');
+    void display();
 
-        caca_draw_thin_box(canvas_, x_, y_, width_, height_);
+    int width() const;
 
-        callback_(*this);
+    int height() const;
 
-        caca_refresh_display(display_);
-    }
+    int x() const;
 
-    int width() const
-    {
-        return width_;
-    }
+    int y() const;
 
-    int height() const
-    {
-        return height_;
-    }
+    caca_canvas_t *canvas() const;
 
-    int x() const
-    {
-        return x_;
-    }
+    void center(const string &text) const;
+    void center_x(int y, const string &text) const;
 
-    int y() const
-    {
-        return y_;
-    }
+    int center_y() const;
 
-    caca_canvas_t *canvas() const
-    {
-        return canvas_;
-    }
-
-    void center(const string &text) const
-    {
-        int x = center_x() - (text.length() / 2);
-        int y = center_y();
-
-        caca_put_str(canvas_, x, y, text.c_str());
-    }
-    void center_x(int y, const string &text) const 
-    {
-        int x = center_x() - (text.length() / 2);
-
-        caca_put_str(canvas_, x, y, text.c_str());
-    }
-
-    int center_y() const {
-        return y_ + (height_ / 2);
-    }
-
-    int center_x() const {
-        return x_ + (width_ / 2);
-    }
+    int center_x() const;
 
 private:
     caca_canvas_t *canvas_;
     caca_display_t *display_;
     int x_, y_;
     int width_, height_;
-    function<void(const alert_box &)> callback_;
+    std::function<void(const alert_box &)> callback_;
 };
