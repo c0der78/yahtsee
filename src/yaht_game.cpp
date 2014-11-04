@@ -153,6 +153,8 @@ void yaht_game::display_multiplayer_menu()
 
 void yaht_game::action_host_game()
 {
+    pop_alert(); // pop off multiplayer menu
+
     int port = (rand() % 99999) + 1024;
 
     char buf[BUFSIZ + 1] = {0};
@@ -183,7 +185,7 @@ void yaht_game::action_host_game()
 
     server_ = make_shared<arg3::net::socket_server>(port);
 
-    server_->start_thread();
+    server_->start_in_background();
 
     display_alert("Waiting for connections...");
 }
