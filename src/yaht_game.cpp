@@ -6,13 +6,8 @@ using namespace std::placeholders;
 
 yaht_game::yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
     lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), helpbuf_size_(0), display_mode_(MINIMAL), num_players_(0),
-    api(GAME_API_URL)
+    matchmaker_()
 {
-    api.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
-
-    api.add_header("X-Application-Token", "78ed4bfb42f54c9fa7ac62873d37228e");
-
-    api.add_header("Content-Type", "application/json");
 }
 
 void yaht_game::reset()
@@ -55,19 +50,9 @@ void yaht_game::reset()
         headerbuf_size_ = 0;
     }
 
-    if (!gameId_.empty())
-    {
-        api.set_payload(gameId_).post("api/v1/games/unregister");
-
-        if (api.response_code() != arg3::net::http::OK)
-            cerr << "Unable to unregister game!" << endl;
-    }
-
-    if (server_ != nullptr)
-    {
-        server_->stop();
-    }
+    matchmaker_.stop();
 }
+
 yaht_game::state_handler yaht_game::state() const
 {
     return state_;
@@ -150,37 +135,20 @@ void yaht_game::display_multiplayer_menu()
 
 void yaht_game::action_host_game()
 {
-    pop_alert(); // pop off multiplayer menu
+    display_alert("Starting server...");
 
-    int port = (rand() % 99999) + 1024;
-
-    char buf[BUFSIZ + 1] = {0};
-
-    display_alert("Registering game with server...");
-
-    snprintf(buf, BUFSIZ, "{\"type\": \"%s\", \"port\":%d}\n", GAME_TYPE, port);
-
-    api.set_payload(buf).post("api/v1/games/register");
+    int response = matchmaker_.host();
 
     pop_alert(); // done registration
 
-    if (api.response_code() != arg3::net::http::OK)
+    if (response != arg3::net::http::OK)
     {
-        display_alert("Unable to register game with server at this time.");
-
-        pop_alert(2000, [&]()
-        {
-            display_multiplayer_menu();
-        });
+        display_alert(2000, "Unable to register game at this time.");
 
         return;
     }
 
-    gameId_ = api.response();
-
-    server_ = make_shared<arg3::net::socket_server>(port);
-
-    server_->start_in_background();
+    set_state(&yaht_game::state_waiting_for_connections);
 
     display_alert("Waiting for connections...");
 
@@ -242,12 +210,7 @@ void yaht_game::refresh_display(bool reset)
 
 void yaht_game::display_already_scored()
 {
-    display_alert("You've already scored that.");
-
-    pop_alert(2000, [&]()
-    {
-        display_dice_roll();
-    });
+    display_alert(2000, "You've already scored that.");
 }
 
 void yaht_game::display_dice(player *player, int x, int y)
@@ -305,11 +268,7 @@ void yaht_game::action_roll_dice()
     }
     else
     {
-        display_alert("You must choose a score after three rolls.");
-        pop_alert(2000, [&]()
-        {
-            display_dice_roll();
-        });
+        display_alert(2000, "You must choose a score after three rolls.");
     }
 }
 
@@ -399,11 +358,7 @@ void yaht_game::action_score_best(player *player)
     }
     else
     {
-        display_alert("No best score found!");
-        pop_alert(2000, [&]()
-        {
-            display_dice_roll();
-        });
+        display_alert(2000, "No best score found!");
     }
 }
 
@@ -503,12 +458,25 @@ void yaht_game::display_alert(function<void(const alert_box &a)> funk)
     caca_game::display_alert(get_alert_x(), get_alert_y(), get_alert_w(), get_alert_h(), funk);
 }
 
+void yaht_game::display_alert(int millis, function<void(const alert_box &)> funk)
+{
+    display_alert(funk);
+    pop_alert(millis);
+}
+
 void yaht_game::display_alert(const string &message)
 {
     display_alert([&](const alert_box & a)
     {
         a.center(message);
     });
+}
+
+void yaht_game::display_alert(int millis, const string &message)
+{
+    display_alert(message);
+
+    pop_alert(millis);
 }
 
 int yaht_game::get_alert_x() const

@@ -112,6 +112,16 @@ void yaht_game::state_ask_number_of_players(int input)
     }
 }
 
+void yaht_game::state_waiting_for_connections(int input)
+{
+    if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
+    {
+        pop_alert();
+        set_state(&yaht_game::state_multiplayer_menu);
+        display_multiplayer_menu();
+    }
+}
+
 void yaht_game::state_quit_confirm(int input)
 {
     if (tolower(input) == 'n')

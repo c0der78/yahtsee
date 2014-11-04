@@ -1,9 +1,7 @@
 
 #include "caca_game.h"
-
+#include "matchmaker.h"
 #include <arg3dice/yaht/engine.h>
-#include <arg3net/socket_server.h>
-#include <arg3net/http_client.h>
 
 using namespace arg3::yaht;
 
@@ -19,9 +17,6 @@ class yaht_game : public caca_game
 {
 
 public:
-
-    constexpr static const char *GAME_TYPE = "yahtsee";
-    constexpr static const char *GAME_API_URL = "connect.arg3.com";
 
     typedef void (yaht_game::*state_handler)(int);
 
@@ -67,11 +62,17 @@ private:
 
     void state_multiplayer_menu(int input);
 
+    void state_waiting_for_connections(int input);
+
     /* display methods */
 
-    void display_alert(function<void(const alert_box &a)> funk);
+    void display_alert(int millis, function<void(const alert_box &)> funk);
+
+    void display_alert(function<void(const alert_box &)> funk);
 
     void display_alert(const string &message);
+
+    void display_alert(int millis, const string &message);
 
     void display_already_scored();
 
@@ -139,10 +140,7 @@ private:
     display_mode display_mode_;
     bool minimalLower_;
     int num_players_;
-    string gameId_;
-    shared_ptr<arg3::net::socket_server> server_;
-
-    arg3::net::http_client api;
+    matchmaker matchmaker_;
 
     constexpr static const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
