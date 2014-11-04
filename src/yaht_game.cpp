@@ -57,9 +57,6 @@ void yaht_game::reset()
 
     if (!gameId_.empty())
     {
-
-        cout << "Unregistering game..." << endl;
-
         api.set_payload(gameId_).post("api/v1/games/unregister");
 
         if (api.response_code() != arg3::net::http::OK)
@@ -165,12 +162,10 @@ void yaht_game::action_host_game()
 
     api.set_payload(buf).post("api/v1/games/register");
 
-    pop_alert();
+    pop_alert(); // done registration
 
     if (api.response_code() != arg3::net::http::OK)
     {
-        pop_alert();
-
         display_alert("Unable to register game with server at this time.");
 
         pop_alert(2000, [&]()
@@ -188,11 +183,13 @@ void yaht_game::action_host_game()
     server_->start_in_background();
 
     display_alert("Waiting for connections...");
+
+    // TODO: add server listener to display connections
 }
 
 void yaht_game::action_join_game()
 {
-
+    // TODO: list available games.  maybe based on ip locations
 }
 
 void yaht_game::refresh_display(bool reset)
