@@ -129,12 +129,7 @@ void yaht_game::display_ask_name()
 
 void yaht_game::display_ask_number_of_players()
 {
-    string buf = "How many players?";
-
-    display_alert([&](const alert_box & a)
-    {
-        put(a.center_x() - (buf.length() / 2), a.center_y(), buf.c_str());
-    });
+    display_alert("How many players?");
 }
 
 bool yaht_game::alive() const
@@ -158,25 +153,27 @@ void yaht_game::display_multiplayer_menu()
 
 void yaht_game::action_host_game()
 {
-
     int port = (rand() % 99999) + 1024;
 
     char buf[BUFSIZ + 1] = {0};
+
+    display_alert("Registering game with server...");
 
     snprintf(buf, BUFSIZ, "{\"type\": \"%s\", \"port\":%d}\n", GAME_TYPE, port);
 
     api.set_payload(buf).post("api/v1/games/register");
 
+    pop_alert();
+
     if (api.response_code() != arg3::net::http::OK)
     {
         pop_alert();
 
-        add_event(2000, [&]()
+        display_alert("Unable to register game with server at this time.");
+
+        pop_alert(2000, [&]()
         {
-            display_alert([&](const alert_box & a)
-            {
-                a.center("Unable to register game with server at this time.");
-            });
+            display_multiplayer_menu();
         });
 
         return;
@@ -184,14 +181,11 @@ void yaht_game::action_host_game()
 
     gameId_ = api.response();
 
-    display_alert([&](const alert_box & a)
-    {
-        a.center("Waiting for connections...");
-    });
+    server_ = make_shared<arg3::net::socket_server>(port);
 
-    // server_ = make_shared<arg3::net::socket_server>(port);
+    server_->start_thread();
 
-    // server_->start_thread();
+    display_alert("Waiting for connections...");
 }
 
 void yaht_game::action_join_game()
@@ -249,14 +243,10 @@ void yaht_game::refresh_display(bool reset)
 
 void yaht_game::display_already_scored()
 {
-    display_alert([&](const alert_box & a)
-    {
-        a.center("You've already scored that.");
-    });
-    add_event(2000, [&]()
-    {
-        pop_alert();
+    display_alert("You've already scored that.");
 
+    pop_alert(2000, [&]()
+    {
         display_dice_roll();
     });
 }
@@ -264,6 +254,7 @@ void yaht_game::display_already_scored()
 void yaht_game::display_dice(player *player, int x, int y)
 {
     char buf[BUFSIZ + 1] = {0};
+
     snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
 
     x += 13;
@@ -315,14 +306,9 @@ void yaht_game::action_roll_dice()
     }
     else
     {
-        display_alert([&](const alert_box & box)
+        display_alert("You must choose a score after three rolls.");
+        pop_alert(2000, [&]()
         {
-            box.center("You must choose a score after three rolls.");
-        });
-        add_event(2000, [&]()
-        {
-            pop_alert();
-
             display_dice_roll();
         });
     }
@@ -414,14 +400,9 @@ void yaht_game::action_score_best(player *player)
     }
     else
     {
-        display_alert([&](const alert_box & box)
+        display_alert("No best score found!");
+        pop_alert(2000, [&]()
         {
-            box.center("No best score found!");
-        });
-        add_event(2000, [&]()
-        {
-            pop_alert();
-
             display_dice_roll();
         });
     }
@@ -430,10 +411,7 @@ void yaht_game::action_score_best(player *player)
 
 void yaht_game::display_confirm_quit()
 {
-    display_alert([&](const alert_box & box)
-    {
-        box.center("Are you sure you want to quit? (Y/n)");
-    });
+    display_alert("Are you sure you want to quit? (Y/n)");
 }
 
 void yaht_game::on_resize(int width, int height)
@@ -524,6 +502,14 @@ void yaht_game::set_display_mode(display_mode mode)
 void yaht_game::display_alert(function<void(const alert_box &a)> funk)
 {
     caca_game::display_alert(get_alert_x(), get_alert_y(), get_alert_w(), get_alert_h(), funk);
+}
+
+void yaht_game::display_alert(const string &message)
+{
+    display_alert([&](const alert_box & a)
+    {
+        a.center(message);
+    });
 }
 
 int yaht_game::get_alert_x() const

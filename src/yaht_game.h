@@ -71,6 +71,8 @@ private:
 
     void display_alert(function<void(const alert_box &a)> funk);
 
+    void display_alert(const string &message);
+
     void display_already_scored();
 
     void display_dice(player *player, int x, int y);

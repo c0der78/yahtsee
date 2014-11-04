@@ -65,6 +65,8 @@ public:
 
     void pop_alert();
 
+    void pop_alert(int millis, std::function<void()> funk = nullptr);
+
     void new_frame();
 
     void pop_frame();

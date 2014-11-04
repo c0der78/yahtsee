@@ -45,7 +45,6 @@ void caca_game::reset()
         caca_free_display(display_);
         display_ = NULL;
     }
-
 }
 
 void caca_game::start()
@@ -193,6 +192,17 @@ void caca_game::pop_alert()
         alert_boxes_.top().display();
     }
     caca_refresh_display(display_);
+}
+
+void caca_game::pop_alert(int millis, std::function<void()> funk)
+{
+    add_event(millis, [&]()
+    {
+        pop_alert();
+    });
+
+    if (funk != nullptr)
+        add_event(millis, funk);
 }
 
 void caca_game::new_frame()
