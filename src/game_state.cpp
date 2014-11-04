@@ -1,11 +1,11 @@
 #include "yaht_game.h"
 
-
 void yaht_game::state_ask_name(int ch)
 {
     if ( ch == CACA_KEY_ESCAPE)
     {
-        set_state(nullptr);
+        set_state(&yaht_game::state_game_menu);
+        display_game_menu();
         return;
     }
 
@@ -15,13 +15,20 @@ void yaht_game::state_ask_name(int ch)
 
         engine::instance()->add_player(name);
 
-        set_state(&yaht_game::state_playing);
-
         pop_alert();
 
-        clear_buffer();
-
         clear();
+
+        if (engine::instance()->number_of_players() == num_players_)
+        {
+            set_state(&yaht_game::state_playing);
+        }
+        else
+        {
+            display_ask_name();
+        }
+
+        clear_buffer();
     }
     else if (isnumber(ch) || isalpha(ch))
     {
@@ -39,7 +46,7 @@ void yaht_game::state_ask_name(int ch)
     refresh();
 }
 
-void yaht_game::state_display_menu(int ch)
+void yaht_game::state_help_menu(int ch)
 {
     if (ch == CACA_KEY_ESCAPE || tolower(ch) == 'q')
     {
@@ -49,6 +56,61 @@ void yaht_game::state_display_menu(int ch)
     }
 }
 
+void yaht_game::state_game_menu(int input)
+{
+    if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
+    {
+        set_state(&yaht_game::state_quit_confirm);
+        display_confirm_quit();
+        return;
+    }
+
+    switch (tolower(input))
+    {
+    case 'n':
+        set_state(&yaht_game::state_ask_number_of_players);
+        display_ask_number_of_players();
+        break;
+    case 'm':
+        set_state(&yaht_game::state_multiplayer_menu);
+        display_multiplayer_menu();
+        break;
+    case 's':
+        break;
+    }
+}
+
+void yaht_game::state_multiplayer_menu(int input)
+{
+    if (input == CACA_KEY_ESCAPE)
+    {
+        pop_alert();
+        set_state(&yaht_game::state_game_menu);
+        display_game_menu();
+        return;
+    }
+
+    switch (tolower(input))
+    {
+    case 'h':
+        action_host_game();
+        break;
+    case 'j':
+        action_join_game();
+        break;
+    }
+}
+
+void yaht_game::state_ask_number_of_players(int input)
+{
+    if (isdigit(input))
+    {
+        num_players_ = input - '0';
+
+        set_state(&yaht_game::state_ask_name);
+        display_ask_name();
+    }
+}
 
 void yaht_game::state_quit_confirm(int input)
 {
@@ -101,7 +163,7 @@ void yaht_game::state_playing(int input)
 
     case CACA_KEY_ESCAPE:
         set_state(&yaht_game::state_quit_confirm);
-        action_confirm_quit();
+        display_confirm_quit();
         return;
     }
 
@@ -113,12 +175,12 @@ void yaht_game::state_playing(int input)
         action_roll_dice();
         break;
     case '?':
-        set_state(&yaht_game::state_display_menu);
-        display_menu();
+        set_state(&yaht_game::state_help_menu);
+        display_help();
         break;
     case 'q':
         set_state(&yaht_game::state_quit_confirm);
-        action_confirm_quit();
+        display_confirm_quit();
         break;
     default: break;
 
@@ -136,7 +198,6 @@ void yaht_game::state_rolling_dice(int input)
     }
 
     auto player = engine::instance()->current_player();
-
 
     if (isdigit(input))
     {
@@ -184,8 +245,8 @@ void yaht_game::state_rolling_dice(int input)
     {
 
     case '?':
-        set_state(&yaht_game::state_display_menu);
-        display_menu();
+        set_state(&yaht_game::state_help_menu);
+        display_help();
         break;
     case 'r':
         set_state(&yaht_game::state_rolling_dice);

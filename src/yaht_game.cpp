@@ -1,9 +1,19 @@
 #include "yaht_game.h"
 
+#include <arg3/str_util.h>
+
 using namespace std::placeholders;
 
-yaht_game::yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), upperbuf_size_(0), lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), display_mode_(MINIMAL)
-{}
+yaht_game::yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
+    lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), helpbuf_size_(0), display_mode_(MINIMAL), num_players_(0),
+    api(GAME_API_URL)
+{
+    api.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
+
+    api.add_header("X-Application-Token", "78ed4bfb42f54c9fa7ac62873d37228e");
+
+    api.add_header("Content-Type", "application/json");
+}
 
 void yaht_game::reset()
 {
@@ -29,6 +39,36 @@ void yaht_game::reset()
         free(menubuf_);
         menubuf_ = NULL;
         menubuf_size_ = 0;
+    }
+
+    if (helpbuf_ != NULL)
+    {
+        free(helpbuf_);
+        helpbuf_ = NULL;
+        helpbuf_size_ = 0;
+    }
+
+    if (headerbuf_ != NULL)
+    {
+        free(headerbuf_);
+        headerbuf_ = NULL;
+        headerbuf_size_ = 0;
+    }
+
+    if (!gameId_.empty())
+    {
+
+        cout << "Unregistering game..." << endl;
+
+        api.set_payload(gameId_).post("api/v1/games/unregister");
+
+        if (api.response_code() != arg3::net::http::OK)
+            cerr << "Unable to unregister game!" << endl;
+    }
+
+    if (server_ != nullptr)
+    {
+        server_->stop();
     }
 }
 yaht_game::state_handler yaht_game::state() const
@@ -59,42 +99,104 @@ bool yaht_game::is_state(state_handler value)
 
 void yaht_game::on_start()
 {
-    set_state(&yaht_game::state_ask_name);
+    set_state(&yaht_game::state_game_menu);
 
+    display_game_menu();
+}
+
+void yaht_game::display_game_menu()
+{
     display_alert([&](const alert_box & a)
     {
-        put(a.center_x() - 10, a.center_y() - 1, "What is your name? ");
-        set_cursor(a.center_x() - 10, a.center_y());
+        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, menubuf_, menubuf_size_, "caca");
     });
 }
 
-void yaht_game::prompt()
+void yaht_game::display_ask_name()
 {
-    /*switch (state_)
+    char buf[BUFSIZ + 1] = {0};
+
+    snprintf(buf, BUFSIZ, "What is Player %lu's name?", engine::instance()->number_of_players() + 1);
+
+    int mod = (strlen(buf) / 2);
+
+    display_alert([&](const alert_box & a)
     {
-    case ASK_NAME:
-        display_alert([&](const alert_box & a)
-        {
-            put(a.center_x() - 10, a.center_y() - 1, "What is your name? ");
-            set_cursor(a.center_x() - 10, a.center_y());
-        });
-        break;
-    case ROLLING_DICE:
-        display_alert([&](const alert_box & box)
-        {
-            display_dice(engine::instance()->current_player(), box.x(), box.y());
-        });
+        put(a.center_x() - mod, a.center_y() - 1, buf);
+        set_cursor(a.center_x() - mod, a.center_y());
+    });
+}
 
-    case DISPLAY_MENU:
-    default:
-        break;
-    }*/
+void yaht_game::display_ask_number_of_players()
+{
+    string buf = "How many players?";
 
+    display_alert([&](const alert_box & a)
+    {
+        put(a.center_x() - (buf.length() / 2), a.center_y(), buf.c_str());
+    });
 }
 
 bool yaht_game::alive() const
 {
     return state_ != nullptr;
+}
+
+void yaht_game::display_multiplayer_menu()
+{
+    string buf1 = "'h' : host a game";
+    string buf2 = "'j' : join a game";
+
+    int xmod = min(buf1.length() / 2, buf2.length() / 2);
+
+    display_alert([&](const alert_box & a)
+    {
+        put(a.center_x() - xmod, a.center_y() - 1, buf1.c_str());
+        put(a.center_x() - xmod, a.center_y(), buf2.c_str());
+    });
+}
+
+void yaht_game::action_host_game()
+{
+
+    int port = (rand() % 99999) + 1024;
+
+    char buf[BUFSIZ + 1] = {0};
+
+    snprintf(buf, BUFSIZ, "{\"type\": \"%s\", \"port\":%d}\n", GAME_TYPE, port);
+
+    api.set_payload(buf).post("api/v1/games/register");
+
+    if (api.response_code() != arg3::net::http::OK)
+    {
+        pop_alert();
+
+        add_event(2000, [&]()
+        {
+            display_alert([&](const alert_box & a)
+            {
+                a.center("Unable to register game with server at this time.");
+            });
+        });
+
+        return;
+    }
+
+    gameId_ = api.response();
+
+    display_alert([&](const alert_box & a)
+    {
+        a.center("Waiting for connections...");
+    });
+
+    // server_ = make_shared<arg3::net::socket_server>(port);
+
+    // server_->start_thread();
+}
+
+void yaht_game::action_join_game()
+{
+
 }
 
 void yaht_game::refresh_display(bool reset)
@@ -155,7 +257,7 @@ void yaht_game::display_already_scored()
     {
         pop_alert();
 
-        action_display_dice();
+        display_dice_roll();
     });
 }
 
@@ -190,7 +292,7 @@ void yaht_game::display_dice(player *player, int x, int y)
     put(xs, y, "Press '?' for help on how to score.");
 }
 
-void yaht_game::action_display_dice()
+void yaht_game::display_dice_roll()
 {
     display_alert([&](const alert_box & box)
     {
@@ -209,7 +311,7 @@ void yaht_game::action_roll_dice()
 
         new_frame();
 
-        action_display_dice();
+        display_dice_roll();
     }
     else
     {
@@ -221,9 +323,18 @@ void yaht_game::action_roll_dice()
         {
             pop_alert();
 
-            action_display_dice();
+            display_dice_roll();
         });
     }
+}
+
+void yaht_game::action_finish_turn()
+{
+    set_state(&yaht_game::state_playing);
+
+    engine::instance()->next_player();
+
+    refresh(true);
 }
 
 void yaht_game::action_select_die(player *player, int d)
@@ -244,8 +355,8 @@ void yaht_game::action_lower_score(player *player, scoresheet::type type)
     if (!player->score().lower_score(type))
     {
         player->score().lower_score(type, player->calculate_lower_score(type));
-        set_state(&yaht_game::state_playing);
-        refresh(true);
+
+        action_finish_turn();
     }
     else
     {
@@ -259,9 +370,7 @@ void yaht_game::action_score(player *player, int n)
     {
         player->score().upper_score(n, player->calculate_upper_score(n));
 
-        set_state(&yaht_game::state_playing);
-
-        refresh(true);
+        action_finish_turn();
     }
     else
     {
@@ -282,9 +391,7 @@ void yaht_game::action_score_best(player *player)
         {
             player->score().upper_score(best_upper.first, best_upper.second);
 
-            set_state(&yaht_game::state_playing);
-
-            refresh(true);
+            action_finish_turn();
         }
         else
         {
@@ -298,9 +405,7 @@ void yaht_game::action_score_best(player *player)
         {
             player->score().lower_score(best_lower.first, best_lower.second);
 
-            set_state(&yaht_game::state_playing);
-
-            refresh(true);
+            action_finish_turn();
         }
         else
         {
@@ -317,13 +422,13 @@ void yaht_game::action_score_best(player *player)
         {
             pop_alert();
 
-            action_display_dice();
+            display_dice_roll();
         });
     }
 }
 
 
-void yaht_game::action_confirm_quit()
+void yaht_game::display_confirm_quit()
 {
     display_alert([&](const alert_box & box)
     {
@@ -373,6 +478,14 @@ void yaht_game::init_canvas(caca_canvas_t *canvas)
     caca_import_canvas_from_file(temp, "menu.txt", "utf8");
 
     menubuf_ = caca_export_canvas_to_memory(temp, "caca", &menubuf_size_);
+
+    caca_free_canvas(temp);
+
+    temp = caca_create_canvas(0, 0);
+
+    caca_import_canvas_from_file(temp, "help.txt", "utf8");
+
+    helpbuf_ = caca_export_canvas_to_memory(temp, "caca", &helpbuf_size_);
 
     caca_free_canvas(temp);
 
@@ -444,11 +557,11 @@ int yaht_game::get_alert_h() const
     return 15;
 }
 
-void yaht_game::display_menu()
+void yaht_game::display_help()
 {
     display_alert([&](const alert_box & a)
     {
-        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, menubuf_, menubuf_size_, "caca");
+        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, helpbuf_, helpbuf_size_, "caca");
     });
 }
 

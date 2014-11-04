@@ -68,8 +68,6 @@ void caca_game::start()
 
     on_start();
 
-    prompt();
-
     caca_refresh_display(display_);
 }
 
@@ -91,8 +89,6 @@ void caca_game::update()
             int width = caca_get_event_resize_width(&event_);
 
             on_resize(width, height);
-
-            prompt();
 
             caca_refresh_display(display_);
         }
@@ -144,10 +140,6 @@ void caca_game::clear()
 
     while (!alert_boxes_.empty())
         alert_boxes_.pop();
-
-    //set_cursor(80, 20);
-
-    prompt();
 }
 
 void caca_game::set_cursor(int x, int y)

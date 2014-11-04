@@ -41,8 +41,6 @@ public:
 
     virtual void on_start() = 0;
 
-    virtual void prompt() = 0;
-
     virtual void refresh_display(bool reset) = 0;
 
     void refresh(bool reset = false);
