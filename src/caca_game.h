@@ -1,3 +1,6 @@
+#ifndef _CACA_GAME_H_
+#define _CACA_GAME_H_
+
 #include <caca.h>
 #include <vector>
 #include <stack>
@@ -93,3 +96,5 @@ private:
     stack<alert_box> alert_boxes_;
     vector <game_event> timed_events_;
 };
+
+#endif

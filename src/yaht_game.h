@@ -1,3 +1,5 @@
+#ifndef _YAHT_GAME_H_
+#define _YAHT_GAME_H_
 
 #include "caca_game.h"
 #include "matchmaker.h"
@@ -41,6 +43,10 @@ public:
     void on_quit();
 
     void on_key_press(int input);
+
+    void action_add_network_player(const string &name);
+
+    void action_remove_network_player(const string &name);
 
 private:
 
@@ -141,7 +147,11 @@ private:
     bool minimalLower_;
     int num_players_;
     matchmaker matchmaker_;
+    int flags_;
 
     constexpr static const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
+    static const int FLAG_MULTIPLAYER = (1 << 0);
 };
+
+#endif

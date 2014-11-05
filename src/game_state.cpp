@@ -19,9 +19,12 @@ void yaht_game::state_ask_name(int ch)
 
         clear();
 
-        if (engine::instance()->number_of_players() == num_players_)
+        if (engine::instance()->number_of_players() >= num_players_)
         {
-            set_state(&yaht_game::state_playing);
+            if (flags_ & FLAG_MULTIPLAYER)
+                action_host_game();
+            else
+                set_state(&yaht_game::state_playing);
         }
         else
         {
@@ -93,7 +96,10 @@ void yaht_game::state_multiplayer_menu(int input)
     switch (tolower(input))
     {
     case 'h':
-        action_host_game();
+        num_players_ = 1;
+        flags_ |= FLAG_MULTIPLAYER;
+        set_state(&yaht_game::state_ask_name);
+        display_ask_name();
         break;
     case 'j':
         action_join_game();

@@ -12,6 +12,8 @@ a game of yahtzee on the terminal
 
 - [libarg3net](http://github.com/c0der78/arg3net.git) (./configure; make install)
 
+- [libarg3json](http://github.com/c0der78/arg3json.git) (./configure; make install)
+
 #### TODO
 
 Multiplayer?

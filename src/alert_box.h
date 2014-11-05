@@ -1,3 +1,6 @@
+#ifndef _ALERT_BOX_H_
+#define _ALERT_BOX_H_
+
 #include <functional>
 #include <caca.h>
 
@@ -35,3 +38,5 @@ private:
     int width_, height_;
     std::function<void(const alert_box &)> callback_;
 };
+
+#endif

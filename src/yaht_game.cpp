@@ -6,14 +6,13 @@ using namespace std::placeholders;
 
 yaht_game::yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
     lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), helpbuf_size_(0), display_mode_(MINIMAL), num_players_(0),
-    matchmaker_()
+    matchmaker_(this), flags_(0)
 {
 }
 
 void yaht_game::reset()
 {
     caca_game::reset();
-
 
     if (upperbuf_ != NULL)
     {
@@ -137,11 +136,11 @@ void yaht_game::action_host_game()
 {
     display_alert("Starting server...");
 
-    int response = matchmaker_.host();
+    bool response = matchmaker_.host();
 
     pop_alert(); // done registration
 
-    if (response != arg3::net::http::OK)
+    if (!response)
     {
         display_alert(2000, "Unable to register game at this time.");
 
@@ -158,6 +157,32 @@ void yaht_game::action_host_game()
 void yaht_game::action_join_game()
 {
     // TODO: list available games.  maybe based on ip locations
+
+    display_alert("Finding game to join...");
+
+    bool result = matchmaker_.join_best_game();
+
+    pop_alert();
+
+    if (!result)
+    {
+        display_alert(2000, "Unable to find game to join at this time.");
+        return;
+    }
+}
+
+void yaht_game::action_add_network_player(const string &name)
+{
+    engine::instance()->add_player(name);
+
+    matchmaker_.notify_player_joined(name);
+}
+
+void yaht_game::action_remove_network_player(const string &name)
+{
+    engine::instance()->remove_player(name);
+
+    matchmaker_.notify_player_left(name);
 }
 
 void yaht_game::refresh_display(bool reset)
