@@ -185,9 +185,10 @@ bool caca_game::has_alert() const
 
 void caca_game::pop_alert()
 {
-    alert_boxes_.pop();
+    if (!alert_boxes_.empty())
+        alert_boxes_.pop();
 
-    if (alert_boxes_.size() > 0)
+    if (!alert_boxes_.empty())
     {
         alert_boxes_.top().display();
     }

@@ -124,7 +124,6 @@ void yaht_game::state_waiting_for_connections(int input)
     {
         pop_alert();
         set_state(&yaht_game::state_multiplayer_menu);
-        display_multiplayer_menu();
     }
 }
 
