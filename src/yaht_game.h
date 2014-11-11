@@ -145,7 +145,7 @@ private:
     state_handler state_, last_state_;
     display_mode display_mode_;
     bool minimalLower_;
-    int num_players_;
+    unsigned num_players_;
     matchmaker matchmaker_;
     int flags_;
 

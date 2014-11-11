@@ -33,7 +33,7 @@ void yaht_game::state_ask_name(int ch)
 
         clear_buffer();
     }
-    else if (isnumber(ch) || isalpha(ch))
+    else if (isalnum(ch))
     {
         add_to_buffer(ch);
 

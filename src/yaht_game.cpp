@@ -1,5 +1,5 @@
 #include "yaht_game.h"
-
+#include <cstring>
 #include <arg3/str_util.h>
 
 using namespace std::placeholders;
@@ -95,7 +95,7 @@ void yaht_game::display_ask_name()
 {
     char buf[BUFSIZ + 1] = {0};
 
-    snprintf(buf, BUFSIZ, "What is Player %lu's name?", engine::instance()->number_of_players() + 1);
+    snprintf(buf, BUFSIZ, "What is Player %zu's name?", engine::instance()->number_of_players() + 1);
 
     int mod = (strlen(buf) / 2);
 
@@ -118,13 +118,13 @@ bool yaht_game::alive() const
 
 void yaht_game::display_multiplayer_menu()
 {
-    string buf1 = "'h' : host a game";
-    string buf2 = "'j' : join a game";
-
-    int xmod = min(buf1.length() / 2, buf2.length() / 2);
-
     display_alert([&](const alert_box & a)
     {
+        string buf1 = "'h' : host a game";
+        string buf2 = "'j' : join a game";
+
+        int xmod = min(buf1.length() / 2, buf2.length() / 2);
+
         put(a.center_x() - xmod, a.center_y() - 1, buf1.c_str());
         put(a.center_x() - xmod, a.center_y(), buf2.c_str());
     });
@@ -212,7 +212,7 @@ void yaht_game::refresh_display(bool reset)
             break;
         case VERTICAL:
         {
-            scoresheet::value_type lower_score_total = lower_score_total = display_upper_scores(player->score(), x , 9 );
+            scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
             display_lower_scores(player->score(), lower_score_total, 46, 28);
             put(0, 51, HELP);
             break;
@@ -519,6 +519,7 @@ int yaht_game::get_alert_y() const
     {
     case VERTICAL:
         return 20;
+    default:
     case MINIMAL:
     case HORIZONTAL: return 8;
     }

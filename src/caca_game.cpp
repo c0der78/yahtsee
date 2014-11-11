@@ -158,7 +158,8 @@ int caca_game::get_cursor_y() const
 
 void caca_game::put(int x, int y, const char *value)
 {
-    caca_put_str(canvas_, x, y, value);
+    if(value && *value)
+        caca_put_str(canvas_, x, y, value);
 }
 
 void caca_game::put(int x, int y, int value)
