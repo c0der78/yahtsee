@@ -69,8 +69,6 @@ void yaht_game::set_state(state_handler value)
     last_state_ = state_;
 
     state_ = value;
-
-    new_frame();
 }
 
 bool yaht_game::is_state(state_handler value)

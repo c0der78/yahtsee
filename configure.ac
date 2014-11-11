@@ -12,7 +12,11 @@ AM_INIT_AUTOMAKE
 LT_INIT
 
 # Checks for programs.
-AC_PROG_CXX
+: ${CXXFLAGS=""}
+
+# Checks for programs.
+AC_PROG_CXX([clang++ g++])
+AC_PROG_CC
 
 if test "x$CXX" = "xclang++"; then
   AC_SUBST([AM_CPPFLAGS], ["-std=c++11 -stdlib=libc++ -Wall -Werror"])

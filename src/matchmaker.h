@@ -13,6 +13,10 @@ class matchmaker
 public:
 
     matchmaker(yaht_game *game);
+    matchmaker(const matchmaker &) = delete;
+    matchmaker(matchmaker &&);
+    matchmaker &operator=(const matchmaker &) = delete;
+    matchmaker &operator=(matchmaker && );
     virtual ~matchmaker();
     void stop();
     bool host(int port = INVALID);
@@ -27,8 +31,8 @@ private:
 
     static const int INVALID = -1;
 
-    shared_ptr<arg3::net::socket_server> server_;
-    shared_ptr<yaht_client> client_;
+    arg3::net::socket_server server_;
+    yaht_client client_;
     yaht_game *game_;
     std::string gameId_;
     arg3::net::http_client api_;

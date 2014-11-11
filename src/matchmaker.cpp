@@ -3,13 +3,33 @@
 
 using namespace arg3;
 
-matchmaker::matchmaker(yaht_game *game) : server_(nullptr), client_(nullptr), game_(game), api_(GAME_API_URL), client_factory_(game)
+matchmaker::matchmaker(yaht_game *game) : server_(), client_(game), game_(game), api_(GAME_API_URL), client_factory_(game)
 {
     api_.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
 
     api_.add_header("X-Application-Token", "78ed4bfb42f54c9fa7ac62873d37228e");
 
     api_.add_header("Content-Type", "application/json");
+}
+
+matchmaker::matchmaker(matchmaker &&other) : server_(std::move(other.server_)), client_(std::move(other.client_)), game_(other.game_),
+    api_(std::move(other.api_)), client_factory_(std::move(other.client_factory_))
+{
+    other.game_ = NULL;
+}
+
+
+matchmaker &matchmaker::operator=(matchmaker && other)
+{
+    server_ = std::move(other.server_);
+    client_ = std::move(other.client_);
+    game_ = other.game_;
+    api_ = std::move(other.api_);
+    client_factory_ = std::move(other.client_factory_);
+
+    other.game_ = NULL;
+
+    return *this;
 }
 
 matchmaker::~matchmaker()
@@ -29,17 +49,9 @@ void matchmaker::stop()
         gameId_.clear();
     }
 
-    if (server_ != nullptr)
-    {
-        server_->stop();
-        server_ = nullptr;
-    }
+    server_.stop();
 
-    if (client_ != nullptr)
-    {
-        client_->close();
-        client_ = nullptr;
-    }
+    client_.close();
 }
 
 bool matchmaker::join_best_game()
@@ -57,9 +69,7 @@ bool matchmaker::join_best_game()
 
     int port = game.get_int("port");
 
-    client_ = make_shared<yaht_client>(game_);
-
-    return client_->connect(ip, port);
+    return client_.connect(ip, port);
 }
 
 bool matchmaker::host(int port)
@@ -82,9 +92,7 @@ bool matchmaker::host(int port)
 
     gameId_ = api_.response();
 
-    server_ = make_shared<arg3::net::socket_server>(port);
-
-    server_->start_in_background();
+    server_.start_in_background(port);
 
     return true;
 }

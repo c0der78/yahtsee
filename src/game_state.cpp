@@ -122,8 +122,10 @@ void yaht_game::state_waiting_for_connections(int input)
 {
     if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
     {
+        matchmaker_.stop();
         pop_alert();
         set_state(&yaht_game::state_multiplayer_menu);
+        display_multiplayer_menu();
     }
 }
 
