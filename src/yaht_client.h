@@ -38,7 +38,6 @@ public:
 
 private:
     yaht_game *game_;
-    std::map<arg3::net::buffered_socket *, string> connections_;
 };
 
 #endif

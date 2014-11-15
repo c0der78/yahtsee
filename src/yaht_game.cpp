@@ -60,8 +60,6 @@ yaht_game::state_handler yaht_game::state() const
 void yaht_game::recover_state()
 {
     state_ = last_state_;
-
-    new_frame();
 }
 
 void yaht_game::set_state(state_handler value)
@@ -93,14 +91,14 @@ void yaht_game::display_game_menu()
 
 void yaht_game::display_ask_name()
 {
-    char buf[BUFSIZ + 1] = {0};
-
-    snprintf(buf, BUFSIZ, "What is Player %zu's name?", engine::instance()->number_of_players() + 1);
-
-    int mod = (strlen(buf) / 2);
-
     display_alert([&](const alert_box & a)
     {
+        char buf[BUFSIZ + 1] = {0};
+
+        snprintf(buf, BUFSIZ, "What is Player %zu's name?", engine::instance()->number_of_players() + 1);
+
+        int mod = (strlen(buf) / 2);
+
         put(a.center_x() - mod, a.center_y() - 1, buf);
         set_cursor(a.center_x() - mod, a.center_y());
     });
@@ -284,8 +282,6 @@ void yaht_game::action_roll_dice()
     if (player->roll_count() < 3)
     {
         player->roll();
-
-        new_frame();
 
         display_dice_roll();
     }

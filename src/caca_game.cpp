@@ -3,23 +3,42 @@
 
 game_event::game_event(unsigned millis, function<void()> callback) : millis_(millis), callback_(callback), ready_(false)
 {
-    run();
+    worker_ = std::thread(&game_event::wait, this);
 }
+
+game_event::game_event(game_event &&other) : millis_(other.millis_), callback_(std::move(other.callback_)), ready_(other.ready_), worker_(std::move(other.worker_))
+{
+
+}
+
+game_event::~game_event()
+{
+    if (worker_.joinable())
+        worker_.join();
+}
+
+game_event &game_event::operator=(game_event && other)
+{
+    millis_ = other.millis_;
+    callback_ = std::move(other.callback_);
+    ready_ = other.ready_;
+    worker_ = std::move(other.worker_);
+    return *this;
+}
+
 bool game_event::ready() const
 {
     return ready_;
 }
-void game_event::perform()
+void game_event::perform() const
 {
     callback_();
 }
-void game_event::run()
+
+void game_event::wait()
 {
-    std::thread([&]()
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(millis_));
-        ready_ = true;
-    }).detach();
+    std::this_thread::sleep_for(std::chrono::milliseconds(millis_));
+    ready_ = true;
 }
 
 caca_game::caca_game() : frame_(1), canvas_(NULL), display_(NULL)
@@ -100,21 +119,15 @@ void caca_game::update()
         }
     }
 
-    auto it = timed_events_.begin();
-
-    while (it != timed_events_.end())
+    timed_events_.erase(remove_if(timed_events_.begin(), timed_events_.end(), [](const game_event & ev)
     {
-        if (it->ready())
+        if (ev.ready())
         {
-            it->perform();
-
-            it = timed_events_.erase(it);
+            ev.perform();
+            return true;
         }
-        else
-        {
-            it++;
-        }
-    }
+        return false;
+    }), timed_events_.end());
 }
 
 void caca_game::refresh(bool reset)
@@ -158,7 +171,7 @@ int caca_game::get_cursor_y() const
 
 void caca_game::put(int x, int y, const char *value)
 {
-    if(value && *value)
+    if (value && *value)
         caca_put_str(canvas_, x, y, value);
 }
 
@@ -174,7 +187,7 @@ void caca_game::display_alert(int x, int y, int width, int height, function<void
     alert_boxes_.top().display();
 }
 
-alert_box caca_game::displayed_alert() const
+const alert_box &caca_game::displayed_alert() const
 {
     return alert_boxes_.top();
 }

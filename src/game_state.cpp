@@ -98,8 +98,9 @@ void yaht_game::state_multiplayer_menu(int input)
     case 'h':
         num_players_ = 1;
         flags_ |= FLAG_MULTIPLAYER;
-        set_state(&yaht_game::state_ask_name);
-        display_ask_name();
+        //set_state(&yaht_game::state_ask_name);
+        //display_ask_name();
+        action_host_game();
         break;
     case 'j':
         action_join_game();
@@ -122,10 +123,10 @@ void yaht_game::state_waiting_for_connections(int input)
 {
     if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
     {
-        matchmaker_.stop();
         pop_alert();
         set_state(&yaht_game::state_multiplayer_menu);
         display_multiplayer_menu();
+        matchmaker_.stop();
     }
 }
 

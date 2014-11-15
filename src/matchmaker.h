@@ -33,7 +33,6 @@ private:
 
     arg3::net::socket_server server_;
     yaht_client client_;
-    yaht_game *game_;
     std::string gameId_;
     arg3::net::http_client api_;
     yaht_client_factory client_factory_;

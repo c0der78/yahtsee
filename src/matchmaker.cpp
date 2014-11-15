@@ -3,7 +3,7 @@
 
 using namespace arg3;
 
-matchmaker::matchmaker(yaht_game *game) : server_(), client_(game), game_(game), api_(GAME_API_URL), client_factory_(game)
+matchmaker::matchmaker(yaht_game *game) : client_(game), api_(GAME_API_URL), client_factory_(game)
 {
     api_.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
 
@@ -12,10 +12,9 @@ matchmaker::matchmaker(yaht_game *game) : server_(), client_(game), game_(game),
     api_.add_header("Content-Type", "application/json");
 }
 
-matchmaker::matchmaker(matchmaker &&other) : server_(std::move(other.server_)), client_(std::move(other.client_)), game_(other.game_),
-    api_(std::move(other.api_)), client_factory_(std::move(other.client_factory_))
+matchmaker::matchmaker(matchmaker &&other) : server_(std::move(other.server_)), client_(std::move(other.client_)),
+    gameId_(std::move(other.gameId_)), api_(std::move(other.api_)), client_factory_(std::move(other.client_factory_))
 {
-    other.game_ = NULL;
 }
 
 
@@ -23,11 +22,9 @@ matchmaker &matchmaker::operator=(matchmaker && other)
 {
     server_ = std::move(other.server_);
     client_ = std::move(other.client_);
-    game_ = other.game_;
+    gameId_ = std::move(other.gameId_);
     api_ = std::move(other.api_);
     client_factory_ = std::move(other.client_factory_);
-
-    other.game_ = NULL;
 
     return *this;
 }
@@ -39,6 +36,11 @@ matchmaker::~matchmaker()
 
 void matchmaker::stop()
 {
+
+    server_.stop();
+
+    client_.close();
+
     if (!gameId_.empty())
     {
         api_.set_payload(gameId_).post("api/v1/games/unregister");
@@ -48,10 +50,6 @@ void matchmaker::stop()
 
         gameId_.clear();
     }
-
-    server_.stop();
-
-    client_.close();
 }
 
 bool matchmaker::join_best_game()
@@ -74,16 +72,19 @@ bool matchmaker::join_best_game()
 
 bool matchmaker::host(int port)
 {
-    char buf[BUFSIZ + 1] = {0};
-
     if (port == INVALID)
     {
         port = (rand() % 99999) + 1024;
     }
 
-    snprintf(buf, BUFSIZ, "{\"type\": \"%s\", \"port\":%d}\n", GAME_TYPE, port);
+    server_.start_in_background(port);
 
-    api_.set_payload(buf).post("api/v1/games/register");
+    json::object json;
+
+    json.set_string("type", GAME_TYPE);
+    json.set_int("port", port);
+
+    api_.set_payload(json.to_string()).post("api/v1/games/register");
 
     int response = api_.response_code();
 
@@ -91,8 +92,6 @@ bool matchmaker::host(int port)
         return false;
 
     gameId_ = api_.response();
-
-    server_.start_in_background(port);
 
     return true;
 }

@@ -14,13 +14,19 @@ class game_event
 {
 public:
     game_event(unsigned millis, function<void()> callback);
+    game_event(const game_event &) = delete;
+    game_event(game_event &&);
+    ~game_event();
+    game_event &operator=(const game_event &) = delete;
+    game_event &operator=(game_event && );
     bool ready() const;
-    void perform();
+    void perform() const;
 private:
-    void run();
+    void wait();
     unsigned millis_;
     function<void()> callback_;
     bool ready_;
+    thread worker_;
 };
 
 class caca_game
@@ -62,7 +68,7 @@ public:
 
     void display_alert(int x, int y, int width, int height, function<void(const alert_box &)> callback);
 
-    alert_box displayed_alert() const;
+    const alert_box &displayed_alert() const;
 
     bool has_alert() const;
 

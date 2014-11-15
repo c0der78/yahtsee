@@ -17,7 +17,6 @@ yaht_client_factory::yaht_client_factory(yaht_game *game) : game_(game)
 {
 }
 
-
 void yaht_client::on_connect()
 {
     json::object packet;
