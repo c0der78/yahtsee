@@ -1,5 +1,6 @@
 #include "caca_game.h"
 #include <iostream>
+#include <algorithm>
 
 game_event::game_event(unsigned millis, function<void()> callback) : millis_(millis), callback_(callback), ready_(false)
 {
