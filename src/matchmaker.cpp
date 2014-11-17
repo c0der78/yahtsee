@@ -84,7 +84,9 @@ bool matchmaker::join_best_game(string *error)
         return false;
     }
 
-    json::object game = json::object(api_.response());
+    json::object game;
+
+    game.parse(api_.response());
 
     string ip = game.get_string("host");
 
