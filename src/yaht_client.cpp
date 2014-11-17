@@ -6,14 +6,10 @@
 using namespace arg3;
 using namespace arg3::net;
 
-yaht_client::yaht_client(yaht_game *game, SOCKET sock, const sockaddr_in &addr) : buffered_socket(sock, addr), game_(game)
+yaht_client::yaht_client(yaht_game *game, SOCKET sock, const sockaddr_storage &addr) : buffered_socket(sock, addr), game_(game)
 {}
 
 yaht_client::yaht_client(yaht_game *game) : buffered_socket(), game_(game)
-{
-}
-
-yaht_client_factory::yaht_client_factory(yaht_game *game) : game_(game)
 {
 }
 
@@ -65,10 +61,15 @@ void yaht_client::on_did_write()
 {
 }
 
+yaht_client_factory::yaht_client_factory(yaht_game *game) : game_(game)
+{
+}
 
-std::shared_ptr<buffered_socket> yaht_client_factory::create_socket(socket_server *server, SOCKET sock, const sockaddr_in &addr)
+std::shared_ptr<buffered_socket> yaht_client_factory::create_socket(socket_server *server, SOCKET sock, const sockaddr_storage &addr)
 {
     auto socket = make_shared<yaht_client>(game_, sock, addr);
+
+    cout << "someone connected." << endl;
 
     return socket;
 }

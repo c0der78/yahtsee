@@ -116,6 +116,7 @@ bool yaht_game::alive() const
 
 void yaht_game::display_multiplayer_menu()
 {
+
     display_alert([&](const alert_box & a)
     {
         string buf1 = "'h' : host a game";
@@ -132,13 +133,15 @@ void yaht_game::action_host_game()
 {
     display_alert("Starting server...");
 
-    bool response = matchmaker_.host();
+    string error;
+
+    bool response = matchmaker_.host(&error);
 
     pop_alert(); // done registration
 
     if (!response)
     {
-        display_alert(2000, "Unable to register game at this time.");
+        display_alert(2000, { "Unable to register game at this time.", error } );
 
         return;
     }
@@ -156,13 +159,15 @@ void yaht_game::action_join_game()
 
     display_alert("Finding game to join...");
 
-    bool result = matchmaker_.join_best_game();
+    string error;
+
+    bool result = matchmaker_.join_best_game(&error);
 
     pop_alert();
 
     if (!result)
     {
-        display_alert(2000, "Unable to find game to join at this time.");
+        display_alert(2000, {"Unable to find game to join at this time.", error});
         return;
     }
 }
@@ -171,12 +176,16 @@ void yaht_game::action_add_network_player(const string &name)
 {
     engine::instance()->add_player(name);
 
+    display_alert(2000, name + " has joined.");
+
     matchmaker_.notify_player_joined(name);
 }
 
 void yaht_game::action_remove_network_player(const string &name)
 {
     engine::instance()->remove_player(name);
+
+    display_alert(2000, name + " has left.");
 
     matchmaker_.notify_player_left(name);
 }
@@ -494,6 +503,33 @@ void yaht_game::display_alert(const string &message)
 void yaht_game::display_alert(int millis, const string &message)
 {
     display_alert(message);
+
+    pop_alert(millis);
+}
+
+void yaht_game::display_alert(vector<string> messages)
+{
+    display_alert([&](const alert_box & a)
+    {
+        const int ymod = messages.size() / 2;
+
+        int pos = 0;
+
+        for (const auto &msg : messages)
+        {
+            if ( pos < ymod)
+                put(a.center_x() - (msg.length() / 2), a.center_y() - (ymod - pos), msg.c_str());
+            else
+                put(a.center_x() - (msg.length() / 2), a.center_y() + (pos - ymod), msg.c_str());
+
+            pos++;
+        }
+    });
+}
+
+void yaht_game::display_alert(int millis, vector<string> messages)
+{
+    display_alert(messages);
 
     pop_alert(millis);
 }

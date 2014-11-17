@@ -19,23 +19,23 @@ public:
     matchmaker &operator=(matchmaker && );
     virtual ~matchmaker();
     void stop();
-    bool host(int port = INVALID);
-    bool join_best_game();
+    bool host(std::string *error = NULL, int port = INVALID);
+    bool join_best_game(std::string *error = NULL);
     void notify_player_joined(const string &name);
     void notify_player_left(const string &name);
 private:
 
     constexpr static const char *GAME_TYPE = "yahtsee";
 
-    constexpr static const char *GAME_API_URL = "connect.arg3.com";
+    static const char *GAME_API_URL;
 
     static const int INVALID = -1;
 
-    arg3::net::socket_server server_;
-    yaht_client client_;
     std::string gameId_;
     arg3::net::http_client api_;
+    yaht_client client_;
     yaht_client_factory client_factory_;
+    arg3::net::socket_server server_;
 
 };
 

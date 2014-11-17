@@ -80,6 +80,10 @@ private:
 
     void display_alert(int millis, const string &message);
 
+    void display_alert(vector<string> messages);
+
+    void display_alert(int millis, vector<string> messages);
+
     void display_already_scored();
 
     void display_dice(player *player, int x, int y);
