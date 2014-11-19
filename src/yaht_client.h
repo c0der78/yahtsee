@@ -4,6 +4,7 @@
 #include <arg3net/socket_factory.h>
 #include <arg3net/buffered_socket.h>
 #include <map>
+#include <thread>
 
 class yaht_game;
 
@@ -17,6 +18,12 @@ class yaht_client : public arg3::net::buffered_socket
 public:
     yaht_client(yaht_game *game, arg3::net::SOCKET sock, const sockaddr_storage &addr);
     yaht_client(yaht_game *game);
+    yaht_client(const yaht_client &other) = delete;
+    yaht_client(yaht_client &&other);
+    ~yaht_client();
+
+    yaht_client &operator=(const yaht_client &other) = delete;
+    yaht_client &operator=(yaht_client && other);
 
     virtual void on_will_read();
     virtual void on_did_read();
@@ -25,7 +32,14 @@ public:
     virtual void on_connect();
     virtual void on_close();
 
+    bool start_in_background(const std::string &host, int port);
+    bool start(const std::string &host, int port);
 private:
+
+    void run();
+
+    shared_ptr<thread> backgroundThread_;
+
     yaht_game *game_;
 };
 

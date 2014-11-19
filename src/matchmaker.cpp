@@ -21,6 +21,7 @@ matchmaker::matchmaker(yaht_game *game) : api_(GAME_API_URL), client_(game), cli
     api_.add_header("X-Application-Token", "ac8afc408f284eedad323e1ddd5c17e4");
 #endif
     api_.add_header("Content-Type", "application/json");
+
 }
 
 matchmaker::matchmaker(matchmaker &&other) :
@@ -92,7 +93,7 @@ bool matchmaker::join_best_game(string *error)
 
     int port = game.get_int("port");
 
-    bool rval = client_.connect(ip, port);
+    bool rval = client_.start_in_background(ip, port);
 
     if (!rval)
     {

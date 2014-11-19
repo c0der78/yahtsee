@@ -19,12 +19,17 @@ void yaht_game::state_ask_name(int ch)
 
         clear();
 
-        if (engine::instance()->number_of_players() >= num_players_)
+        if (flags_ & FLAG_HOSTING)
         {
-            if (flags_ & FLAG_MULTIPLAYER)
-                action_host_game();
-            else
-                set_state(&yaht_game::state_playing);
+            action_host_game();
+        }
+        else if (flags_ & FLAG_JOINING)
+        {
+            action_join_game();
+        }
+        else if (engine::instance()->number_of_players() >= num_players_)
+        {
+            set_state(&yaht_game::state_playing);
         }
         else
         {
@@ -96,14 +101,14 @@ void yaht_game::state_multiplayer_menu(int input)
     switch (tolower(input))
     {
     case 'h':
-        num_players_ = 1;
-        flags_ |= FLAG_MULTIPLAYER;
-        //set_state(&yaht_game::state_ask_name);
-        //display_ask_name();
-        action_host_game();
+        flags_ |= FLAG_HOSTING;
+        set_state(&yaht_game::state_ask_name);
+        display_ask_name();
         break;
     case 'j':
-        action_join_game();
+        flags_ |= FLAG_JOINING;
+        set_state(&yaht_game::state_ask_name);
+        display_ask_name();
         break;
     }
 }

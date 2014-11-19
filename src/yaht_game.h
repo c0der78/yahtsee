@@ -155,7 +155,8 @@ private:
 
     constexpr static const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
-    static const int FLAG_MULTIPLAYER = (1 << 0);
+    static const int FLAG_HOSTING = (1 << 0);
+    static const int FLAG_JOINING = (1 << 1);
 };
 
 #endif

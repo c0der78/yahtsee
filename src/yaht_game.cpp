@@ -515,7 +515,7 @@ void yaht_game::display_alert(vector<string> messages)
 
         int pos = 0;
 
-        for (const auto &msg : messages)
+        for (const auto & msg : messages)
         {
             if ( pos < ymod)
                 put(a.center_x() - (msg.length() / 2), a.center_y() - (ymod - pos), msg.c_str());
