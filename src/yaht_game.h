@@ -44,9 +44,6 @@ public:
 
     void on_key_press(int input);
 
-    void action_add_network_player(const string &name);
-
-    void action_remove_network_player(const string &name);
 
 private:
 
@@ -108,6 +105,12 @@ private:
 
     /* actions */
 
+    void action_add_network_player(const string &name);
+
+    void action_remove_network_player(const string &name);
+
+    void action_joined_game();
+
     void action_host_game();
 
     void action_join_game();
@@ -157,6 +160,8 @@ private:
 
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
+
+    friend class yaht_connection;
 };
 
 #endif

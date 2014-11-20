@@ -14,7 +14,7 @@ public:
 
     matchmaker(yaht_game *game);
     matchmaker(const matchmaker &) = delete;
-    matchmaker(matchmaker &&);
+    matchmaker(matchmaker  &&other);
     matchmaker &operator=(const matchmaker &) = delete;
     matchmaker &operator=(matchmaker && );
     virtual ~matchmaker();
@@ -34,7 +34,7 @@ private:
     std::string gameId_;
     arg3::net::http_client api_;
     yaht_client client_;
-    yaht_client_factory client_factory_;
+    yaht_connection_factory client_factory_;
     arg3::net::socket_server server_;
 
 };

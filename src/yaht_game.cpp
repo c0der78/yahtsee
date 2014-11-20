@@ -172,13 +172,55 @@ void yaht_game::action_join_game()
     }
 }
 
+void yaht_game::action_joined_game()
+{
+
+    char buf[BUFSIZ + 1] = {0};
+
+    pop_alert();
+
+    vector<string> message;
+
+    int count = 1;
+
+    for (auto & p : *arg3::yaht::engine::instance())
+    {
+        snprintf(buf, BUFSIZ, "%2d: %s", count++, p.name().c_str());
+        message.push_back(buf);
+    }
+
+    message.push_back(" ");
+
+    message.push_back("Waiting for host to start game...");
+
+    display_alert(message);
+}
+
 void yaht_game::action_add_network_player(const string &name)
 {
+    char buf[BUFSIZ + 1] = {0};
+
     engine::instance()->add_player(name);
 
-    display_alert(2000, name + " has joined.");
-
     matchmaker_.notify_player_joined(name);
+
+    pop_alert();
+
+    vector<string> message;
+
+    int count = 1;
+
+    for (auto & p : *arg3::yaht::engine::instance())
+    {
+        snprintf(buf, BUFSIZ, "%2d: %s", count++, p.name().c_str());
+        message.push_back(buf);
+    }
+
+    message.push_back(" ");
+
+    message.push_back("Waiting for more players, press 's' to start the game.");
+
+    display_alert(message);
 }
 
 void yaht_game::action_remove_network_player(const string &name)
