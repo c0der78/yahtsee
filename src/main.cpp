@@ -1,7 +1,6 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include <arg3dice/yaht/engine.h>
 
 #include "caca.h"
 

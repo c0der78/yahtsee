@@ -13,7 +13,7 @@ void yaht_game::state_ask_name(int ch)
     {
         string name = get_buffer();
 
-        engine::instance()->add_player(name);
+        yaht_.add_player(make_shared<arg3::yaht::player>(name));
 
         pop_alert();
 
@@ -27,7 +27,7 @@ void yaht_game::state_ask_name(int ch)
         {
             action_join_game();
         }
-        else if (engine::instance()->number_of_players() >= num_players_)
+        else if (yaht_.number_of_players() >= num_players_)
         {
             set_state(&yaht_game::state_playing);
         }
@@ -133,6 +133,14 @@ void yaht_game::state_waiting_for_connections(int input)
         display_multiplayer_menu();
         matchmaker_.stop();
     }
+    else if (tolower(input) == 's' && yaht_.number_of_players() > 1)
+    {
+        set_state(&yaht_game::state_playing);
+
+        matchmaker_.notify_game_start();
+
+        refresh(true);
+    }
 }
 
 void yaht_game::state_quit_confirm(int input)
@@ -220,7 +228,7 @@ void yaht_game::state_rolling_dice(int input)
         refresh(true);
     }
 
-    auto player = engine::instance()->current_player();
+    auto player = yaht_.current_player();
 
     if (isdigit(input))
     {

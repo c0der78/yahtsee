@@ -3,7 +3,7 @@
 
 #include "caca_game.h"
 #include "matchmaker.h"
-#include <arg3dice/yaht/engine.h>
+#include <arg3dice/yaht/game.h>
 
 using namespace arg3::yaht;
 
@@ -14,6 +14,19 @@ typedef enum
     MINIMAL
 } display_mode;
 
+
+class yaht_connection;
+
+class yaht_player : public arg3::yaht::player
+{
+public:
+    yaht_player(yaht_connection *conn, const string &name);
+
+    int id() const;
+
+private:
+    yaht_connection *connection_;
+};
 
 class yaht_game : public caca_game
 {
@@ -83,7 +96,7 @@ private:
 
     void display_already_scored();
 
-    void display_dice(player *player, int x, int y);
+    void display_dice(shared_ptr<player> player, int x, int y);
 
     void display_help();
 
@@ -105,9 +118,9 @@ private:
 
     /* actions */
 
-    void action_add_network_player(const string &name);
+    void action_add_network_player(const shared_ptr<yaht_player> &p);
 
-    void action_remove_network_player(const string &name);
+    void action_remove_network_player(const shared_ptr<yaht_player> &p);
 
     void action_joined_game();
 
@@ -117,13 +130,13 @@ private:
 
     void action_roll_dice();
 
-    void action_select_die(player *player, int d);
+    void action_select_die(shared_ptr<player> player, int d);
 
-    void action_lower_score(player *player, scoresheet::type type);
+    void action_lower_score(shared_ptr<player> player, scoresheet::type type);
 
-    void action_score(player *player, int n);
+    void action_score(shared_ptr<player> player, int n);
 
-    void action_score_best(player *player);
+    void action_score_best(shared_ptr<player> player);
 
     void action_finish_turn();
 
@@ -147,6 +160,8 @@ private:
 
     int get_alert_h() const;
 
+    shared_ptr<yaht_player> find_player_by_id(int id) const;
+
     void *upperbuf_, *lowerbuf_, *menubuf_, *headerbuf_, *helpbuf_;
     size_t upperbuf_size_, lowerbuf_size_, menubuf_size_, headerbuf_size_, helpbuf_size_;
     state_handler state_, last_state_;
@@ -156,12 +171,15 @@ private:
     matchmaker matchmaker_;
     int flags_;
 
+    arg3::yaht::game yaht_;
+
     constexpr static const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
 
     friend class yaht_connection;
+    friend class yaht_client;
 };
 
 #endif

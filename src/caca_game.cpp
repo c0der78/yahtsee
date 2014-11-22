@@ -151,6 +151,11 @@ void caca_game::clear()
 
     init_canvas(canvas_);
 
+    clear_alerts();
+}
+
+void caca_game::clear_alerts()
+{
     while (!alert_boxes_.empty())
         alert_boxes_.pop();
 }

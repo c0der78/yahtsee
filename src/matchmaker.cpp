@@ -113,6 +113,8 @@ bool matchmaker::host(string *error, int port)
         port = (rand() % 99999) + 1024;
     }
 
+    server_.start_in_background(port);
+
     json::object json;
 
     json.set_string("type", GAME_TYPE);
@@ -131,17 +133,27 @@ bool matchmaker::host(string *error, int port)
 
     gameId_ = api_.response();
 
-    server_.start_in_background(port);
-
     return true;
 }
 
-void matchmaker::notify_player_joined(const string &name)
+void matchmaker::notify_game_start()
+{
+    json::object json;
+
+    json.set_int("action", GAME_START);
+
+    client_factory_.for_connections([&json](const shared_ptr<yaht_connection> &conn)
+    {
+        conn->writeln(json.to_string());
+    });
+}
+
+void matchmaker::notify_player_joined(const shared_ptr<yaht_player> &p)
 {
 
 }
 
-void matchmaker::notify_player_left(const string &name)
+void matchmaker::notify_player_left(const shared_ptr<yaht_player> &p)
 {
 
 }

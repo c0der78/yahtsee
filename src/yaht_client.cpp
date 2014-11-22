@@ -1,5 +1,5 @@
 #include "yaht_client.h"
-#include <arg3dice/yaht/engine.h>
+#include <arg3dice/yaht/game.h>
 #include <arg3json/json.h>
 #include "yaht_game.h"
 
@@ -38,10 +38,11 @@ void yaht_connection::on_connect()
 
     json::array names;
 
-    for (auto & p : *yaht::engine::instance())
+    game_->yaht_.for_players([&names](const shared_ptr<arg3::yaht::player> &p)
     {
-        names.add_string(p.name());
-    }
+
+        names.add_string(p->name());
+    });
 
     packet.set_array("players", names);
 
@@ -71,7 +72,7 @@ void yaht_connection::on_did_read()
     {
         string name = packet.get_string("name");
 
-        game_->action_add_network_player(name);
+        game_->action_add_network_player(make_shared<yaht_player>(this, name));
 
         break;
     }
@@ -82,10 +83,18 @@ void yaht_connection::on_did_read()
 
         for (auto & name : names)
         {
-            yaht::engine::instance()->add_player(name);
+            game_->yaht_.add_player(make_shared<yaht_player>(this, name));
         }
 
         game_->action_joined_game();
+
+        break;
+    }
+    case GAME_START:
+    {
+        game_->set_state(&yaht_game::state_playing);
+
+        game_->refresh(true);
 
         break;
     }
@@ -108,10 +117,18 @@ std::shared_ptr<buffered_socket> yaht_connection_factory::create_socket(socket_s
 {
     auto socket = make_shared<yaht_connection>(game_, sock, addr);
 
+    connections_.push_back(socket);
+
     return socket;
 }
 
-
+void yaht_connection_factory::for_connections(std::function<void(const shared_ptr<yaht_connection> &conn)> funk)
+{
+    for (const auto & c : connections_)
+    {
+        funk(c);
+    }
+}
 
 yaht_client::yaht_client(yaht_game *game, SOCKET sock, const sockaddr_storage &addr) : yaht_connection(game, sock, addr), backgroundThread_(nullptr)
 {}
@@ -146,7 +163,7 @@ void yaht_client::on_connect()
     json::object packet;
 
     packet.set_int("action", CLIENT_INIT);
-    packet.set_string("name", (*yaht::engine::instance())[0]->name());
+    packet.set_string("name", game_->yaht_.get_player(0)->name());
 
     writeln(packet.to_string());
 }

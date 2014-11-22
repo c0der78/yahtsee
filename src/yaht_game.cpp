@@ -4,6 +4,15 @@
 
 using namespace std::placeholders;
 
+yaht_player::yaht_player(yaht_connection *conn, const string &name) : player(name), connection_(conn)
+{
+}
+
+int yaht_player::id() const
+{
+    return connection_->raw_socket();
+}
+
 yaht_game::yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
     lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), helpbuf_size_(0), display_mode_(MINIMAL), num_players_(0),
     matchmaker_(this), flags_(0)
@@ -95,7 +104,7 @@ void yaht_game::display_ask_name()
     {
         char buf[BUFSIZ + 1] = {0};
 
-        snprintf(buf, BUFSIZ, "What is Player %zu's name?", engine::instance()->number_of_players() + 1);
+        snprintf(buf, BUFSIZ, "What is Player %zu's name?", yaht_.number_of_players() + 1);
 
         int mod = (strlen(buf) / 2);
 
@@ -183,11 +192,11 @@ void yaht_game::action_joined_game()
 
     int count = 1;
 
-    for (auto & p : *arg3::yaht::engine::instance())
+    yaht_.for_players([&message, &buf, &count](const shared_ptr<player> &p)
     {
-        snprintf(buf, BUFSIZ, "%2d: %s", count++, p.name().c_str());
+        snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
-    }
+    });
 
     message.push_back(" ");
 
@@ -196,13 +205,13 @@ void yaht_game::action_joined_game()
     display_alert(message);
 }
 
-void yaht_game::action_add_network_player(const string &name)
+void yaht_game::action_add_network_player(const shared_ptr<yaht_player> &player)
 {
     char buf[BUFSIZ + 1] = {0};
 
-    engine::instance()->add_player(name);
+    yaht_.add_player(player);
 
-    matchmaker_.notify_player_joined(name);
+    matchmaker_.notify_player_joined(player);
 
     pop_alert();
 
@@ -210,11 +219,11 @@ void yaht_game::action_add_network_player(const string &name)
 
     int count = 1;
 
-    for (auto & p : *arg3::yaht::engine::instance())
+    yaht_.for_players([&message, &buf, &count](const shared_ptr<arg3::yaht::player> &p)
     {
-        snprintf(buf, BUFSIZ, "%2d: %s", count++, p.name().c_str());
+        snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
-    }
+    });
 
     message.push_back(" ");
 
@@ -223,20 +232,20 @@ void yaht_game::action_add_network_player(const string &name)
     display_alert(message);
 }
 
-void yaht_game::action_remove_network_player(const string &name)
+void yaht_game::action_remove_network_player(const shared_ptr<yaht_player> &p)
 {
-    engine::instance()->remove_player(name);
+    yaht_.remove_player(p);
 
-    display_alert(2000, name + " has left.");
+    display_alert(2000, p->name() + " has left.");
 
-    matchmaker_.notify_player_left(name);
+    matchmaker_.notify_player_left(p);
 }
 
 void yaht_game::refresh_display(bool reset)
 {
-    player *player = engine::instance()->current_player();
+    shared_ptr<player> player = yaht_.current_player();
 
-    if (player != NULL && is_playing())
+    if (player != nullptr && is_playing())
     {
         if (reset)
             player->reset();
@@ -285,7 +294,7 @@ void yaht_game::display_already_scored()
     display_alert(2000, "You've already scored that.");
 }
 
-void yaht_game::display_dice(player *player, int x, int y)
+void yaht_game::display_dice(shared_ptr<player> player, int x, int y)
 {
     char buf[BUFSIZ + 1] = {0};
 
@@ -321,14 +330,14 @@ void yaht_game::display_dice_roll()
 {
     display_alert([&](const alert_box & box)
     {
-        display_dice(engine::instance()->current_player(), box.x(), box.y());
+        display_dice(yaht_.current_player(), box.x(), box.y());
 
     });
 }
 
 void yaht_game::action_roll_dice()
 {
-    player *player = engine::instance()->current_player();
+    auto player = yaht_.current_player();
 
     if (player->roll_count() < 3)
     {
@@ -346,12 +355,12 @@ void yaht_game::action_finish_turn()
 {
     set_state(&yaht_game::state_playing);
 
-    engine::instance()->next_player();
+    yaht_.next_player();
 
     refresh(true);
 }
 
-void yaht_game::action_select_die(player *player, int d)
+void yaht_game::action_select_die(shared_ptr<player> player, int d)
 {
     if (player->is_kept(d))
         player->keep_die(d, false);
@@ -364,7 +373,7 @@ void yaht_game::action_select_die(player *player, int d)
 }
 
 
-void yaht_game::action_lower_score(player *player, scoresheet::type type)
+void yaht_game::action_lower_score(shared_ptr<player> player, scoresheet::type type)
 {
     if (!player->score().lower_score(type))
     {
@@ -378,7 +387,7 @@ void yaht_game::action_lower_score(player *player, scoresheet::type type)
     }
 }
 
-void yaht_game::action_score(player *player, int n)
+void yaht_game::action_score(shared_ptr<player> player, int n)
 {
     if (!player->score().upper_score(n))
     {
@@ -392,7 +401,7 @@ void yaht_game::action_score(player *player, int n)
     }
 }
 
-void yaht_game::action_score_best(player *player)
+void yaht_game::action_score_best(shared_ptr<player> player)
 {
     auto best_upper = player->calculate_best_upper_score();
 
@@ -614,6 +623,18 @@ void yaht_game::display_help()
     {
         caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, helpbuf_, helpbuf_size_, "caca");
     });
+}
+
+shared_ptr<yaht_player> yaht_game::find_player_by_id(int id) const
+{
+    for (size_t i = 0; i < yaht_.number_of_players(); i++)
+    {
+        auto player = dynamic_pointer_cast<yaht_player>(yaht_.get_player(i));
+
+        if (player->id() == id) return player;
+    }
+
+    return nullptr;
 }
 
 scoresheet::value_type yaht_game::display_upper_scores(const scoresheet &score, int x, int y)

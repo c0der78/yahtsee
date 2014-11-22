@@ -5,8 +5,10 @@
 #include <arg3net/http_client.h>
 #include <string>
 #include "yaht_client.h"
+#include <arg3dice/yaht/player.h>
 
 class yaht_game;
+class yaht_player;
 
 class matchmaker
 {
@@ -21,8 +23,9 @@ public:
     void stop();
     bool host(std::string *error = NULL, int port = INVALID);
     bool join_best_game(std::string *error = NULL);
-    void notify_player_joined(const string &name);
-    void notify_player_left(const string &name);
+    void notify_player_joined(const shared_ptr<yaht_player> &p);
+    void notify_player_left(const shared_ptr<yaht_player> &p);
+    void notify_game_start();
 private:
 
     constexpr static const char *GAME_TYPE = "yahtsee";

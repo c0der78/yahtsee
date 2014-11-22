@@ -1,6 +1,6 @@
 #include <arg3net/http_client.h>
 #include <arg3json/json.h>
-#include "uri.h"
+#include <arg3net/uri.h>
 #include <map>
 #include <cstring>
 

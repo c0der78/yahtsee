@@ -10,7 +10,7 @@ class yaht_game;
 
 typedef enum
 {
-    CONNECTION_INIT, CLIENT_INIT
+    CONNECTION_INIT, CLIENT_INIT, GAME_START
 } client_action;
 
 /*!
@@ -35,7 +35,7 @@ public:
     virtual void on_connect();
     virtual void on_close();
 
-private:
+protected:
 
     yaht_game *game_;
 };
@@ -74,8 +74,10 @@ public:
 
     std::shared_ptr<arg3::net::buffered_socket> create_socket(arg3::net::socket_server *server, arg3::net::SOCKET sock, const sockaddr_storage &addr);
 
+    void for_connections(std::function<void(const shared_ptr<yaht_connection> &sock)> funk);
 private:
     yaht_game *game_;
+    vector<shared_ptr<yaht_connection>> connections_;
 };
 
 #endif

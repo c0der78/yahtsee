@@ -15,7 +15,7 @@ class game_event
 public:
     game_event(unsigned millis, function<void()> callback);
     game_event(const game_event &) = delete;
-    game_event(game_event &&);
+    game_event(game_event  &&e);
     ~game_event();
     game_event &operator=(const game_event &) = delete;
     game_event &operator=(game_event && );
@@ -75,6 +75,8 @@ public:
     void pop_alert();
 
     void pop_alert(int millis, std::function<void()> funk = nullptr);
+
+    void clear_alerts();
 
     void new_frame();
 
