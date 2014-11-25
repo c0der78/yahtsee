@@ -1,27 +1,28 @@
-#include "yaht_client.h"
+#include "client.h"
+#include "player.h"
 #include <arg3dice/yaht/game.h>
 #include <arg3json/json.h>
-#include "yaht_game.h"
+#include "game.h"
 
 using namespace arg3;
 using namespace arg3::net;
 
-yaht_connection::yaht_connection(yaht_game *game, SOCKET sock, const sockaddr_storage &addr) : buffered_socket(sock, addr), game_(game)
+connection::connection(game *game, SOCKET sock, const sockaddr_storage &addr) : buffered_socket(sock, addr), game_(game)
 {}
 
-yaht_connection::yaht_connection(yaht_game *game) : buffered_socket(), game_(game)
+connection::connection(game *game) : buffered_socket(), game_(game)
 {
 }
 
-yaht_connection::yaht_connection(yaht_connection &&other) : buffered_socket(std::move(other)),
+connection::connection(connection &&other) : buffered_socket(std::move(other)),
     game_(other.game_)
 {}
 
-yaht_connection::~yaht_connection()
+connection::~connection()
 {
 }
 
-yaht_connection &yaht_connection::operator=(yaht_connection && other)
+connection &connection::operator=(connection && other)
 {
     buffered_socket::operator=(std::move(other));
 
@@ -30,7 +31,7 @@ yaht_connection &yaht_connection::operator=(yaht_connection && other)
     return *this;
 }
 
-void yaht_connection::on_connect()
+void connection::on_connect()
 {
     json::object packet;
 
@@ -38,7 +39,7 @@ void yaht_connection::on_connect()
 
     json::array players;
 
-    game_->for_players([&players](const shared_ptr<yaht_player> &p)
+    game_->for_players([&players](const shared_ptr<player> &p)
     {
         players.add(p->to_json());
     });
@@ -48,15 +49,15 @@ void yaht_connection::on_connect()
     writeln(packet.to_string());
 }
 
-void yaht_connection::on_close()
+void connection::on_close()
 {
 }
 
-void yaht_connection::on_will_read()
+void connection::on_will_read()
 {
 }
 
-void yaht_connection::on_did_read()
+void connection::on_did_read()
 {
     json::object packet;
 
@@ -72,7 +73,7 @@ void yaht_connection::on_did_read()
         string name = packet.get_string("name");
         string id = packet.get_string("id");
 
-        game_->action_add_network_player(make_shared<yaht_player>(this, id, name));
+        game_->action_add_network_player(make_shared<player>(this, id, name));
 
         break;
     }
@@ -83,7 +84,7 @@ void yaht_connection::on_did_read()
 
         for (const json::object &player : players)
         {
-            game_->yaht_.add_player(make_shared<yaht_player>(this, player));
+            game_->yaht_.add_player(make_shared<::player>(this, player));
         }
 
         game_->action_joined_game();
@@ -98,7 +99,7 @@ void yaht_connection::on_did_read()
 
         game_->yaht_.set_current_player(player);
 
-        game_->set_state(&yaht_game::state_playing);
+        game_->set_state(&game::state_playing);
 
         game_->refresh(true);
 
@@ -107,28 +108,28 @@ void yaht_connection::on_did_read()
     }
 }
 
-void yaht_connection::on_will_write()
+void connection::on_will_write()
 {
 }
 
-void yaht_connection::on_did_write()
+void connection::on_did_write()
 {
 }
 
-yaht_connection_factory::yaht_connection_factory(yaht_game *game) : game_(game)
+connection_factory::connection_factory(game *game) : game_(game)
 {
 }
 
-std::shared_ptr<buffered_socket> yaht_connection_factory::create_socket(socket_server *server, SOCKET sock, const sockaddr_storage &addr)
+std::shared_ptr<buffered_socket> connection_factory::create_socket(socket_server *server, SOCKET sock, const sockaddr_storage &addr)
 {
-    auto socket = make_shared<yaht_connection>(game_, sock, addr);
+    auto socket = make_shared<connection>(game_, sock, addr);
 
     connections_.push_back(socket);
 
     return socket;
 }
 
-void yaht_connection_factory::for_connections(std::function<void(const shared_ptr<yaht_connection> &conn)> funk)
+void connection_factory::for_connections(std::function<void(const shared_ptr<connection> &conn)> funk)
 {
     for (const auto &c : connections_)
     {
@@ -136,17 +137,17 @@ void yaht_connection_factory::for_connections(std::function<void(const shared_pt
     }
 }
 
-yaht_client::yaht_client(yaht_game *game, SOCKET sock, const sockaddr_storage &addr) : yaht_connection(game, sock, addr), backgroundThread_(nullptr)
+client::client(game *game, SOCKET sock, const sockaddr_storage &addr) : connection(game, sock, addr), backgroundThread_(nullptr)
 {}
 
-yaht_client::yaht_client(yaht_game *game) : yaht_connection(game), backgroundThread_(nullptr)
+client::client(game *game) : connection(game), backgroundThread_(nullptr)
 {
 }
 
-yaht_client::yaht_client(yaht_client &&other) : yaht_connection(std::move(other)), backgroundThread_(std::move(other.backgroundThread_))
+client::client(client &&other) : connection(std::move(other)), backgroundThread_(std::move(other.backgroundThread_))
 {}
 
-yaht_client::~yaht_client()
+client::~client()
 {
     if (backgroundThread_ != nullptr)
     {
@@ -155,28 +156,28 @@ yaht_client::~yaht_client()
     }
 }
 
-yaht_client &yaht_client::operator=(yaht_client && other)
+client &client::operator=(client && other)
 {
-    yaht_connection::operator=(std::move(other));
+    connection::operator=(std::move(other));
 
     backgroundThread_ = std::move(other.backgroundThread_);
 
     return *this;
 }
 
-void yaht_client::on_connect()
+void client::on_connect()
 {
     json::object packet;
 
     packet.set_int("action", CLIENT_INIT);
 
-    packet.set_string("name", game_->yaht_.get_player(0)->name());
+    packet.set_string("name", game_->yaht_.get_player<player>(0)->name());
 
     writeln(packet.to_string());
 }
 
 
-bool yaht_client::start(const std::string &host, int port)
+bool client::start(const std::string &host, int port)
 {
     if (!connect(host, port))
         return false;
@@ -186,19 +187,19 @@ bool yaht_client::start(const std::string &host, int port)
     return true;
 }
 
-bool yaht_client::start_in_background(const std::string &host, int port)
+bool client::start_in_background(const std::string &host, int port)
 {
     if (!connect(host, port))
         return false;
 
     set_non_blocking(true);
 
-    backgroundThread_ = make_shared<thread>(&yaht_client::run, this);
+    backgroundThread_ = make_shared<thread>(&client::run, this);
 
     return true;
 }
 
-void yaht_client::run()
+void client::run()
 {
     std::chrono::milliseconds dura( 100 );
 

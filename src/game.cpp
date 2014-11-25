@@ -1,4 +1,5 @@
-#include "yaht_game.h"
+#include "game.h"
+#include "player.h"
 #include <cstring>
 #include <arg3/str_util.h>
 
@@ -6,51 +7,13 @@ using namespace arg3;
 
 using namespace std::placeholders;
 
-yaht_player::yaht_player(const string &name) : player(name), connection_(NULL), id_(generate_uuid())
-{}
-
-yaht_player::yaht_player(yaht_connection *conn, const string &id, const string &name) : player(name), connection_(conn), id_(id)
-{
-}
-
-yaht_player::yaht_player(yaht_connection *conn, const json::object &json) : player()
-{
-    from_json(json);
-}
-
-yaht_connection *yaht_player::connection() const
-{
-    return connection_;
-}
-
-string yaht_player::id() const
-{
-    return id_;
-}
-
-void yaht_player::from_json(const json::object &json)
-{
-    id_ = json.get_string("id");
-    set_name(json.get_string("name"));
-}
-
-json::object yaht_player::to_json() const
-{
-    json::object json;
-
-    json.set_string("id", id_);
-    json.set_string("name", name());
-
-    return json;
-}
-
-yaht_game::yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
+game::game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
     lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), helpbuf_size_(0), display_mode_(MINIMAL), num_players_(0),
     matchmaker_(this), flags_(0)
 {
 }
 
-void yaht_game::reset()
+void game::reset()
 {
     caca_game::reset();
 
@@ -92,36 +55,36 @@ void yaht_game::reset()
     matchmaker_.stop();
 }
 
-yaht_game::state_handler yaht_game::state() const
+game::state_handler game::state() const
 {
     return state_;
 }
 
-void yaht_game::recover_state()
+void game::recover_state()
 {
     state_ = last_state_;
 }
 
-void yaht_game::set_state(state_handler value)
+void game::set_state(state_handler value)
 {
     last_state_ = state_;
 
     state_ = value;
 }
 
-bool yaht_game::is_state(state_handler value)
+bool game::is_state(state_handler value)
 {
     return state_ == value;
 }
 
-void yaht_game::on_start()
+void game::on_start()
 {
-    set_state(&yaht_game::state_game_menu);
+    set_state(&game::state_game_menu);
 
     display_game_menu();
 }
 
-void yaht_game::display_game_menu()
+void game::display_game_menu()
 {
     display_alert([&](const alert_box & a)
     {
@@ -129,7 +92,7 @@ void yaht_game::display_game_menu()
     });
 }
 
-void yaht_game::display_ask_name()
+void game::display_ask_name()
 {
     display_alert([&](const alert_box & a)
     {
@@ -144,17 +107,17 @@ void yaht_game::display_ask_name()
     });
 }
 
-void yaht_game::display_ask_number_of_players()
+void game::display_ask_number_of_players()
 {
     display_alert("How many players?");
 }
 
-bool yaht_game::alive() const
+bool game::alive() const
 {
     return state_ != nullptr;
 }
 
-void yaht_game::display_multiplayer_menu()
+void game::display_multiplayer_menu()
 {
 
     display_alert([&](const alert_box & a)
@@ -169,7 +132,7 @@ void yaht_game::display_multiplayer_menu()
     });
 }
 
-void yaht_game::action_host_game()
+void game::action_host_game()
 {
     display_alert("Starting server...");
 
@@ -186,14 +149,14 @@ void yaht_game::action_host_game()
         return;
     }
 
-    set_state(&yaht_game::state_waiting_for_connections);
+    set_state(&game::state_waiting_for_connections);
 
     display_alert("Waiting for connections...");
 
     // TODO: add server listener to display connections
 }
 
-void yaht_game::action_join_game()
+void game::action_join_game()
 {
     // TODO: list available games.  maybe based on ip locations
 
@@ -212,7 +175,7 @@ void yaht_game::action_join_game()
     }
 }
 
-void yaht_game::action_joined_game()
+void game::action_joined_game()
 {
 
     char buf[BUFSIZ + 1] = {0};
@@ -223,7 +186,7 @@ void yaht_game::action_joined_game()
 
     int count = 1;
 
-    yaht_.for_players([&message, &buf, &count](const shared_ptr<player> &p)
+    yaht_.for_players<player>([&message, &buf, &count](const shared_ptr<player> &p)
     {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
@@ -236,7 +199,7 @@ void yaht_game::action_joined_game()
     display_alert(message);
 }
 
-void yaht_game::action_add_network_player(const shared_ptr<yaht_player> &player)
+void game::action_add_network_player(const shared_ptr<player> &player)
 {
     char buf[BUFSIZ + 1] = {0};
 
@@ -250,7 +213,7 @@ void yaht_game::action_add_network_player(const shared_ptr<yaht_player> &player)
 
     int count = 1;
 
-    yaht_.for_players([&message, &buf, &count](const shared_ptr<arg3::yaht::player> &p)
+    yaht_.for_players<::player>([&message, &buf, &count](const shared_ptr<::player> &p)
     {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
@@ -263,7 +226,7 @@ void yaht_game::action_add_network_player(const shared_ptr<yaht_player> &player)
     display_alert(message);
 }
 
-void yaht_game::action_remove_network_player(const shared_ptr<yaht_player> &p)
+void game::action_remove_network_player(const shared_ptr<player> &p)
 {
     yaht_.remove_player(p);
 
@@ -272,9 +235,9 @@ void yaht_game::action_remove_network_player(const shared_ptr<yaht_player> &p)
     matchmaker_.notify_player_left(p);
 }
 
-void yaht_game::refresh_display(bool reset)
+void game::refresh_display(bool reset)
 {
-    shared_ptr<player> player = yaht_.current_player();
+    shared_ptr<player> player = yaht_.current_player<::player>();
 
     if (player != nullptr && is_playing())
     {
@@ -301,14 +264,14 @@ void yaht_game::refresh_display(bool reset)
             break;
         case VERTICAL:
         {
-            scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
             display_lower_scores(player->score(), lower_score_total, 46, 28);
             put(0, 51, HELP);
             break;
         }
         case HORIZONTAL:
         {
-            scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
             display_lower_scores(player->score(), lower_score_total, 122, 2);
             put(76, 25, HELP);
             break;
@@ -320,12 +283,12 @@ void yaht_game::refresh_display(bool reset)
 }
 
 
-void yaht_game::display_already_scored()
+void game::display_already_scored()
 {
     display_alert(2000, "You've already scored that.");
 }
 
-void yaht_game::display_dice(shared_ptr<player> player, int x, int y)
+void game::display_dice(shared_ptr<yaht::player> player, int x, int y)
 {
     char buf[BUFSIZ + 1] = {0};
 
@@ -357,16 +320,16 @@ void yaht_game::display_dice(shared_ptr<player> player, int x, int y)
     put(xs, y, "Press '?' for help on how to score.");
 }
 
-void yaht_game::display_dice_roll()
+void game::display_dice_roll()
 {
     display_alert([&](const alert_box & box)
     {
-        display_dice(yaht_.current_player(), box.x(), box.y());
+        display_dice(yaht_.current_player<player>(), box.x(), box.y());
 
     });
 }
 
-void yaht_game::action_roll_dice()
+void game::action_roll_dice()
 {
     auto player = yaht_.current_player();
 
@@ -382,16 +345,16 @@ void yaht_game::action_roll_dice()
     }
 }
 
-void yaht_game::action_finish_turn()
+void game::action_finish_turn()
 {
-    set_state(&yaht_game::state_playing);
+    set_state(&game::state_playing);
 
     yaht_.next_player();
 
     refresh(true);
 }
 
-void yaht_game::action_select_die(shared_ptr<player> player, int d)
+void game::action_select_die(shared_ptr<yaht::player> player, int d)
 {
     if (player->is_kept(d))
         player->keep_die(d, false);
@@ -404,7 +367,7 @@ void yaht_game::action_select_die(shared_ptr<player> player, int d)
 }
 
 
-void yaht_game::action_lower_score(shared_ptr<player> player, scoresheet::type type)
+void game::action_lower_score(shared_ptr<yaht::player> player, yaht::scoresheet::type type)
 {
     if (!player->score().lower_score(type))
     {
@@ -418,7 +381,7 @@ void yaht_game::action_lower_score(shared_ptr<player> player, scoresheet::type t
     }
 }
 
-void yaht_game::action_score(shared_ptr<player> player, int n)
+void game::action_score(shared_ptr<yaht::player> player, int n)
 {
     if (!player->score().upper_score(n))
     {
@@ -432,7 +395,7 @@ void yaht_game::action_score(shared_ptr<player> player, int n)
     }
 }
 
-void yaht_game::action_score_best(shared_ptr<player> player)
+void game::action_score_best(shared_ptr<yaht::player> player)
 {
     auto best_upper = player->calculate_best_upper_score();
 
@@ -473,31 +436,31 @@ void yaht_game::action_score_best(shared_ptr<player> player)
 }
 
 
-void yaht_game::display_confirm_quit()
+void game::display_confirm_quit()
 {
     display_alert("Are you sure you want to quit? (Y/n)");
 }
 
-void yaht_game::on_resize(int width, int height)
+void game::on_resize(int width, int height)
 {
 }
 
-void yaht_game::on_quit()
+void game::on_quit()
 {
     state_ = nullptr;
 }
 
-void yaht_game::on_key_press(int input)
+void game::on_key_press(int input)
 {
     bind(state_, this, _1)(input);
 }
 
-bool yaht_game::is_playing()
+bool game::is_playing()
 {
-    return is_state(&yaht_game::state_playing);
+    return is_state(&game::state_playing);
 }
 
-void yaht_game::init_canvas(caca_canvas_t *canvas)
+void game::init_canvas(caca_canvas_t *canvas)
 {
     caca_canvas_t *temp = caca_create_canvas(0, 0);
 
@@ -557,24 +520,24 @@ void yaht_game::init_canvas(caca_canvas_t *canvas)
         break;
     }
 }
-void yaht_game::set_display_mode(display_mode mode)
+void game::set_display_mode(display_mode mode)
 {
     display_mode_ = mode;
 }
 
 
-void yaht_game::display_alert(function<void(const alert_box &a)> funk)
+void game::display_alert(function<void(const alert_box &a)> funk)
 {
     caca_game::display_alert(get_alert_x(), get_alert_y(), get_alert_w(), get_alert_h(), funk);
 }
 
-void yaht_game::display_alert(int millis, function<void(const alert_box &)> funk)
+void game::display_alert(int millis, function<void(const alert_box &)> funk)
 {
     display_alert(funk);
     pop_alert(millis);
 }
 
-void yaht_game::display_alert(const string &message)
+void game::display_alert(const string &message)
 {
     display_alert([&](const alert_box & a)
     {
@@ -582,14 +545,14 @@ void yaht_game::display_alert(const string &message)
     });
 }
 
-void yaht_game::display_alert(int millis, const string &message)
+void game::display_alert(int millis, const string &message)
 {
     display_alert(message);
 
     pop_alert(millis);
 }
 
-void yaht_game::display_alert(vector<string> messages)
+void game::display_alert(vector<string> messages)
 {
     display_alert([&](const alert_box & a)
     {
@@ -609,14 +572,14 @@ void yaht_game::display_alert(vector<string> messages)
     });
 }
 
-void yaht_game::display_alert(int millis, vector<string> messages)
+void game::display_alert(int millis, vector<string> messages)
 {
     display_alert(messages);
 
     pop_alert(millis);
 }
 
-int yaht_game::get_alert_x() const
+int game::get_alert_x() const
 {
     switch (display_mode_)
     {
@@ -627,7 +590,7 @@ int yaht_game::get_alert_x() const
     }
 }
 
-int yaht_game::get_alert_y() const
+int game::get_alert_y() const
 {
     switch (display_mode_)
     {
@@ -639,16 +602,16 @@ int yaht_game::get_alert_y() const
     }
 }
 
-int yaht_game::get_alert_w() const
+int game::get_alert_w() const
 {
     return 60;
 }
-int yaht_game::get_alert_h() const
+int game::get_alert_h() const
 {
     return 15;
 }
 
-void yaht_game::display_help()
+void game::display_help()
 {
     display_alert([&](const alert_box & a)
     {
@@ -656,27 +619,24 @@ void yaht_game::display_help()
     });
 }
 
-void yaht_game::for_players(std::function<void(const shared_ptr<yaht_player> &p)> funk)
+void game::for_players(std::function<void(const shared_ptr<player> &p)> funk)
 {
-    yaht_.for_players([&funk](const shared_ptr<arg3::yaht::player> &p)
+    yaht_.for_players<player>([&funk](const shared_ptr<player> &p)
     {
-        auto yp = dynamic_pointer_cast<yaht_player>(p);
-
-        if (yp)
-            funk(yp);
+        funk(p);
     });
 }
 
-shared_ptr<yaht_player> yaht_game::current_player()
+shared_ptr<player> game::current_player()
 {
-    return dynamic_pointer_cast<yaht_player>(yaht_.current_player());
+    return dynamic_pointer_cast<player>(yaht_.current_player());
 }
 
-shared_ptr<yaht_player> yaht_game::find_player_by_id(const string &id) const
+shared_ptr<player> game::find_player_by_id(const string &id) const
 {
     for (size_t i = 0; i < yaht_.number_of_players(); i++)
     {
-        auto player = dynamic_pointer_cast<yaht_player>(yaht_.get_player(i));
+        auto player = yaht_.get_player<::player>(i);
 
         if (player->id() == id) return player;
     }
@@ -684,11 +644,11 @@ shared_ptr<yaht_player> yaht_game::find_player_by_id(const string &id) const
     return nullptr;
 }
 
-scoresheet::value_type yaht_game::display_upper_scores(const scoresheet &score, int x, int y)
+yaht::scoresheet::value_type game::display_upper_scores(const yaht::scoresheet &score, int x, int y)
 {
-    scoresheet::value_type total_score = 0;
+    yaht::scoresheet::value_type total_score = 0;
 
-    for (int i = 0; i <= Constants::NUM_DICE; i++, y += 2)
+    for (int i = 0; i <= yaht::Constants::NUM_DICE; i++, y += 2)
     {
         auto value = score.upper_score(i + 1);
 
@@ -712,13 +672,13 @@ scoresheet::value_type yaht_game::display_upper_scores(const scoresheet &score, 
 
 }
 
-void yaht_game::display_lower_scores(const scoresheet &score, scoresheet::value_type lower_score_total, int x, int y)
+void game::display_lower_scores(const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
 {
-    scoresheet::value_type total_score = 0;
+    yaht::scoresheet::value_type total_score = 0;
 
-    for (int i = scoresheet::FIRST_TYPE; i < scoresheet::MAX_TYPE; i++)
+    for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++)
     {
-        scoresheet::type type = static_cast<scoresheet::type>(i);
+        yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
 
         auto value = score.lower_score(type);
 
@@ -731,9 +691,9 @@ void yaht_game::display_lower_scores(const scoresheet &score, scoresheet::value_
         default:
             y += 2;
             break;
-        case scoresheet::STRAIGHT_SMALL:
-        case scoresheet::STRAIGHT_BIG:
-        case scoresheet::YACHT:
+        case yaht::scoresheet::STRAIGHT_SMALL:
+        case yaht::scoresheet::STRAIGHT_BIG:
+        case yaht::scoresheet::YACHT:
             y += 3;
             break;
         }

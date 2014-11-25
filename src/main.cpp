@@ -1,12 +1,9 @@
 
 #include <stdlib.h>
-#include <iostream>
 
 #include "caca.h"
 
-#include "yaht_game.h"
-
-#include <cassert>
+#include "game.h"
 
 using namespace std;
 
@@ -14,7 +11,7 @@ using namespace arg3;
 
 int main(int argc, char **argv)
 {
-    yaht_game game;
+    ::game game;
 
     srand(time(0));
 

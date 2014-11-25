@@ -4,17 +4,17 @@
 #include <arg3net/socket_server.h>
 #include <arg3net/http_client.h>
 #include <string>
-#include "yaht_client.h"
+#include "client.h"
 #include <arg3dice/yaht/player.h>
 
-class yaht_game;
-class yaht_player;
+class game;
+class player;
 
 class matchmaker
 {
 public:
 
-    matchmaker(yaht_game *game);
+    matchmaker(game *game);
     matchmaker(const matchmaker &) = delete;
     matchmaker(matchmaker  &&other);
     matchmaker &operator=(const matchmaker &) = delete;
@@ -23,8 +23,8 @@ public:
     void stop();
     bool host(std::string *error = NULL, int port = INVALID);
     bool join_best_game(std::string *error = NULL);
-    void notify_player_joined(const shared_ptr<yaht_player> &p);
-    void notify_player_left(const shared_ptr<yaht_player> &p);
+    void notify_player_joined(const shared_ptr<player> &p);
+    void notify_player_left(const shared_ptr<player> &p);
     void notify_game_start();
 private:
 
@@ -36,10 +36,10 @@ private:
 
     std::string gameId_;
     arg3::net::http_client api_;
-    yaht_client client_;
-    yaht_connection_factory client_factory_;
+    client client_;
+    connection_factory client_factory_;
     arg3::net::socket_server server_;
-    yaht_game *game_;
+    game *game_;
 
 };
 

@@ -1,6 +1,7 @@
 #include "matchmaker.h"
 #include <arg3json/json.h>
-#include "yaht_game.h"
+#include "game.h"
+#include "player.h"
 
 using namespace arg3;
 
@@ -10,7 +11,7 @@ const char *matchmaker::GAME_API_URL = "connect.arg3.com";
 const char *matchmaker::GAME_API_URL = "localhost.arg3.com:1337";
 #endif
 
-matchmaker::matchmaker(yaht_game *game) : api_(GAME_API_URL), client_(game), client_factory_(game), server_(&client_factory_), game_(game)
+matchmaker::matchmaker(game *game) : api_(GAME_API_URL), client_(game), client_factory_(game), server_(&client_factory_), game_(game)
 {
 #ifndef DEBUG
     api_.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
@@ -144,18 +145,18 @@ void matchmaker::notify_game_start()
 
     json.set_string("start_id", game_->current_player()->id());
 
-    client_factory_.for_connections([&json](const shared_ptr<yaht_connection> &conn)
+    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
     {
         conn->writeln(json.to_string());
     });
 }
 
-void matchmaker::notify_player_joined(const shared_ptr<yaht_player> &p)
+void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 {
 
 }
 
-void matchmaker::notify_player_left(const shared_ptr<yaht_player> &p)
+void matchmaker::notify_player_left(const shared_ptr<player> &p)
 {
 
 }

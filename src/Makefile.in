@@ -78,7 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = yahtsee$(EXEEXT) rest$(EXEEXT)
+bin_PROGRAMS = yahtsee$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -95,21 +95,15 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_rest_OBJECTS = rest_client.$(OBJEXT)
-rest_OBJECTS = $(am_rest_OBJECTS)
-rest_LDADD = $(LDADD)
+am_yahtsee_OBJECTS = main.$(OBJEXT) game.$(OBJEXT) \
+	game_state.$(OBJEXT) caca_game.$(OBJEXT) alert_box.$(OBJEXT) \
+	matchmaker.$(OBJEXT) client.$(OBJEXT) player.$(OBJEXT)
+yahtsee_OBJECTS = $(am_yahtsee_OBJECTS)
+yahtsee_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-rest_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(rest_LDFLAGS) $(LDFLAGS) -o $@
-am_yahtsee_OBJECTS = main.$(OBJEXT) yaht_game.$(OBJEXT) \
-	game_state.$(OBJEXT) caca_game.$(OBJEXT) alert_box.$(OBJEXT) \
-	matchmaker.$(OBJEXT) yaht_client.$(OBJEXT)
-yahtsee_OBJECTS = $(am_yahtsee_OBJECTS)
-yahtsee_LDADD = $(LDADD)
 yahtsee_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(yahtsee_LDFLAGS) $(LDFLAGS) -o $@
@@ -147,8 +141,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(rest_SOURCES) $(yahtsee_SOURCES)
-DIST_SOURCES = $(rest_SOURCES) $(yahtsee_SOURCES)
+SOURCES = $(yahtsee_SOURCES)
+DIST_SOURCES = $(yahtsee_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -296,10 +290,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-yahtsee_SOURCES = main.cpp yaht_game.cpp game_state.cpp caca_game.cpp alert_box.cpp matchmaker.cpp yaht_client.cpp
+yahtsee_SOURCES = main.cpp game.cpp game_state.cpp caca_game.cpp alert_box.cpp matchmaker.cpp client.cpp player.cpp
 yahtsee_LDFLAGS = -lcaca -larg3dice -larg3net -larg3str -lpthread -larg3json -ljson
-rest_SOURCES = rest_client.cpp
-rest_LDFLAGS = -luriparser -larg3net -larg3json -ljson
 all: all-am
 
 .SUFFIXES:
@@ -384,10 +376,6 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-rest$(EXEEXT): $(rest_OBJECTS) $(rest_DEPENDENCIES) $(EXTRA_rest_DEPENDENCIES) 
-	@rm -f rest$(EXEEXT)
-	$(AM_V_CXXLD)$(rest_LINK) $(rest_OBJECTS) $(rest_LDADD) $(LIBS)
-
 yahtsee$(EXEEXT): $(yahtsee_OBJECTS) $(yahtsee_DEPENDENCIES) $(EXTRA_yahtsee_DEPENDENCIES) 
 	@rm -f yahtsee$(EXEEXT)
 	$(AM_V_CXXLD)$(yahtsee_LINK) $(yahtsee_OBJECTS) $(yahtsee_LDADD) $(LIBS)
@@ -400,12 +388,12 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alert_box.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caca_game.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/game.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/game_state.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/matchmaker.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rest_client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yaht_client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yaht_game.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/player.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
