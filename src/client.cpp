@@ -1,6 +1,5 @@
 #include "client.h"
 #include "player.h"
-#include <arg3dice/yaht/game.h>
 #include <arg3json/json.h>
 #include "game.h"
 
@@ -84,7 +83,7 @@ void connection::on_did_read()
 
         for (const json::object &player : players)
         {
-            game_->yaht_.add_player(make_shared<::player>(this, player));
+            game_->add_player(make_shared<::player>(this, player));
         }
 
         game_->action_joined_game();
@@ -97,7 +96,7 @@ void connection::on_did_read()
 
         auto player = game_->find_player_by_id(id);
 
-        game_->yaht_.set_current_player(player);
+        game_->set_current_player(player);
 
         game_->set_state(&game::state_playing);
 
@@ -171,7 +170,7 @@ void client::on_connect()
 
     packet.set_int("action", CLIENT_INIT);
 
-    packet.set_string("name", game_->yaht_.get_player<player>(0)->name());
+    packet.set_string("name", game_->get_player(0)->name());
 
     writeln(packet.to_string());
 }

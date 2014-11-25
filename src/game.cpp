@@ -7,9 +7,9 @@ using namespace arg3;
 
 using namespace std::placeholders;
 
-game::game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
-    lowerbuf_size_(0), menubuf_size_(0), headerbuf_size_(0), helpbuf_size_(0), display_mode_(MINIMAL), num_players_(0),
-    matchmaker_(this), flags_(0)
+game::game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbufSize_(0),
+    lowerbufSize_(0), menubufSize_(0), headerbufSize_(0), helpbufSize_(0), displayMode_(MINIMAL), numPlayers_(0),
+    matchmaker_(this), flags_(0), currentPlayer_(0)
 {
 }
 
@@ -21,35 +21,35 @@ void game::reset()
     {
         free(upperbuf_);
         upperbuf_ = NULL;
-        upperbuf_size_ = 0;
+        upperbufSize_ = 0;
     }
 
     if (lowerbuf_ != NULL)
     {
         free(lowerbuf_);
         lowerbuf_ = NULL;
-        lowerbuf_size_ = 0;
+        lowerbufSize_ = 0;
     }
 
     if (menubuf_ != NULL)
     {
         free(menubuf_);
         menubuf_ = NULL;
-        menubuf_size_ = 0;
+        menubufSize_ = 0;
     }
 
     if (helpbuf_ != NULL)
     {
         free(helpbuf_);
         helpbuf_ = NULL;
-        helpbuf_size_ = 0;
+        helpbufSize_ = 0;
     }
 
     if (headerbuf_ != NULL)
     {
         free(headerbuf_);
         headerbuf_ = NULL;
-        headerbuf_size_ = 0;
+        headerbufSize_ = 0;
     }
 
     matchmaker_.stop();
@@ -62,12 +62,12 @@ game::state_handler game::state() const
 
 void game::recover_state()
 {
-    state_ = last_state_;
+    state_ = lastState_;
 }
 
 void game::set_state(state_handler value)
 {
-    last_state_ = state_;
+    lastState_ = state_;
 
     state_ = value;
 }
@@ -88,7 +88,7 @@ void game::display_game_menu()
 {
     display_alert([&](const alert_box & a)
     {
-        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, menubuf_, menubuf_size_, "caca");
+        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, menubuf_, menubufSize_, "caca");
     });
 }
 
@@ -98,7 +98,7 @@ void game::display_ask_name()
     {
         char buf[BUFSIZ + 1] = {0};
 
-        snprintf(buf, BUFSIZ, "What is Player %zu's name?", yaht_.number_of_players() + 1);
+        snprintf(buf, BUFSIZ, "What is Player %zu's name?", players_.size() + 1);
 
         int mod = (strlen(buf) / 2);
 
@@ -186,11 +186,11 @@ void game::action_joined_game()
 
     int count = 1;
 
-    yaht_.for_players<player>([&message, &buf, &count](const shared_ptr<player> &p)
+    for (const auto &p : players_)
     {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
-    });
+    }
 
     message.push_back(" ");
 
@@ -203,7 +203,7 @@ void game::action_add_network_player(const shared_ptr<player> &player)
 {
     char buf[BUFSIZ + 1] = {0};
 
-    yaht_.add_player(player);
+    players_.push_back(player);
 
     matchmaker_.notify_player_joined(player);
 
@@ -213,11 +213,11 @@ void game::action_add_network_player(const shared_ptr<player> &player)
 
     int count = 1;
 
-    yaht_.for_players<::player>([&message, &buf, &count](const shared_ptr<::player> &p)
+    for (const auto &p : players_)
     {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
-    });
+    }
 
     message.push_back(" ");
 
@@ -228,16 +228,21 @@ void game::action_add_network_player(const shared_ptr<player> &player)
 
 void game::action_remove_network_player(const shared_ptr<player> &p)
 {
-    yaht_.remove_player(p);
+    auto it = find(players_.begin(), players_.end(), p);
 
-    display_alert(2000, p->name() + " has left.");
+    if (it != players_.end())
+    {
+        players_.erase(it);
 
-    matchmaker_.notify_player_left(p);
+        display_alert(2000, p->name() + " has left.");
+
+        matchmaker_.notify_player_left(p);
+    }
 }
 
 void game::refresh_display(bool reset)
 {
-    shared_ptr<player> player = yaht_.current_player<::player>();
+    shared_ptr<player> player = current_player();
 
     if (player != nullptr && is_playing())
     {
@@ -248,7 +253,7 @@ void game::refresh_display(bool reset)
 
         put(50, 2, player->name().c_str());
 
-        switch (display_mode_)
+        switch (displayMode_)
         {
         case MINIMAL:
             if (minimalLower_)
@@ -324,14 +329,14 @@ void game::display_dice_roll()
 {
     display_alert([&](const alert_box & box)
     {
-        display_dice(yaht_.current_player<player>(), box.x(), box.y());
+        display_dice(current_player(), box.x(), box.y());
 
     });
 }
 
 void game::action_roll_dice()
 {
-    auto player = yaht_.current_player();
+    auto player = current_player();
 
     if (player->roll_count() < 3)
     {
@@ -349,7 +354,7 @@ void game::action_finish_turn()
 {
     set_state(&game::state_playing);
 
-    yaht_.next_player();
+    next_player();
 
     refresh(true);
 }
@@ -466,7 +471,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     caca_import_canvas_from_file(temp, "upper.txt", "utf8");
 
-    upperbuf_ = caca_export_canvas_to_memory(temp, "caca", &upperbuf_size_);
+    upperbuf_ = caca_export_canvas_to_memory(temp, "caca", &upperbufSize_);
 
     caca_free_canvas(temp);
 
@@ -474,7 +479,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     caca_import_canvas_from_file(temp, "lower.txt", "utf8");
 
-    lowerbuf_ = caca_export_canvas_to_memory(temp, "caca", &lowerbuf_size_);
+    lowerbuf_ = caca_export_canvas_to_memory(temp, "caca", &lowerbufSize_);
 
     caca_free_canvas(temp);
 
@@ -482,7 +487,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     caca_import_canvas_from_file(temp, "menu.txt", "utf8");
 
-    menubuf_ = caca_export_canvas_to_memory(temp, "caca", &menubuf_size_);
+    menubuf_ = caca_export_canvas_to_memory(temp, "caca", &menubufSize_);
 
     caca_free_canvas(temp);
 
@@ -490,7 +495,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     caca_import_canvas_from_file(temp, "help.txt", "utf8");
 
-    helpbuf_ = caca_export_canvas_to_memory(temp, "caca", &helpbuf_size_);
+    helpbuf_ = caca_export_canvas_to_memory(temp, "caca", &helpbufSize_);
 
     caca_free_canvas(temp);
 
@@ -498,31 +503,31 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     caca_import_canvas_from_file(temp, "header.txt", "utf8");
 
-    headerbuf_ = caca_export_canvas_to_memory(temp, "caca", &headerbuf_size_);
+    headerbuf_ = caca_export_canvas_to_memory(temp, "caca", &headerbufSize_);
 
     caca_free_canvas(temp);
 
-    switch (display_mode_)
+    switch (displayMode_)
     {
     case VERTICAL:
-        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbuf_size_, "caca");
-        caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbuf_size_, "caca");
-        caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbuf_size_, "caca");
+        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbufSize_, "caca");
+        caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbufSize_, "caca");
+        caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbufSize_, "caca");
         break;
     case HORIZONTAL:
-        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbuf_size_, "caca");
-        caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbuf_size_, "caca");
-        caca_import_area_from_memory(canvas, 76, 1, lowerbuf_, lowerbuf_size_, "caca");
+        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbufSize_, "caca");
+        caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbufSize_, "caca");
+        caca_import_area_from_memory(canvas, 76, 1, lowerbuf_, lowerbufSize_, "caca");
         break;
     case MINIMAL:
-        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbuf_size_, "caca");
-        caca_import_area_from_memory(canvas, 0, 8, minimalLower_ ? lowerbuf_ : upperbuf_, minimalLower_ ? lowerbuf_size_ : upperbuf_size_, "caca");
+        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbufSize_, "caca");
+        caca_import_area_from_memory(canvas, 0, 8, minimalLower_ ? lowerbuf_ : upperbuf_, minimalLower_ ? lowerbufSize_ : upperbufSize_, "caca");
         break;
     }
 }
 void game::set_display_mode(display_mode mode)
 {
-    display_mode_ = mode;
+    displayMode_ = mode;
 }
 
 
@@ -581,7 +586,7 @@ void game::display_alert(int millis, vector<string> messages)
 
 int game::get_alert_x() const
 {
-    switch (display_mode_)
+    switch (displayMode_)
     {
     default:
         return 8;
@@ -592,7 +597,7 @@ int game::get_alert_x() const
 
 int game::get_alert_y() const
 {
-    switch (display_mode_)
+    switch (displayMode_)
     {
     case VERTICAL:
         return 20;
@@ -615,29 +620,59 @@ void game::display_help()
 {
     display_alert([&](const alert_box & a)
     {
-        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, helpbuf_, helpbuf_size_, "caca");
+        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, helpbuf_, helpbufSize_, "caca");
     });
 }
 
 void game::for_players(std::function<void(const shared_ptr<player> &p)> funk)
 {
-    yaht_.for_players<player>([&funk](const shared_ptr<player> &p)
+    for (const auto &p : players_)
     {
         funk(p);
-    });
+    }
 }
 
-shared_ptr<player> game::current_player()
+void game::add_player(const shared_ptr<player> &p)
 {
-    return dynamic_pointer_cast<player>(yaht_.current_player());
+    players_.push_back(p);
+}
+
+void game::next_player()
+{
+    if (++currentPlayer_ >= players_.size())
+        currentPlayer_ = 0;
+}
+
+shared_ptr<player> game::get_player(size_t index) const
+{
+    if (index >= players_.size()) return nullptr;
+
+    auto it = players_.begin() + index;
+
+    return *it;
+}
+
+void game::set_current_player(const shared_ptr<player> &p)
+{
+    auto it = find(players_.begin(), players_.end(), p);
+
+    if (it != players_.end())
+        currentPlayer_ = distance(players_.begin(), it);
+}
+
+shared_ptr<player> game::current_player() const
+{
+    size_t pSize = players_.size();
+
+    if (pSize == 0) return nullptr;
+
+    return players_[currentPlayer_];
 }
 
 shared_ptr<player> game::find_player_by_id(const string &id) const
 {
-    for (size_t i = 0; i < yaht_.number_of_players(); i++)
+    for (const auto &player : players_)
     {
-        auto player = yaht_.get_player<::player>(i);
-
         if (player->id() == id) return player;
     }
 

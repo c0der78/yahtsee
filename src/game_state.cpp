@@ -16,7 +16,7 @@ void game::state_ask_name(int ch)
     {
         string name = get_buffer();
 
-        yaht_.add_player(make_shared<player>(name));
+        players_.push_back(make_shared<player>(name));
 
         pop_alert();
 
@@ -30,7 +30,7 @@ void game::state_ask_name(int ch)
         {
             action_join_game();
         }
-        else if (yaht_.number_of_players() >= num_players_)
+        else if (players_.size() >= numPlayers_)
         {
             set_state(&game::state_playing);
         }
@@ -120,7 +120,13 @@ void game::state_ask_number_of_players(int input)
 {
     if (isdigit(input))
     {
-        num_players_ = input - '0';
+        numPlayers_ = input - '0';
+
+        if (numPlayers_ > 6)
+        {
+            display_alert(2000, "A game can have up to 6 players only.");
+            return;
+        }
 
         set_state(&game::state_ask_name);
         display_ask_name();
@@ -136,7 +142,7 @@ void game::state_waiting_for_connections(int input)
         display_multiplayer_menu();
         matchmaker_.stop();
     }
-    else if (tolower(input) == 's' && yaht_.number_of_players() > 1)
+    else if (tolower(input) == 's' && players_.size() > 1)
     {
         set_state(&game::state_playing);
 
@@ -168,27 +174,27 @@ void game::state_playing(int input)
     {
     case CACA_KEY_UP:
     {
-        int mode = display_mode_;
+        int mode = displayMode_;
         if (mode == MINIMAL)
-            display_mode_ = HORIZONTAL;
+            displayMode_ = HORIZONTAL;
         else
-            display_mode_ = static_cast<display_mode>(++mode);
+            displayMode_ = static_cast<display_mode>(++mode);
         refresh(true);
         return;
     }
     case CACA_KEY_DOWN:
     {
-        int mode = display_mode_;
+        int mode = displayMode_;
         if (mode == HORIZONTAL)
-            display_mode_ = MINIMAL;
+            displayMode_ = MINIMAL;
         else
-            display_mode_ = static_cast<display_mode>(--mode);
+            displayMode_ = static_cast<display_mode>(--mode);
         refresh(true);
         return;
     }
     case CACA_KEY_LEFT:
     case CACA_KEY_RIGHT:
-        if (display_mode_ == MINIMAL)
+        if (displayMode_ == MINIMAL)
         {
             minimalLower_ = !minimalLower_;
             refresh(true);
@@ -231,7 +237,7 @@ void game::state_rolling_dice(int input)
         refresh(true);
     }
 
-    auto player = yaht_.current_player();
+    auto player = current_player();
 
     if (isdigit(input))
     {

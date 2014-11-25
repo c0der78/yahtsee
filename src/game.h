@@ -3,7 +3,7 @@
 
 #include "caca_game.h"
 #include "matchmaker.h"
-#include <arg3dice/yaht/game.h>
+
 
 typedef enum
 {
@@ -11,6 +11,8 @@ typedef enum
     VERTICAL,
     MINIMAL
 } display_mode;
+
+class player;
 
 class game : public caca_game
 {
@@ -41,9 +43,16 @@ public:
 
     void on_key_press(int input);
 
-    shared_ptr<player> current_player();
+    shared_ptr<player> current_player() const;
 
     void for_players(std::function<void(const std::shared_ptr<player> &p)> funk);
+
+    void add_player(const shared_ptr<player> &p);
+
+    void set_current_player(const shared_ptr<player> &p);
+
+    shared_ptr<player> get_player(size_t index) const;
+
 private:
 
     /* states */
@@ -146,18 +155,21 @@ private:
 
     int get_alert_h() const;
 
+    void next_player();
+
     shared_ptr<player> find_player_by_id(const string &id) const;
 
     void *upperbuf_, *lowerbuf_, *menubuf_, *headerbuf_, *helpbuf_;
-    size_t upperbuf_size_, lowerbuf_size_, menubuf_size_, headerbuf_size_, helpbuf_size_;
-    state_handler state_, last_state_;
-    display_mode display_mode_;
+    size_t upperbufSize_, lowerbufSize_, menubufSize_, headerbufSize_, helpbufSize_;
+    state_handler state_, lastState_;
+    display_mode displayMode_;
     bool minimalLower_;
-    unsigned num_players_;
+    unsigned numPlayers_;
     matchmaker matchmaker_;
     int flags_;
 
-    arg3::yaht::game yaht_;
+    vector<shared_ptr<player>> players_;
+    int currentPlayer_;
 
     constexpr static const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
