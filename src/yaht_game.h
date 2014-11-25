@@ -4,6 +4,7 @@
 #include "caca_game.h"
 #include "matchmaker.h"
 #include <arg3dice/yaht/game.h>
+#include <arg3json/json.h>
 
 using namespace arg3::yaht;
 
@@ -20,12 +21,22 @@ class yaht_connection;
 class yaht_player : public arg3::yaht::player
 {
 public:
-    yaht_player(yaht_connection *conn, const string &name);
+    yaht_player(const string &name);
 
-    int id() const;
+    yaht_player(yaht_connection *conn, const string &id, const string &name);
+
+    yaht_player(yaht_connection *conn, const arg3::json::object &json);
+
+    string id() const;
+
+    void from_json(const arg3::json::object &json);
+    arg3::json::object to_json() const;
+
+    yaht_connection *connection() const;
 
 private:
     yaht_connection *connection_;
+    string id_;
 };
 
 class yaht_game : public caca_game
@@ -57,7 +68,9 @@ public:
 
     void on_key_press(int input);
 
+    shared_ptr<yaht_player> current_player();
 
+    void for_players(std::function<void(const std::shared_ptr<yaht_player> &p)> funk);
 private:
 
     /* states */
@@ -160,7 +173,7 @@ private:
 
     int get_alert_h() const;
 
-    shared_ptr<yaht_player> find_player_by_id(int id) const;
+    shared_ptr<yaht_player> find_player_by_id(const string &id) const;
 
     void *upperbuf_, *lowerbuf_, *menubuf_, *headerbuf_, *helpbuf_;
     size_t upperbuf_size_, lowerbuf_size_, menubuf_size_, headerbuf_size_, helpbuf_size_;

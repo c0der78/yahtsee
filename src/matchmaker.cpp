@@ -1,5 +1,6 @@
 #include "matchmaker.h"
 #include <arg3json/json.h>
+#include "yaht_game.h"
 
 using namespace arg3;
 
@@ -9,7 +10,7 @@ const char *matchmaker::GAME_API_URL = "connect.arg3.com";
 const char *matchmaker::GAME_API_URL = "localhost.arg3.com:1337";
 #endif
 
-matchmaker::matchmaker(yaht_game *game) : api_(GAME_API_URL), client_(game), client_factory_(game), server_(&client_factory_)
+matchmaker::matchmaker(yaht_game *game) : api_(GAME_API_URL), client_(game), client_factory_(game), server_(&client_factory_), game_(game)
 {
 #ifndef DEBUG
     api_.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
@@ -26,7 +27,7 @@ matchmaker::matchmaker(yaht_game *game) : api_(GAME_API_URL), client_(game), cli
 
 matchmaker::matchmaker(matchmaker &&other) :
     gameId_(std::move(other.gameId_)), api_(std::move(other.api_)), client_(std::move(other.client_)),
-    client_factory_(std::move(other.client_factory_)), server_(std::move(other.server_))
+    client_factory_(std::move(other.client_factory_)), server_(std::move(other.server_)), game_(other.game_)
 {
     client_.set_non_blocking(true);
 }
@@ -39,6 +40,7 @@ matchmaker &matchmaker::operator=(matchmaker && other)
     gameId_ = std::move(other.gameId_);
     api_ = std::move(other.api_);
     client_factory_ = std::move(other.client_factory_);
+    game_ = other.game_;
 
     return *this;
 }
@@ -78,9 +80,7 @@ bool matchmaker::join_best_game(string *error)
     if (response != net::http::OK)
     {
         if (error)
-        {
             *error = api_.response();
-        }
 
         return false;
     }
@@ -141,6 +141,8 @@ void matchmaker::notify_game_start()
     json::object json;
 
     json.set_int("action", GAME_START);
+
+    json.set_string("start_id", game_->current_player()->id());
 
     client_factory_.for_connections([&json](const shared_ptr<yaht_connection> &conn)
     {

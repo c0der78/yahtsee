@@ -13,7 +13,7 @@ void yaht_game::state_ask_name(int ch)
     {
         string name = get_buffer();
 
-        yaht_.add_player(make_shared<arg3::yaht::player>(name));
+        yaht_.add_player(make_shared<yaht_player>(name));
 
         pop_alert();
 

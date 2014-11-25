@@ -39,6 +39,7 @@ private:
     yaht_client client_;
     yaht_connection_factory client_factory_;
     arg3::net::socket_server server_;
+    yaht_game *game_;
 
 };
 

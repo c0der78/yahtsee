@@ -2,15 +2,46 @@
 #include <cstring>
 #include <arg3/str_util.h>
 
+using namespace arg3;
+
 using namespace std::placeholders;
 
-yaht_player::yaht_player(yaht_connection *conn, const string &name) : player(name), connection_(conn)
+yaht_player::yaht_player(const string &name) : player(name), connection_(NULL), id_(generate_uuid())
+{}
+
+yaht_player::yaht_player(yaht_connection *conn, const string &id, const string &name) : player(name), connection_(conn), id_(id)
 {
 }
 
-int yaht_player::id() const
+yaht_player::yaht_player(yaht_connection *conn, const json::object &json) : player()
 {
-    return connection_->raw_socket();
+    from_json(json);
+}
+
+yaht_connection *yaht_player::connection() const
+{
+    return connection_;
+}
+
+string yaht_player::id() const
+{
+    return id_;
+}
+
+void yaht_player::from_json(const json::object &json)
+{
+    id_ = json.get_string("id");
+    set_name(json.get_string("name"));
+}
+
+json::object yaht_player::to_json() const
+{
+    json::object json;
+
+    json.set_string("id", id_);
+    json.set_string("name", name());
+
+    return json;
 }
 
 yaht_game::yaht_game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbuf_size_(0),
@@ -566,7 +597,7 @@ void yaht_game::display_alert(vector<string> messages)
 
         int pos = 0;
 
-        for (const auto & msg : messages)
+        for (const auto &msg : messages)
         {
             if ( pos < ymod)
                 put(a.center_x() - (msg.length() / 2), a.center_y() - (ymod - pos), msg.c_str());
@@ -625,7 +656,23 @@ void yaht_game::display_help()
     });
 }
 
-shared_ptr<yaht_player> yaht_game::find_player_by_id(int id) const
+void yaht_game::for_players(std::function<void(const shared_ptr<yaht_player> &p)> funk)
+{
+    yaht_.for_players([&funk](const shared_ptr<arg3::yaht::player> &p)
+    {
+        auto yp = dynamic_pointer_cast<yaht_player>(p);
+
+        if (yp)
+            funk(yp);
+    });
+}
+
+shared_ptr<yaht_player> yaht_game::current_player()
+{
+    return dynamic_pointer_cast<yaht_player>(yaht_.current_player());
+}
+
+shared_ptr<yaht_player> yaht_game::find_player_by_id(const string &id) const
 {
     for (size_t i = 0; i < yaht_.number_of_players(); i++)
     {
