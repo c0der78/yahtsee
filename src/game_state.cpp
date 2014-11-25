@@ -9,7 +9,7 @@ void yaht_game::state_ask_name(int ch)
         return;
     }
 
-    if (ch == CACA_KEY_RETURN)
+    if (ch == CACA_KEY_RETURN || ch == 10)
     {
         string name = get_buffer();
 
