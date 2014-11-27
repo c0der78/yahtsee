@@ -61,7 +61,7 @@ void matchmaker::stop()
     {
         api_.set_payload(gameId_).post("api/v1/games/unregister");
 
-        if (api_.response_code() != net::http::OK)
+        if (api_.response().code() != net::http::OK)
             cerr << "Unable to unregister game!" << endl;
 
         gameId_.clear();
@@ -76,7 +76,7 @@ bool matchmaker::join_best_game(string *error)
 
     api_.set_payload(type.to_string()).post("api/v1/games/best");
 
-    int response = api_.response_code();
+    int response = api_.response().code();
 
     if (response != net::http::OK)
     {
@@ -123,7 +123,7 @@ bool matchmaker::host(string *error, int port)
 
     api_.set_payload(json.to_string()).post("api/v1/games/register");
 
-    int response = api_.response_code();
+    int response = api_.response().code();
 
     if (response != arg3::net::http::OK)
     {
@@ -131,7 +131,7 @@ bool matchmaker::host(string *error, int port)
             *error = api_.response();
 
         server_.stop();
-        
+
         return false;
     }
 
