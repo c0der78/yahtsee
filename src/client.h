@@ -56,6 +56,7 @@ public:
     client &operator=(client && other);
 
     virtual void on_connect();
+    virtual void on_close();
 
     bool start_in_background(const std::string &host, int port);
     bool start(const std::string &host, int port);

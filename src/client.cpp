@@ -50,6 +50,7 @@ void connection::on_connect()
 
 void connection::on_close()
 {
+    game_->action_remove_network_player(this);
 }
 
 void connection::on_will_read()
@@ -66,7 +67,7 @@ void connection::on_did_read()
 
     switch (action)
     {
-    /* client is the person joining */
+        /* client is the person joining */
     case CLIENT_INIT:
     {
         string name = packet.get_string("name");
@@ -81,7 +82,7 @@ void connection::on_did_read()
     {
         json::array players = packet.get_array("players");
 
-        for (const json::object &player : players)
+        for (const json::object & player : players)
         {
             game_->add_player(make_shared<::player>(this, player));
         }
@@ -130,7 +131,7 @@ std::shared_ptr<buffered_socket> connection_factory::create_socket(socket_server
 
 void connection_factory::for_connections(std::function<void(const shared_ptr<connection> &conn)> funk)
 {
-    for (const auto &c : connections_)
+    for (const auto & c : connections_)
     {
         funk(c);
     }
@@ -175,6 +176,10 @@ void client::on_connect()
     writeln(packet.to_string());
 }
 
+void client::on_close()
+{
+    game_->action_disconnected();
+}
 
 bool client::start(const std::string &host, int port)
 {
@@ -206,12 +211,14 @@ void client::run()
     {
         if (!read_to_buffer())
         {
-            std::this_thread::sleep_for( dura );
+            close();
+            break;
         }
 
         if (!write_from_buffer())
         {
-            std::this_thread::sleep_for( dura );
+            close();
+            break;
         }
 
         std::this_thread::sleep_for( dura );

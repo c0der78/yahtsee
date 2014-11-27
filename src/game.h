@@ -115,7 +115,7 @@ private:
 
     void action_add_network_player(const shared_ptr<player> &p);
 
-    void action_remove_network_player(const shared_ptr<player> &p);
+    void action_remove_network_player(connection *c);
 
     void action_joined_game();
 
@@ -134,6 +134,8 @@ private:
     void action_score_best(shared_ptr<arg3::yaht::player> player);
 
     void action_finish_turn();
+
+    void action_disconnected();
 
     /* misc */
 
