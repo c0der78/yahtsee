@@ -85,9 +85,9 @@ private:
 
     void display_alert(int millis, const string &message);
 
-    void display_alert(vector<string> messages);
+    void display_alert(const vector<string> &messages);
 
-    void display_alert(int millis, vector<string> messages);
+    void display_alert(int millis, const vector<string> &messages);
 
     void display_already_scored();
 

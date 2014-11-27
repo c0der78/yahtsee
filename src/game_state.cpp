@@ -18,8 +18,6 @@ void game::state_ask_name(int ch)
 
         players_.push_back(make_shared<player>(name));
 
-        pop_alert();
-
         clear();
 
         if (flags_ & FLAG_HOSTING)
@@ -62,7 +60,6 @@ void game::state_help_menu(int ch)
     if (ch == CACA_KEY_ESCAPE || tolower(ch) == 'q')
     {
         recover_state();
-        pop_alert();
         refresh(is_playing());
     }
 }
@@ -95,7 +92,6 @@ void game::state_multiplayer_menu(int input)
 {
     if (input == CACA_KEY_ESCAPE)
     {
-        pop_alert();
         set_state(&game::state_game_menu);
         display_game_menu();
         return;
@@ -137,10 +133,9 @@ void game::state_waiting_for_connections(int input)
 {
     if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
     {
-        pop_alert();
+        matchmaker_.stop();
         set_state(&game::state_multiplayer_menu);
         display_multiplayer_menu();
-        matchmaker_.stop();
     }
     else if (tolower(input) == 's' && players_.size() > 1)
     {
@@ -156,7 +151,6 @@ void game::state_quit_confirm(int input)
 {
     if (tolower(input) == 'n')
     {
-        pop_alert();
         recover_state();
         refresh(is_playing());
     }
@@ -233,7 +227,6 @@ void game::state_rolling_dice(int input)
     if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
     {
         set_state(&game::state_playing);
-        pop_alert();
         refresh(true);
     }
 

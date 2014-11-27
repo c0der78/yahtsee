@@ -63,6 +63,10 @@ game::state_handler game::state() const
 void game::recover_state()
 {
     state_ = lastState_;
+
+    clear_alerts();
+
+    clear_events();
 }
 
 void game::set_state(state_handler value)
@@ -70,6 +74,10 @@ void game::set_state(state_handler value)
     lastState_ = state_;
 
     state_ = value;
+
+    clear_alerts();
+
+    clear_events();
 }
 
 bool game::is_state(state_handler value)
@@ -144,6 +152,8 @@ void game::action_host_game()
     if (!response)
     {
         display_alert(2000, { "Unable to register game at this time.", error } );
+
+        players_.clear();
 
         return;
     }
@@ -584,7 +594,7 @@ void game::display_alert(int millis, const string &message)
     pop_alert(millis);
 }
 
-void game::display_alert(vector<string> messages)
+void game::display_alert(const vector<string> &messages)
 {
     display_alert([&](const alert_box & a)
     {
@@ -604,7 +614,7 @@ void game::display_alert(vector<string> messages)
     });
 }
 
-void game::display_alert(int millis, vector<string> messages)
+void game::display_alert(int millis, const vector<string> &messages)
 {
     display_alert(messages);
 

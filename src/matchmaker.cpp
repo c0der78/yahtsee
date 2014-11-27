@@ -129,6 +129,9 @@ bool matchmaker::host(string *error, int port)
     {
         if (error)
             *error = api_.response();
+
+        server_.stop();
+        
         return false;
     }
 

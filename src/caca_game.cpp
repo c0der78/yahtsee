@@ -33,7 +33,14 @@ bool game_event::ready() const
 }
 void game_event::perform() const
 {
-    callback_();
+    if(callback_ != nullptr)
+        callback_();
+}
+
+void game_event::clear()
+{
+    callback_ = nullptr;
+    ready_ = true;
 }
 
 void game_event::wait()
@@ -65,6 +72,10 @@ void caca_game::reset()
         caca_free_display(display_);
         display_ = NULL;
     }
+
+    clear_alerts();
+
+    clear_events();
 }
 
 void caca_game::start()
@@ -152,12 +163,22 @@ void caca_game::clear()
     init_canvas(canvas_);
 
     clear_alerts();
+
+    clear_events();
 }
 
 void caca_game::clear_alerts()
 {
     while (!alert_boxes_.empty())
         alert_boxes_.pop();
+}
+
+void caca_game::clear_events()
+{
+    for(auto &e : timed_events_)
+    {
+        e.clear();
+    }
 }
 
 void caca_game::set_cursor(int x, int y)

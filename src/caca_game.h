@@ -21,6 +21,7 @@ public:
     game_event &operator=(game_event && );
     bool ready() const;
     void perform() const;
+    void clear();
 private:
     void wait();
     unsigned millis_;
@@ -77,6 +78,8 @@ public:
     void pop_alert(int millis, std::function<void()> funk = nullptr);
 
     void clear_alerts();
+
+    void clear_events();
 
     void new_frame();
 
