@@ -155,6 +155,8 @@ void game::action_host_game()
 
         players_.clear();
 
+        flags_ = 0;
+
         return;
     }
 
@@ -180,21 +182,24 @@ void game::action_join_game()
     if (!result)
     {
         display_alert(2000, {"Unable to find game to join at this time.", error});
+
+        players_.clear();
+
+        flags_ = 0;
+
         return;
     }
 }
 
-void game::action_joined_game()
+void game::display_client_waiting_to_start()
 {
     char buf[BUFSIZ + 1] = {0};
-
-    pop_alert();
 
     vector<string> message;
 
     int count = 1;
 
-    for (const auto & p : players_)
+    for (const auto &p : players_)
     {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
@@ -207,9 +212,16 @@ void game::action_joined_game()
     display_alert(message);
 }
 
+void game::action_joined_game()
+{
+    pop_alert();
+
+    display_client_waiting_to_start();
+}
+
 void game::action_disconnected()
 {
-    if(!alive()) return;
+    if (!alive()) return;
 
     clear_alerts();
 
@@ -234,7 +246,7 @@ void game::action_add_network_player(const shared_ptr<player> &player)
 
     int count = 1;
 
-    for (const auto & p : players_)
+    for (const auto &p : players_)
     {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
@@ -276,6 +288,31 @@ void game::action_remove_network_player(connection *c)
         matchmaker_.notify_player_left(p);
 
     }
+}
+
+void game::action_network_player_joined(const shared_ptr<player> &p)
+{
+    players_.push_back(p);
+
+    display_client_waiting_to_start();
+}
+
+void game::action_network_player_left(const shared_ptr<player> &p)
+{
+    auto it = remove_if(players_.begin(), players_.end(), [&p](const shared_ptr<player> &o)
+    {
+        return p->id() == o->id();
+    });
+
+    if (it == players_.end()) return;
+
+    players_.erase(it, players_.end());
+
+    char buf[BUFSIZ + 1] = {0};
+
+    snprintf(buf, BUFSIZ, "%s has left the game.", p->name().c_str());
+
+    display_alert(2000, buf);
 }
 
 void game::refresh_display(bool reset)
@@ -602,7 +639,7 @@ void game::display_alert(const vector<string> &messages)
 
         int pos = 0;
 
-        for (const auto & msg : messages)
+        for (const auto &msg : messages)
         {
             if ( pos < ymod)
                 put(a.center_x() - (msg.length() / 2), a.center_y() - (ymod - pos), msg.c_str());
@@ -663,7 +700,7 @@ void game::display_help()
 
 void game::for_players(std::function<void(const shared_ptr<player> &p)> funk)
 {
-    for (const auto & p : players_)
+    for (const auto &p : players_)
     {
         funk(p);
     }
@@ -708,7 +745,7 @@ shared_ptr<player> game::current_player() const
 
 shared_ptr<player> game::find_player_by_id(const string &id) const
 {
-    for (const auto & player : players_)
+    for (const auto &player : players_)
     {
         if (player->id() == id) return player;
     }

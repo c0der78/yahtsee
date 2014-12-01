@@ -10,7 +10,7 @@ class game;
 
 typedef enum
 {
-    CONNECTION_INIT, CLIENT_INIT, GAME_START
+    CONNECTION_INIT, CLIENT_INIT, GAME_START, PLAYER_JOINED, PLAYER_LEFT
 } client_action;
 
 /*!

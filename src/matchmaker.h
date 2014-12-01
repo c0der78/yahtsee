@@ -28,6 +28,8 @@ public:
     void notify_game_start();
 private:
 
+    void unregister();
+
     constexpr static const char *GAME_TYPE = "yahtsee";
 
     static const char *GAME_API_URL;

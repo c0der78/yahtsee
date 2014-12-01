@@ -2,6 +2,7 @@
 #include "player.h"
 #include <arg3json/json.h>
 #include "game.h"
+#include "log.h"
 
 using namespace arg3;
 using namespace arg3::net;
@@ -45,6 +46,8 @@ void connection::on_connect()
 
     packet.set_array("players", players);
 
+    logf("initializing connection with %s", packet.to_string().c_str());
+
     writeln(packet.to_string());
 }
 
@@ -67,7 +70,7 @@ void connection::on_did_read()
 
     switch (action)
     {
-        /* client is the person joining */
+    /* client is the person joining */
     case CLIENT_INIT:
     {
         string name = packet.get_string("name");
@@ -75,14 +78,48 @@ void connection::on_did_read()
 
         game_->action_add_network_player(make_shared<player>(this, id, name));
 
+        logf("client game init");
+        break;
+    }
+    case PLAYER_JOINED:
+    {
+        json::object player = packet.get("player");
+
+        string name = player.get_string("name");
+        string id = player.get_string("id");
+
+        auto p = make_shared<::player>(this, player);
+
+        game_->action_network_player_joined(p);
+
+        logf("client player joined");
+
+        break;
+    }
+    case PLAYER_LEFT:
+    {
+        json::object player = packet.get("player");
+
+        string id = player.get_string("id");
+
+        auto p = game_->find_player_by_id(id);
+
+        if (p != nullptr)
+            game_->action_network_player_left(p);
+
+        logf("client player left");
+
         break;
     }
     /* connection is someone connect to the server */
     case CONNECTION_INIT:
     {
+
+        logf("client joined game with %s", packet.to_string().c_str());
+
         json::array players = packet.get_array("players");
 
-        for (const json::object & player : players)
+        for (const json::object &player : players)
         {
             game_->add_player(make_shared<::player>(this, player));
         }
@@ -97,11 +134,14 @@ void connection::on_did_read()
 
         auto player = game_->find_player_by_id(id);
 
-        game_->set_current_player(player);
+        if (player != nullptr)
+            game_->set_current_player(player);
 
         game_->set_state(&game::state_playing);
 
         game_->refresh(true);
+
+        logf("client game started.");
 
         break;
     }
@@ -131,7 +171,7 @@ std::shared_ptr<buffered_socket> connection_factory::create_socket(socket_server
 
 void connection_factory::for_connections(std::function<void(const shared_ptr<connection> &conn)> funk)
 {
-    for (const auto & c : connections_)
+    for (const auto &c : connections_)
     {
         funk(c);
     }
@@ -205,7 +245,7 @@ bool client::start_in_background(const std::string &host, int port)
 
 void client::run()
 {
-    std::chrono::milliseconds dura( 100 );
+    std::chrono::milliseconds dura( 200 );
 
     while (is_valid())
     {
@@ -223,4 +263,6 @@ void client::run()
 
         std::this_thread::sleep_for( dura );
     }
+
+    logf("client finished.");
 }

@@ -133,6 +133,7 @@ void game::state_waiting_for_connections(int input)
 {
     if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
     {
+        flags_ = 0;
         matchmaker_.stop();
         set_state(&game::state_multiplayer_menu);
         display_multiplayer_menu();

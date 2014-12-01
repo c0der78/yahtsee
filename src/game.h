@@ -111,6 +111,8 @@ private:
 
     void display_lower_scores(const arg3::yaht::scoresheet &score, arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
 
+    void display_client_waiting_to_start();
+
     /* actions */
 
     void action_add_network_player(const shared_ptr<player> &p);
@@ -122,6 +124,10 @@ private:
     void action_host_game();
 
     void action_join_game();
+
+    void action_network_player_joined(const shared_ptr<player> &p);
+
+    void action_network_player_left(const shared_ptr<player> &p);
 
     void action_roll_dice();
 

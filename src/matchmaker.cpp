@@ -2,6 +2,7 @@
 #include <arg3json/json.h>
 #include "game.h"
 #include "player.h"
+#include "log.h"
 
 using namespace arg3;
 
@@ -17,13 +18,17 @@ matchmaker::matchmaker(game *game) : api_(GAME_API_URL), client_(game), client_f
     api_.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
 
     api_.add_header("X-Application-Token", "78ed4bfb42f54c9fa7ac62873d37228e");
+
 #else
     api_.add_header("X-Application-Id", "8846b98d082d440b8d6024d723d7bc24");
 
     api_.add_header("X-Application-Token", "ac8afc408f284eedad323e1ddd5c17e4");
-#endif
-    api_.add_header("Content-Type", "application/json");
 
+    api_.add_header("X-Jersey-Trace-Accept", "true");
+#endif
+    api_.add_header("Content-Type", "application/json; charset=UTF-8");
+
+    api_.add_header("Accept", "application/json, */*");
 }
 
 matchmaker::matchmaker(matchmaker &&other) :
@@ -57,15 +62,7 @@ void matchmaker::stop()
 
     client_.close();
 
-    if (!gameId_.empty())
-    {
-        api_.set_payload(gameId_).post("api/v1/games/unregister");
-
-        if (api_.response().code() != net::http::OK)
-            cerr << "Unable to unregister game!" << endl;
-
-        gameId_.clear();
-    }
+    unregister();
 }
 
 bool matchmaker::join_best_game(string *error)
@@ -104,6 +101,8 @@ bool matchmaker::join_best_game(string *error)
             *error = buf;
     }
 
+    logf("joining game");
+
     return rval;
 }
 
@@ -137,7 +136,24 @@ bool matchmaker::host(string *error, int port)
 
     gameId_ = api_.response();
 
+    logf("hosting game");
+
     return true;
+}
+
+void matchmaker::unregister()
+{
+    if (!gameId_.empty())
+    {
+        api_.set_payload(gameId_).post("api/v1/games/unregister");
+
+        if (api_.response().code() != net::http::OK)
+            logf("Unable to unregister game");
+        else
+            logf("game unregistered");
+
+        gameId_.clear();
+    }
 }
 
 void matchmaker::notify_game_start()
@@ -152,14 +168,40 @@ void matchmaker::notify_game_start()
     {
         conn->writeln(json.to_string());
     });
+
+    logf("notify game started");
+
+    unregister();
 }
 
 void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 {
+    json::object json;
 
+    json.set_int("action", PLAYER_JOINED);
+
+    json.set_string("player", p->to_json());
+
+    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    {
+        conn->writeln(json.to_string());
+    });
+
+    logf("notify player joined");
 }
 
 void matchmaker::notify_player_left(const shared_ptr<player> &p)
 {
+    json::object json;
 
+    json.set_int("action", PLAYER_LEFT);
+
+    json.set_string("player", p->to_json());
+
+    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    {
+        conn->writeln(json.to_string());
+    });
+
+    logf("notify player left");
 }
