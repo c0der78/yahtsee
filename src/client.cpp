@@ -14,8 +14,7 @@ connection::connection(game *game) : buffered_socket(), game_(game)
 {
 }
 
-connection::connection(connection &&other) : buffered_socket(std::move(other)),
-    game_(other.game_)
+connection::connection(connection &&other) : buffered_socket(std::move(other)), game_(other.game_)
 {}
 
 connection::~connection()
@@ -46,7 +45,7 @@ void connection::on_connect()
 
     packet.set_array("players", players);
 
-    logf("initializing connection with %s", packet.to_string().c_str());
+    logf("writing new connection %s", packet.to_string().c_str());
 
     writeln(packet.to_string());
 }
@@ -66,34 +65,39 @@ void connection::on_did_read()
 
     packet.parse(readln());
 
+    logf("recieved packet %s", packet.to_string().c_str());
+
     client_action action = (client_action) packet.get_int("action");
 
     switch (action)
     {
-    /* client is the person joining */
     case CLIENT_INIT:
     {
         string name = packet.get_string("name");
         string id = packet.get_string("id");
 
+        logf("action client init");
+
         game_->action_add_network_player(make_shared<player>(this, id, name));
 
-        logf("client game init");
         break;
     }
     case PLAYER_JOINED:
     {
         json::object player = packet.get("player");
 
-        string name = player.get_string("name");
         string id = player.get_string("id");
 
-        auto p = make_shared<::player>(this, player);
+        if (id != game_->this_player()->id())
+        {
+            string name = player.get_string("name");
 
-        game_->action_network_player_joined(p);
+            auto p = make_shared<::player>(this, player);
 
-        logf("client player joined");
+            game_->action_network_player_joined(p);
 
+            logf("action player joined");
+        }
         break;
     }
     case PLAYER_LEFT:
@@ -102,20 +106,22 @@ void connection::on_did_read()
 
         string id = player.get_string("id");
 
-        auto p = game_->find_player_by_id(id);
+        if (id != game_->this_player()->id())
+        {
+            auto p = game_->find_player_by_id(id);
 
-        if (p != nullptr)
-            game_->action_network_player_left(p);
+            if (p != nullptr)
+                game_->action_network_player_left(p);
 
-        logf("client player left");
+            logf("action player left");
+        }
 
         break;
     }
     /* connection is someone connect to the server */
     case CONNECTION_INIT:
     {
-
-        logf("client joined game with %s", packet.to_string().c_str());
+        logf("action connection init");
 
         json::array players = packet.get_array("players");
 
@@ -141,7 +147,7 @@ void connection::on_did_read()
 
         game_->refresh(true);
 
-        logf("client game started.");
+        logf("action game started");
 
         break;
     }
@@ -154,6 +160,7 @@ void connection::on_will_write()
 
 void connection::on_did_write()
 {
+    logf("wrote to socket");
 }
 
 connection_factory::connection_factory(game *game) : game_(game)
@@ -211,7 +218,9 @@ void client::on_connect()
 
     packet.set_int("action", CLIENT_INIT);
 
-    packet.set_string("name", game_->get_player(0)->name());
+    packet.set_string("name", game_->this_player()->name());
+
+    packet.set_string("id", game_->this_player()->id());
 
     writeln(packet.to_string());
 }

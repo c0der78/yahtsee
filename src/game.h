@@ -53,6 +53,7 @@ public:
 
     shared_ptr<player> get_player(size_t index) const;
 
+    shared_ptr<player> this_player() const;
 private:
 
     /* states */

@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     {
         game.update();
 
-        usleep(100);
+        usleep(50);
     }
 
     game.reset();

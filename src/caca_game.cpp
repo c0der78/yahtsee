@@ -33,7 +33,7 @@ bool game_event::ready() const
 }
 void game_event::perform() const
 {
-    if(callback_ != nullptr)
+    if (callback_ != nullptr)
         callback_();
 }
 
@@ -175,7 +175,7 @@ void caca_game::clear_alerts()
 
 void caca_game::clear_events()
 {
-    for(auto &e : timed_events_)
+    for (auto &e : timed_events_)
     {
         e.clear();
     }

@@ -2,6 +2,7 @@
 #include "player.h"
 #include <cstring>
 #include <arg3/str_util.h>
+#include "log.h"
 
 using namespace arg3;
 
@@ -51,8 +52,6 @@ void game::reset()
         headerbuf_ = NULL;
         headerbufSize_ = 0;
     }
-
-    matchmaker_.stop();
 }
 
 game::state_handler game::state() const
@@ -92,227 +91,9 @@ void game::on_start()
     display_game_menu();
 }
 
-void game::display_game_menu()
-{
-    display_alert([&](const alert_box & a)
-    {
-        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, menubuf_, menubufSize_, "caca");
-    });
-}
-
-void game::display_ask_name()
-{
-    display_alert([&](const alert_box & a)
-    {
-        char buf[BUFSIZ + 1] = {0};
-
-        snprintf(buf, BUFSIZ, "What is Player %zu's name?", players_.size() + 1);
-
-        int mod = (strlen(buf) / 2);
-
-        put(a.center_x() - mod, a.center_y() - 1, buf);
-        set_cursor(a.center_x() - mod, a.center_y());
-    });
-}
-
-void game::display_ask_number_of_players()
-{
-    display_alert("How many players?");
-}
-
 bool game::alive() const
 {
     return state_ != nullptr;
-}
-
-void game::display_multiplayer_menu()
-{
-    display_alert([&](const alert_box & a)
-    {
-        string buf1 = "'h' : host a game";
-        string buf2 = "'j' : join a game";
-
-        int xmod = min(buf1.length() / 2, buf2.length() / 2);
-
-        put(a.center_x() - xmod, a.center_y() - 1, buf1.c_str());
-        put(a.center_x() - xmod, a.center_y(), buf2.c_str());
-    });
-}
-
-void game::action_host_game()
-{
-    display_alert("Starting server...");
-
-    string error;
-
-    bool response = matchmaker_.host(&error);
-
-    pop_alert(); // done registration
-
-    if (!response)
-    {
-        display_alert(2000, { "Unable to register game at this time.", error } );
-
-        players_.clear();
-
-        flags_ = 0;
-
-        return;
-    }
-
-    set_state(&game::state_waiting_for_connections);
-
-    display_alert("Waiting for connections...");
-
-    // TODO: add server listener to display connections
-}
-
-void game::action_join_game()
-{
-    // TODO: list available games.  maybe based on ip locations
-
-    display_alert("Finding game to join...");
-
-    string error;
-
-    bool result = matchmaker_.join_best_game(&error);
-
-    pop_alert();
-
-    if (!result)
-    {
-        display_alert(2000, {"Unable to find game to join at this time.", error});
-
-        players_.clear();
-
-        flags_ = 0;
-
-        return;
-    }
-}
-
-void game::display_client_waiting_to_start()
-{
-    char buf[BUFSIZ + 1] = {0};
-
-    vector<string> message;
-
-    int count = 1;
-
-    for (const auto &p : players_)
-    {
-        snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
-        message.push_back(buf);
-    }
-
-    message.push_back(" ");
-
-    message.push_back("Waiting for host to start game...");
-
-    display_alert(message);
-}
-
-void game::action_joined_game()
-{
-    pop_alert();
-
-    display_client_waiting_to_start();
-}
-
-void game::action_disconnected()
-{
-    if (!alive()) return;
-
-    clear_alerts();
-
-    display_alert(2000, "Disconnected from server.");
-
-    set_state(&game::state_game_menu);
-
-    display_game_menu();
-}
-
-void game::action_add_network_player(const shared_ptr<player> &player)
-{
-    char buf[BUFSIZ + 1] = {0};
-
-    players_.push_back(player);
-
-    matchmaker_.notify_player_joined(player);
-
-    pop_alert();
-
-    vector<string> message;
-
-    int count = 1;
-
-    for (const auto &p : players_)
-    {
-        snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
-        message.push_back(buf);
-    }
-
-    message.push_back(" ");
-
-    message.push_back("Waiting for more players, press 's' to start the game.");
-
-    display_alert(message);
-}
-
-void game::action_remove_network_player(connection *c)
-{
-    auto it = find_if(players_.begin(), players_.end(), [&c](const shared_ptr<player> &p)
-    {
-        return p->connect1on() == c;
-    });
-
-    if (it != players_.end())
-    {
-        auto p = *it;
-
-        players_.erase(it);
-
-        if (players_.size() == 0)
-        {
-            players_.clear();
-
-            set_state(&game::state_game_menu);
-
-            display_game_menu();
-
-            clear_alerts();
-
-        }
-        display_alert(2000, p->name() + " has left.");
-
-        matchmaker_.notify_player_left(p);
-
-    }
-}
-
-void game::action_network_player_joined(const shared_ptr<player> &p)
-{
-    players_.push_back(p);
-
-    display_client_waiting_to_start();
-}
-
-void game::action_network_player_left(const shared_ptr<player> &p)
-{
-    auto it = remove_if(players_.begin(), players_.end(), [&p](const shared_ptr<player> &o)
-    {
-        return p->id() == o->id();
-    });
-
-    if (it == players_.end()) return;
-
-    players_.erase(it, players_.end());
-
-    char buf[BUFSIZ + 1] = {0};
-
-    snprintf(buf, BUFSIZ, "%s has left the game.", p->name().c_str());
-
-    display_alert(2000, buf);
 }
 
 void game::refresh_display(bool reset)
@@ -360,164 +141,6 @@ void game::refresh_display(bool reset)
 
     }
 
-}
-
-void game::display_already_scored()
-{
-    display_alert(2000, "You've already scored that.");
-}
-
-void game::display_dice(shared_ptr<yaht::player> player, int x, int y)
-{
-    char buf[BUFSIZ + 1] = {0};
-
-    snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
-
-    x += 13;
-    y += 4;
-
-    int xs = x;
-
-    put(x, y, buf);
-
-    x += 2;
-    y += 2;
-
-    put(x, y++, "#  1 │ 2 │ 3 │ 4 │ 5");
-    put(x, y++, "  ───┴───┴───┴───┴───");
-    put(x++, y, "  ");
-    for (size_t i = 0; i < player->die_count(); i++)
-    {
-        put(++x, y, player->is_kept(i) ? '*' : ' ');
-
-        put(++x, y, to_string(player->d1e(i).value()).c_str());
-
-        x += 2;
-    }
-    y += 2;
-
-    put(xs, y, "Press '?' for help on how to score.");
-}
-
-void game::display_dice_roll()
-{
-    display_alert([&](const alert_box & box)
-    {
-        display_dice(current_player(), box.x(), box.y());
-
-    });
-}
-
-void game::action_roll_dice()
-{
-    auto player = current_player();
-
-    if (player->roll_count() < 3)
-    {
-        player->roll();
-
-        display_dice_roll();
-    }
-    else
-    {
-        display_alert(2000, "You must choose a score after three rolls.");
-    }
-}
-
-void game::action_finish_turn()
-{
-    set_state(&game::state_playing);
-
-    next_player();
-
-    refresh(true);
-}
-
-void game::action_select_die(shared_ptr<yaht::player> player, int d)
-{
-    if (player->is_kept(d))
-        player->keep_die(d, false);
-    else
-        player->keep_die(d, true);
-
-    auto box = displayed_alert();
-
-    box.display();
-}
-
-
-void game::action_lower_score(shared_ptr<yaht::player> player, yaht::scoresheet::type type)
-{
-    if (!player->score().lower_score(type))
-    {
-        player->score().lower_score(type, player->calculate_lower_score(type));
-
-        action_finish_turn();
-    }
-    else
-    {
-        display_already_scored();
-    }
-}
-
-void game::action_score(shared_ptr<yaht::player> player, int n)
-{
-    if (!player->score().upper_score(n))
-    {
-        player->score().upper_score(n, player->calculate_upper_score(n));
-
-        action_finish_turn();
-    }
-    else
-    {
-        display_already_scored();
-    }
-}
-
-void game::action_score_best(shared_ptr<yaht::player> player)
-{
-    auto best_upper = player->calculate_best_upper_score();
-
-    auto best_lower = player->calculate_best_lower_score();
-
-    if (best_upper.second > best_lower.second)
-    {
-
-        if (!player->score().upper_score(best_upper.first))
-        {
-            player->score().upper_score(best_upper.first, best_upper.second);
-
-            action_finish_turn();
-        }
-        else
-        {
-            display_already_scored();
-        }
-
-    }
-    else if (best_lower.second > 0)
-    {
-        if (!player->score().lower_score(best_lower.first))
-        {
-            player->score().lower_score(best_lower.first, best_lower.second);
-
-            action_finish_turn();
-        }
-        else
-        {
-            display_already_scored();
-        }
-    }
-    else
-    {
-        display_alert(2000, "No best score found!");
-    }
-}
-
-
-void game::display_confirm_quit()
-{
-    display_alert("Are you sure you want to quit? (Y/n)");
 }
 
 void game::on_resize(int width, int height)
@@ -690,14 +313,6 @@ int game::get_alert_h() const
     return 15;
 }
 
-void game::display_help()
-{
-    display_alert([&](const alert_box & a)
-    {
-        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, helpbuf_, helpbufSize_, "caca");
-    });
-}
-
 void game::for_players(std::function<void(const shared_ptr<player> &p)> funk)
 {
     for (const auto &p : players_)
@@ -743,6 +358,13 @@ shared_ptr<player> game::current_player() const
     return players_[currentPlayer_];
 }
 
+shared_ptr<player> game::this_player() const
+{
+    if (players_.size() == 0) return nullptr;
+
+    return players_[0];
+}
+
 shared_ptr<player> game::find_player_by_id(const string &id) const
 {
     for (const auto &player : players_)
@@ -753,64 +375,3 @@ shared_ptr<player> game::find_player_by_id(const string &id) const
     return nullptr;
 }
 
-yaht::scoresheet::value_type game::display_upper_scores(const yaht::scoresheet &score, int x, int y)
-{
-    yaht::scoresheet::value_type total_score = 0;
-
-    for (int i = 0; i <= yaht::Constants::NUM_DICE; i++, y += 2)
-    {
-        auto value = score.upper_score(i + 1);
-
-        put(x, y, std::to_string(value).c_str());
-
-        total_score += value;
-    }
-
-    put(x, y, std::to_string(total_score).c_str());
-
-    put(x, y + 2, std::to_string(total_score > 63 ? 35 : 0).c_str());
-
-    auto lower_score_total = total_score;
-
-    if (total_score > 63)
-        lower_score_total += 35;
-
-    put(x, y + 4, std::to_string(lower_score_total).c_str());
-
-    return lower_score_total;
-
-}
-
-void game::display_lower_scores(const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
-{
-    yaht::scoresheet::value_type total_score = 0;
-
-    for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++)
-    {
-        yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
-
-        auto value = score.lower_score(type);
-
-        put(x, y, std::to_string(value).c_str());
-
-        total_score += value;
-
-        switch (type)
-        {
-        default:
-            y += 2;
-            break;
-        case yaht::scoresheet::STRAIGHT_SMALL:
-        case yaht::scoresheet::STRAIGHT_BIG:
-        case yaht::scoresheet::YACHT:
-            y += 3;
-            break;
-        }
-    }
-
-    put(x, y, std::to_string(total_score).c_str());
-
-    put(x, y + 2, std::to_string(lower_score_total).c_str());
-
-    put(x, y + 4, std::to_string(total_score + lower_score_total).c_str());
-}

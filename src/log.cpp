@@ -14,7 +14,7 @@ void log_str(const char *const format, ...)
     char buf[BUFSIZ + 1] = {0};
     FILE *out;
 
-    snprintf(buf, BUFSIZ, "yahtsee.%d", getpid());
+    snprintf(buf, BUFSIZ, "yahtsee.%d.log", getpid());
 
     out = fopen(buf, "a");
 

@@ -58,6 +58,8 @@ matchmaker::~matchmaker()
 
 void matchmaker::stop()
 {
+    logf("stopping matchmaker");
+
     server_.stop();
 
     client_.close();
@@ -136,7 +138,7 @@ bool matchmaker::host(string *error, int port)
 
     gameId_ = api_.response();
 
-    logf("hosting game");
+    logf("hosting game %s", gameId_.c_str());
 
     return true;
 }
@@ -150,7 +152,7 @@ void matchmaker::unregister()
         if (api_.response().code() != net::http::OK)
             logf("Unable to unregister game");
         else
-            logf("game unregistered");
+            logf("game unregistered %s", gameId_.c_str());
 
         gameId_.clear();
     }
@@ -166,10 +168,11 @@ void matchmaker::notify_game_start()
 
     client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
     {
+        logf("writing game start to socket %d", conn->raw_socket());
         conn->writeln(json.to_string());
     });
 
-    logf("notify game started");
+    logf("notify game started %s", json.to_string().c_str());
 
     unregister();
 }
@@ -180,14 +183,15 @@ void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 
     json.set_int("action", PLAYER_JOINED);
 
-    json.set_string("player", p->to_json());
+    json.set("player", p->to_json());
 
-    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    client_factory_.for_connections([&json, &p](const shared_ptr<connection> &conn)
     {
-        conn->writeln(json.to_string());
+        if (conn.get() != p->connect1on())
+            conn->writeln(json.to_string());
     });
 
-    logf("notify player joined");
+    logf("notify player joined %s", json.to_string().c_str());
 }
 
 void matchmaker::notify_player_left(const shared_ptr<player> &p)
@@ -198,10 +202,11 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
     json.set_string("player", p->to_json());
 
-    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    client_factory_.for_connections([&json, &p](const shared_ptr<connection> &conn)
     {
-        conn->writeln(json.to_string());
+        if (conn.get() != p->connect1on())
+            conn->writeln(json.to_string());
     });
 
-    logf("notify player left");
+    logf("notify player left %s", json.to_string().c_str());
 }
