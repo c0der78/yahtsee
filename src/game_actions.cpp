@@ -1,6 +1,5 @@
 #include "game.h"
 #include "player.h"
-#include "log.h"
 
 using namespace arg3;
 
@@ -16,7 +15,13 @@ void game::action_host_game()
 
     if (!response)
     {
-        display_alert(2000, { "Unable to register game at this time.", error } );
+        display_alert({ "Unable to register game at this time.", error } );
+
+        pop_alert(2000, [&]()
+        {
+            set_state(&game::state_multiplayer_menu);
+            display_multiplayer_menu();
+        });
 
         players_.clear();
 
@@ -42,7 +47,13 @@ void game::action_join_game()
 
     if (!result)
     {
-        display_alert(2000, {"Unable to find game to join at this time.", error});
+        display_alert({"Unable to find game to join at this time.", error});
+
+        pop_alert(2000, [&]()
+        {
+            set_state(&game::state_multiplayer_menu);
+            display_multiplayer_menu();
+        });
 
         players_.clear();
 
@@ -56,8 +67,6 @@ void game::action_joined_game()
 {
     pop_alert();
 
-    logf("joined game, waiting to start");
-
     display_client_waiting_to_start();
 }
 
@@ -67,11 +76,14 @@ void game::action_disconnected()
 
     clear_alerts();
 
-    display_alert(2000, "Disconnected from server.");
+    display_alert("Disconnected from server.");
 
-    set_state(&game::state_game_menu);
+    pop_alert(2000, [&]()
+    {
+        set_state(&game::state_game_menu);
 
-    display_game_menu();
+        display_game_menu();
+    });
 }
 
 void game::action_add_network_player(const shared_ptr<player> &player)
@@ -118,13 +130,19 @@ void game::action_remove_network_player(connection *c)
         {
             players_.clear();
 
-            set_state(&game::state_game_menu);
+            display_alert(p->name() + " has left the game.");
 
-            display_game_menu();
+            pop_alert(2000, [&]()
+            {
+                set_state(&game::state_game_menu);
 
+                display_game_menu();
+            });
         }
-        display_alert(2000, p->name() + " has left.");
-
+        else
+        {
+            display_alert(2000, p->name() + " has left the game.");
+        }
         matchmaker_.notify_player_left(p);
 
     }
@@ -133,8 +151,6 @@ void game::action_remove_network_player(connection *c)
 void game::action_network_player_joined(const shared_ptr<player> &p)
 {
     players_.push_back(p);
-
-    logf("another player joined, waiting to start.");
 
     display_client_waiting_to_start();
 }
@@ -162,11 +178,19 @@ void game::action_roll_dice()
 {
     auto player = current_player();
 
+    if (player->id() != this_player()->id())
+    {
+        display_alert(2000, "It is not your turn.");
+        return;
+    }
+
     if (player->roll_count() < 3)
     {
         player->roll();
 
         display_dice_roll();
+
+        matchmaker_.notify_player_roll();
     }
     else
     {

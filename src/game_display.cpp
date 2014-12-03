@@ -7,7 +7,7 @@ void game::display_game_menu()
 {
     display_alert([&](const alert_box & a)
     {
-        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, menubuf_, menubufSize_, "caca");
+        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, menubuf_, menubufSize_, "caca");
     });
 }
 
@@ -125,7 +125,7 @@ void game::display_help()
 {
     display_alert([&](const alert_box & a)
     {
-        caca_import_area_from_memory(a.canvas(), a.x() + 4, a.y() + 3, helpbuf_, helpbufSize_, "caca");
+        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, helpbuf_, helpbufSize_, "caca");
     });
 }
 

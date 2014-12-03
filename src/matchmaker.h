@@ -26,6 +26,7 @@ public:
     void notify_player_joined(const shared_ptr<player> &p);
     void notify_player_left(const shared_ptr<player> &p);
     void notify_game_start();
+    void notify_player_roll();
 private:
 
     void unregister();

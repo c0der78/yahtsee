@@ -2,7 +2,6 @@
 #include "player.h"
 #include <cstring>
 #include <arg3/str_util.h>
-#include "log.h"
 
 using namespace arg3;
 
@@ -79,6 +78,18 @@ void game::set_state(state_handler value)
     clear_events();
 }
 
+void game::start()
+{
+    caca_game::start();
+
+    while (alive())
+    {
+        update();
+
+        usleep(50);
+    }
+}
+
 bool game::is_state(state_handler value)
 {
     return state_ == value;
@@ -138,9 +149,7 @@ void game::refresh_display(bool reset)
             break;
         }
         }
-
     }
-
 }
 
 void game::on_resize(int width, int height)

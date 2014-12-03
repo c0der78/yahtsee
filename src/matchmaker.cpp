@@ -210,3 +210,8 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
     logf("notify player left %s", json.to_string().c_str());
 }
+
+void matchmaker::notify_player_roll()
+{
+
+}

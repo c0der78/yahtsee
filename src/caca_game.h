@@ -6,6 +6,7 @@
 #include <stack>
 #include <thread>
 #include <sstream>
+#include <mutex>
 #include "alert_box.h"
 
 using namespace std;
@@ -39,7 +40,7 @@ public:
 
     virtual void reset();
 
-    void start();
+    virtual void start();
 
     void update();
 
@@ -94,18 +95,23 @@ public:
     string get_buffer();
 
     void add_event(unsigned millis, function<void()> callback);
+
 protected:
 
     virtual void init_canvas(caca_canvas_t *canvas) = 0;
 
-private:
-    int frame_;
     caca_canvas_t *canvas_;
     caca_display_t *display_;
+private:
+    int frame_;
     caca_event_t event_;
     ostringstream buf_;
     stack<alert_box> alert_boxes_;
     vector <game_event> timed_events_;
+
+    recursive_mutex mutex_;
+
+    friend class alert_box;
 };
 
 #endif

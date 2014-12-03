@@ -6,11 +6,13 @@
 
 using namespace std;
 
+class caca_game;
+
 class alert_box
 {
 public:
 
-    alert_box(caca_canvas_t *canvas, caca_display_t *display, int x, int y, int width, int height, std::function<void(const alert_box &)> callback);
+    alert_box(caca_game *game, int x, int y, int width, int height, std::function<void(const alert_box &)> callback);
 
     void display();
 
@@ -22,8 +24,6 @@ public:
 
     int y() const;
 
-    caca_canvas_t *canvas() const;
-
     void center(const string &text) const;
     void center_x(int y, const string &text) const;
 
@@ -32,8 +32,7 @@ public:
     int center_x() const;
 
 private:
-    caca_canvas_t *canvas_;
-    caca_display_t *display_;
+    caca_game *game_;
     int x_, y_;
     int width_, height_;
     std::function<void(const alert_box &)> callback_;
