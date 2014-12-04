@@ -17,6 +17,13 @@ int main(int argc, char **argv)
 
     game.start();
 
+    while (game.alive())
+    {
+        game.update();
+
+        usleep(50);
+    }
+
     game.reset();
 
     return 0;

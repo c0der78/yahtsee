@@ -1,6 +1,7 @@
 #include "client.h"
 #include "game.h"
 #include "player.h"
+#include "log.h"
 
 using namespace arg3;
 
@@ -25,9 +26,13 @@ void connection::handle_game_start(const json::object &packet)
     if (player != nullptr)
         game_->set_current_player(player);
 
+    logf("starting game");
+
     game_->set_state(&game::state_playing);
 
-    game_->refresh(true);
+    game_->set_needs_display();
+
+    game_->set_needs_clear();
 }
 
 void connection::handle_player_roll(const json::object &packet)
@@ -100,7 +105,39 @@ void connection::handle_player_left(const json::object &packet)
 
 void connection::handle_player_turn_finished(const json::object &packet)
 {
+    string id = packet.get_string("player_id");
 
+    auto player = game_->find_player_by_id(id);
+
+    if (player == nullptr)
+        return;
+
+    json::array upper = packet.get_array("upper");
+
+    for (auto i = 0; i < upper.size(); i++)
+    {
+        player->score().upper_score(i + 1, upper.get_int(i));
+
+    }
+
+    json::array lower = packet.get_array("lower");
+
+    for (auto i = 0; i < lower.size(); i++)
+    {
+        yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
+
+        player->score().lower_score(type, lower.get_int(i));
+    }
+
+    game_->next_player();
+
+    game_->set_state(&game::state_playing);
+
+    game_->next_player();
+
+    game_->set_needs_display();
+
+    game_->set_needs_clear();
 }
 
 

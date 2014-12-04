@@ -1,5 +1,6 @@
 #include "game.h"
 #include "player.h"
+#include "log.h"
 
 using namespace arg3;
 
@@ -18,8 +19,6 @@ void game::state_ask_name(int ch)
 
         players_.push_back(make_shared<player>(name));
 
-        clear();
-
         if (flags_ & FLAG_HOSTING)
         {
             action_host_game();
@@ -30,6 +29,8 @@ void game::state_ask_name(int ch)
         }
         else if (players_.size() >= numPlayers_)
         {
+            set_needs_clear();
+
             set_state(&game::state_playing);
         }
         else
@@ -52,7 +53,7 @@ void game::state_ask_name(int ch)
         set_cursor(x + 1, y);
     }
 
-    refresh();
+    set_needs_display();
 }
 
 void game::state_help_menu(int ch)
@@ -60,7 +61,10 @@ void game::state_help_menu(int ch)
     if (ch == CACA_KEY_ESCAPE || tolower(ch) == 'q')
     {
         recover_state();
-        refresh(is_playing());
+
+        set_needs_display();
+
+        set_needs_clear();
     }
 }
 
@@ -151,7 +155,9 @@ void game::state_waiting_for_connections(int input)
 
         matchmaker_.notify_game_start();
 
-        refresh(true);
+        set_needs_display();
+
+        set_needs_clear();
     }
 }
 
@@ -160,7 +166,8 @@ void game::state_quit_confirm(int input)
     if (tolower(input) == 'n')
     {
         recover_state();
-        refresh(is_playing());
+        set_needs_display();
+        set_needs_clear();
     }
     else
     {
@@ -181,7 +188,8 @@ void game::state_playing(int input)
             displayMode_ = HORIZONTAL;
         else
             displayMode_ = static_cast<display_mode>(++mode);
-        refresh(true);
+        set_needs_display();
+        set_needs_clear();
         return;
     }
     case CACA_KEY_DOWN:
@@ -191,7 +199,8 @@ void game::state_playing(int input)
             displayMode_ = MINIMAL;
         else
             displayMode_ = static_cast<display_mode>(--mode);
-        refresh(true);
+        set_needs_display();
+        set_needs_clear();
         return;
     }
     case CACA_KEY_LEFT:
@@ -199,7 +208,8 @@ void game::state_playing(int input)
         if (displayMode_ == MINIMAL)
         {
             minimalLower_ = !minimalLower_;
-            refresh(true);
+            set_needs_display();
+            set_needs_clear();
         }
         return;
 
@@ -235,7 +245,9 @@ void game::state_rolling_dice(int input)
     if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
     {
         set_state(&game::state_playing);
-        refresh(true);
+        set_needs_display();
+        set_needs_clear();
+        return;
     }
 
     auto player = current_player();

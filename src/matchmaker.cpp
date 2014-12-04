@@ -58,8 +58,6 @@ matchmaker::~matchmaker()
 
 void matchmaker::stop()
 {
-    logf("stopping matchmaker");
-
     server_.stop();
 
     client_.close();
@@ -67,8 +65,19 @@ void matchmaker::stop()
     unregister();
 }
 
+bool matchmaker::is_valid() const
+{
+    return game_ && game_->is_online();
+}
+
 bool matchmaker::join_best_game(string *error)
 {
+    if (!is_valid())
+    {
+        *error = "Not online.";
+        return false;
+    }
+
     json::object type;
 
     type.set_string("type", GAME_TYPE);
@@ -103,13 +112,17 @@ bool matchmaker::join_best_game(string *error)
             *error = buf;
     }
 
-    logf("joining game");
-
     return rval;
 }
 
 bool matchmaker::host(string *error, int port)
 {
+    if (!is_valid())
+    {
+        *error = "Not online.";
+        return false;
+    }
+
     if (port == INVALID)
     {
         port = (rand() % 99999) + 1024;
@@ -160,6 +173,8 @@ void matchmaker::unregister()
 
 void matchmaker::notify_game_start()
 {
+    if (!is_valid()) return;
+
     json::object json;
 
     json.set_int("action", GAME_START);
@@ -179,6 +194,9 @@ void matchmaker::notify_game_start()
 
 void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 {
+
+    if (!is_valid()) return;
+
     json::object json;
 
     json.set_int("action", PLAYER_JOINED);
@@ -196,6 +214,9 @@ void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 
 void matchmaker::notify_player_left(const shared_ptr<player> &p)
 {
+
+    if (!is_valid()) return;
+
     json::object json;
 
     json.set_int("action", PLAYER_LEFT);
@@ -213,6 +234,9 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
 void matchmaker::notify_player_roll()
 {
+
+    if (!is_valid()) return;
+
     json::object json;
 
     json.set_int("action", PLAYER_ROLL);
@@ -245,7 +269,40 @@ void matchmaker::notify_player_roll()
 
 void matchmaker::notify_player_turn_finished()
 {
+    if (is_valid()) return;
 
+    json::object json;
+
+    json::array upper, lower;
+
+    auto player = game_->current_player();
+
+    for (int i = 0; i <= yaht::Constants::NUM_DICE; i++)
+    {
+        auto value = player->score().upper_score(i + 1);
+
+        upper.add_int(value);
+    }
+
+    json.set_array("upper", upper);
+
+    for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++)
+    {
+        yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
+
+        auto value = player->score().lower_score(type);
+
+        lower.add_int(value);
+    }
+
+    json.set_array("lower", lower);
+
+    json.set_string("player_id", player->id());
+
+    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    {
+        conn->writeln(json.to_string());
+    });
 }
 
 

@@ -35,7 +35,7 @@ public:
 
     bool alive() const;
 
-    void refresh_display(bool reset);
+    void on_display();
 
     void on_resize(int width, int height);
 
@@ -55,8 +55,7 @@ public:
 
     shared_ptr<player> this_player() const;
 
-    void start();
-
+    bool is_online() const;
 private:
 
     /* states */
@@ -81,17 +80,17 @@ private:
 
     /* display methods */
 
-    void display_alert(int millis, function<void(const alert_box &)> funk);
+    void display_alert(int millis, const function<void(const alert_box &)> funk, const function<void()> pop = nullptr);
 
-    void display_alert(function<void(const alert_box &)> funk);
+    void display_alert(const function<void(const alert_box &)> funk);
 
-    void display_alert(const string &message);
+    void display_alert(const string &message, const function<void(const alert_box &a)> funk = nullptr);
 
-    void display_alert(int millis, const string &message);
+    void display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk = nullptr, const function<void()> pop = nullptr);
 
-    void display_alert(const vector<string> &messages);
+    void display_alert(const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr);
 
-    void display_alert(int millis, const vector<string> &messages);
+    void display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr, const function<void()> pop = nullptr);
 
     void display_already_scored();
 
@@ -185,10 +184,9 @@ private:
     vector<shared_ptr<player>> players_;
     int currentPlayer_;
 
-    constexpr static const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
-
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
+    static const int FLAG_NEEDS_PLAYER_RESET = (1 << 2);
 
     friend class connection;
     friend class client;

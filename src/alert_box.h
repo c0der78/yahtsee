@@ -12,8 +12,6 @@ class alert_box
 {
 public:
 
-    alert_box(caca_game *game, int x, int y, int width, int height, std::function<void(const alert_box &)> callback);
-
     void display();
 
     int width() const;
@@ -25,17 +23,24 @@ public:
     int y() const;
 
     void center(const string &text) const;
+
     void center_x(int y, const string &text) const;
 
     int center_y() const;
 
     int center_x() const;
 
+    int center_x(const string &text) const;
 private:
+
+    alert_box(caca_game *game, int x, int y, int width, int height, std::function<void(const alert_box &)> callback);
+
     caca_game *game_;
     int x_, y_;
     int width_, height_;
     std::function<void(const alert_box &)> callback_;
+
+    friend class caca_game;
 };
 
 #endif

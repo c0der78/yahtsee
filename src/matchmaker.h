@@ -21,6 +21,7 @@ public:
     matchmaker &operator=(matchmaker && );
     virtual ~matchmaker();
     void stop();
+    bool is_valid() const;
     bool host(std::string *error = NULL, int port = INVALID);
     bool join_best_game(std::string *error = NULL);
     void notify_player_joined(const shared_ptr<player> &p);

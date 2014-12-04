@@ -1,11 +1,14 @@
 #include "game.h"
 #include "player.h"
+#include "log.h"
 #include <cstring>
 #include <arg3/str_util.h>
 
 using namespace arg3;
 
 using namespace std::placeholders;
+
+const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
 game::game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbufSize_(0),
     lowerbufSize_(0), menubufSize_(0), headerbufSize_(0), helpbufSize_(0), displayMode_(MINIMAL), numPlayers_(0),
@@ -60,7 +63,10 @@ game::state_handler game::state() const
 
 void game::recover_state()
 {
-    state_ = lastState_;
+    if (lastState_ != nullptr)
+    {
+        state_ = lastState_;
+    }
 
     clear_alerts();
 
@@ -76,18 +82,6 @@ void game::set_state(state_handler value)
     clear_alerts();
 
     clear_events();
-}
-
-void game::start()
-{
-    caca_game::start();
-
-    while (alive())
-    {
-        update();
-
-        usleep(50);
-    }
 }
 
 bool game::is_state(state_handler value)
@@ -107,14 +101,23 @@ bool game::alive() const
     return state_ != nullptr;
 }
 
-void game::refresh_display(bool reset)
+bool game::is_online() const
+{
+    return flags_ & (FLAG_HOSTING | FLAG_JOINING);
+}
+
+void game::on_display()
 {
     shared_ptr<player> player = current_player();
 
     if (player != nullptr && is_playing())
     {
-        if (reset)
+        if (flags_ & FLAG_NEEDS_PLAYER_RESET)
+        {
             player->reset();
+
+            flags_ &= ~FLAG_NEEDS_PLAYER_RESET;
+        }
 
         int x = 46;
 
@@ -231,41 +234,45 @@ void game::init_canvas(caca_canvas_t *canvas)
         break;
     }
 }
+
 void game::set_display_mode(display_mode mode)
 {
     displayMode_ = mode;
 }
 
-
-void game::display_alert(function<void(const alert_box &a)> funk)
+void game::display_alert(const function<void(const alert_box &a)> funk)
 {
     caca_game::display_alert(get_alert_x(), get_alert_y(), get_alert_w(), get_alert_h(), funk);
 }
 
-void game::display_alert(int millis, function<void(const alert_box &)> funk)
+void game::display_alert(int millis, const function<void(const alert_box &)> funk, const function<void()> pop)
 {
     display_alert(funk);
-    pop_alert(millis);
+
+    pop_alert(millis, pop);
 }
 
-void game::display_alert(const string &message)
+void game::display_alert(const string &message, const function<void(const alert_box &a)> funk)
 {
-    display_alert([&](const alert_box & a)
+    display_alert([ &, funk](const alert_box & a)
     {
         a.center(message);
+
+        if (funk != nullptr)
+            funk(a);
     });
 }
 
-void game::display_alert(int millis, const string &message)
+void game::display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk, const function<void()> pop)
 {
-    display_alert(message);
+    display_alert(message, funk);
 
-    pop_alert(millis);
+    pop_alert(millis, pop);
 }
 
-void game::display_alert(const vector<string> &messages)
+void game::display_alert(const vector<string> &messages, const std::function<void(const alert_box &a)> funk)
 {
-    display_alert([&](const alert_box & a)
+    display_alert([ &, funk](const alert_box & a)
     {
         const int ymod = messages.size() / 2;
 
@@ -280,14 +287,17 @@ void game::display_alert(const vector<string> &messages)
 
             pos++;
         }
+
+        if (funk != nullptr)
+            funk(a);
     });
 }
 
-void game::display_alert(int millis, const vector<string> &messages)
+void game::display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk, const function<void()> pop)
 {
-    display_alert(messages);
+    display_alert(messages, funk);
 
-    pop_alert(millis);
+    pop_alert(millis, pop);
 }
 
 int game::get_alert_x() const

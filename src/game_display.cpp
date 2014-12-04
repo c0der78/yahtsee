@@ -28,7 +28,7 @@ void game::display_ask_name()
 
 void game::display_ask_number_of_players()
 {
-    display_alert("How many players?");
+    display_alert("How many players are playing?");
 }
 
 
@@ -80,7 +80,7 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
     if (player == this_player())
         snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
     else
-        snprintf(buf, BUFSIZ, "%s's Roll (%d of 3):", player->name().c_str(), player->roll_count());
+        snprintf(buf, BUFSIZ, "%s's roll (%d of 3):", player->name().c_str(), player->roll_count());
 
     x += 13;
     y += 4;

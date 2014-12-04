@@ -10,15 +10,16 @@ alert_box::alert_box(caca_game *game, int x, int y, int width, int height, funct
 
 void alert_box::display()
 {
-    unique_lock<recursive_mutex> lock(game_->mutex_);
+    lock_guard<recursive_mutex> lock(game_->mutex_);
 
     caca_fill_box(game_->canvas_, x_, y_, width_, height_, ' ');
 
     caca_draw_thin_box(game_->canvas_, x_, y_, width_, height_);
 
-    callback_(*this);
+    if (callback_ != nullptr)
+        callback_(*this);
 
-    caca_refresh_display(game_->display_);
+    game_->set_needs_display();
 }
 
 int alert_box::width() const
@@ -43,7 +44,7 @@ int alert_box::y() const
 
 void alert_box::center(const string &text) const
 {
-    unique_lock<recursive_mutex> lock(game_->mutex_);
+    lock_guard<recursive_mutex> lock(game_->mutex_);
 
     int x = center_x() - (text.length() / 2);
     int y = center_y();
@@ -52,7 +53,7 @@ void alert_box::center(const string &text) const
 }
 void alert_box::center_x(int y, const string &text) const
 {
-    unique_lock<recursive_mutex> lock(game_->mutex_);
+    lock_guard<recursive_mutex> lock(game_->mutex_);
 
     int x = center_x() - (text.length() / 2);
 
@@ -67,4 +68,9 @@ int alert_box::center_y() const
 int alert_box::center_x() const
 {
     return x_ + (width_ / 2);
+}
+
+int alert_box::center_x(const string &str) const
+{
+    return x_ + ( (width_ - str.length()) / 2);
 }

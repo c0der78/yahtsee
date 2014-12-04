@@ -14,7 +14,7 @@ using namespace std;
 class game_event
 {
 public:
-    game_event(unsigned millis, function<void()> callback);
+    game_event(unsigned millis, const function<void()> callback);
     game_event(const game_event &) = delete;
     game_event(game_event  &&e);
     ~game_event();
@@ -40,7 +40,7 @@ public:
 
     virtual void reset();
 
-    virtual void start();
+    void start();
 
     void update();
 
@@ -52,11 +52,15 @@ public:
 
     virtual void on_start() = 0;
 
-    virtual void refresh_display(bool reset) = 0;
+    virtual void on_display() = 0;
 
-    void refresh(bool reset = false);
+    void update_display();
 
-    void clear();
+    void update_input();
+
+    void update_events();
+
+    void clear_display();
 
     void set_cursor(int x, int y);
 
@@ -68,7 +72,7 @@ public:
 
     void put(int x, int y, int value);
 
-    void display_alert(int x, int y, int width, int height, function<void(const alert_box &)> callback);
+    void display_alert(int x, int y, int width, int height, const function<void(const alert_box &)> callback);
 
     const alert_box &displayed_alert() const;
 
@@ -76,7 +80,7 @@ public:
 
     void pop_alert();
 
-    void pop_alert(int millis, std::function<void()> funk = nullptr);
+    void pop_alert(int millis, const std::function<void()> funk = nullptr);
 
     void clear_alerts();
 
@@ -94,8 +98,11 @@ public:
 
     string get_buffer();
 
-    void add_event(unsigned millis, function<void()> callback);
+    void add_event(unsigned millis, const function<void()> callback);
 
+    void set_needs_display();
+
+    void set_needs_clear();
 protected:
 
     virtual void init_canvas(caca_canvas_t *canvas) = 0;
@@ -107,9 +114,15 @@ private:
     caca_event_t event_;
     ostringstream buf_;
     stack<alert_box> alert_boxes_;
-    vector <game_event> timed_events_;
+    vector<game_event> timed_events_;
+    int flags_;
+
+    static const int FLAG_NEEDS_DISPLAY = (1 << 0);
+    static const int FLAG_NEEDS_CLEAR = (1 << 1);
 
     recursive_mutex mutex_;
+    recursive_mutex alertsMutex_;
+    recursive_mutex eventsMutex_;
 
     friend class alert_box;
 };

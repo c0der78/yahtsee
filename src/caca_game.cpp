@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "log.h"
 
-game_event::game_event(unsigned millis, function<void()> callback) : millis_(millis), callback_(callback), ready_(false)
+game_event::game_event(unsigned millis, const function<void()> callback) : millis_(millis), callback_(callback), ready_(false)
 {
     worker_ = std::thread(&game_event::wait, this);
 }
@@ -65,6 +65,10 @@ void caca_game::reset()
 
     frame_ = 1;
 
+    clear_alerts();
+
+    clear_events();
+
     if (canvas_ != NULL)
     {
         caca_free_canvas(canvas_);
@@ -76,13 +80,12 @@ void caca_game::reset()
         display_ = NULL;
     }
 
-    clear_alerts();
-
-    clear_events();
 }
 
 void caca_game::start()
 {
+    lock_guard<recursive_mutex> lock(mutex_);
+
     reset();
 
     canvas_ = caca_create_canvas(0, 0);
@@ -91,8 +94,7 @@ void caca_game::start()
 
     if (display_ == NULL)
     {
-        cerr << "Failed to create display" << endl;
-        exit(1);
+        throw runtime_error("Failed to create display");
     }
 
     init_canvas(canvas_);
@@ -101,7 +103,7 @@ void caca_game::start()
 
     on_start();
 
-    caca_refresh_display(display_);
+    set_needs_display();
 }
 
 void caca_game::update()
@@ -109,6 +111,17 @@ void caca_game::update()
     unique_lock<recursive_mutex> lock(mutex_);
 
     if (display_ == NULL) return;
+
+    update_input();
+
+    update_events();
+
+    update_display();
+}
+
+void caca_game::update_input()
+{
+    lock_guard<recursive_mutex> lock(mutex_);
 
     if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, 0) != 0)
     {
@@ -125,7 +138,7 @@ void caca_game::update()
 
             on_resize(width, height);
 
-            caca_refresh_display(display_);
+            set_needs_display();
         }
 
         if (caca_get_event_type(&event_) & CACA_EVENT_KEY_RELEASE)
@@ -133,8 +146,15 @@ void caca_game::update()
             int input = caca_get_event_key_ch(&event_);
 
             on_key_press(input);
+
+            set_needs_display();
         }
     }
+}
+
+void caca_game::update_events()
+{
+    unique_lock<recursive_mutex> lock(eventsMutex_);
 
     timed_events_.erase(remove_if(timed_events_.begin(), timed_events_.end(), [](const game_event & ev)
     {
@@ -147,46 +167,72 @@ void caca_game::update()
     }), timed_events_.end());
 }
 
-void caca_game::refresh(bool reset)
+void caca_game::update_display()
 {
-    if (reset)
+    lock_guard<recursive_mutex> lock(mutex_);
+
+    if (flags_ & FLAG_NEEDS_CLEAR)
     {
-        clear();
+        clear_display();
+
+        flags_ &= ~FLAG_NEEDS_CLEAR;
     }
 
-    unique_lock<recursive_mutex> lock(mutex_);
+    if (flags_ & FLAG_NEEDS_DISPLAY)
+    {
+        on_display();
 
-    refresh_display(reset);
+        caca_refresh_display(display_);
 
-    caca_refresh_display(display_);
+        flags_ &= ~FLAG_NEEDS_DISPLAY;
+    }
+
 }
 
-void caca_game::clear()
+void caca_game::clear_display()
 {
+    lock_guard<recursive_mutex> lock(mutex_);
+
     clear_alerts();
 
     clear_events();
-
-    unique_lock<recursive_mutex> lock(mutex_);
 
     caca_clear_canvas(canvas_);
 
     init_canvas(canvas_);
 
     set_cursor(0, 0);
+
+    set_needs_display();
+}
+
+void caca_game::set_needs_display()
+{
+    flags_ |= FLAG_NEEDS_DISPLAY;
+}
+
+void caca_game::set_needs_clear()
+{
+    flags_ |= FLAG_NEEDS_CLEAR;
 }
 
 void caca_game::clear_alerts()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    if (alert_boxes_.empty()) return;
+
+    unique_lock<recursive_mutex> lock(alertsMutex_);
 
     while (!alert_boxes_.empty())
         alert_boxes_.pop();
+
+    set_needs_display();
 }
 
 void caca_game::clear_events()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    if (timed_events_.empty()) return;
+
+    unique_lock<recursive_mutex> lock(eventsMutex_);
 
     for (auto &e : timed_events_)
     {
@@ -197,6 +243,7 @@ void caca_game::clear_events()
 void caca_game::set_cursor(int x, int y)
 {
     lock_guard<recursive_mutex> lock(mutex_);
+
     caca_gotoxy(canvas_, x, y);
 }
 
@@ -214,26 +261,32 @@ void caca_game::put(int x, int y, const char *value)
 {
     if (value && *value)
     {
-        unique_lock<recursive_mutex> lock(mutex_);
+        lock_guard<recursive_mutex> lock(mutex_);
+
         caca_put_str(canvas_, x, y, value);
+
+        set_needs_display();
     }
 }
 
 void caca_game::put(int x, int y, int value)
 {
-    unique_lock<recursive_mutex> lock(mutex_);
+    lock_guard<recursive_mutex> lock(mutex_);
+
     caca_put_char(canvas_, x, y, value);
+
+    set_needs_display();
 }
 
-void caca_game::display_alert(int x, int y, int width, int height, function<void(const alert_box &)> callback)
+void caca_game::display_alert(int x, int y, int width, int height, const function<void(const alert_box &)> callback)
 {
-    unique_lock<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(alertsMutex_);
 
-    alert_boxes_.emplace(this, x, y, width, height, callback);
-
-    logf("displaying alert %zu", alert_boxes_.size());
+    alert_boxes_.push(std::move(alert_box(this, x, y, width, height, callback)));
 
     alert_boxes_.top().display();
+
+    set_needs_display();
 }
 
 const alert_box &caca_game::displayed_alert() const
@@ -248,48 +301,48 @@ bool caca_game::has_alert() const
 
 void caca_game::pop_alert()
 {
-    unique_lock<recursive_mutex> lock(mutex_);
-
     if (!alert_boxes_.empty())
     {
-        logf("popping alert %zu", alert_boxes_.size());
+        unique_lock<recursive_mutex> lock(alertsMutex_);
+
         alert_boxes_.pop();
+
+        if (!alert_boxes_.empty())
+            alert_boxes_.top().display();
+
+        set_needs_display();
     }
 
-    caca_clear_canvas(canvas_);
-
-    init_canvas(canvas_);
-
-    if (!alert_boxes_.empty())
-    {
-        alert_boxes_.top().display();
-    }
-
-    caca_refresh_display(display_);
 }
 
-void caca_game::pop_alert(int millis, std::function<void()> funk)
+void caca_game::pop_alert(int millis, const std::function<void()> funk)
 {
-    add_event(millis, [&]()
+    add_event(millis, [ &, funk]()
     {
-        logf("pop alert after %d ms", millis);
         pop_alert();
+
+        if (funk != nullptr)
+        {
+            funk();
+        }
     });
 
-    if (funk != nullptr)
-        add_event(millis, funk);
 }
 
 void caca_game::new_frame()
 {
     lock_guard<recursive_mutex> lock(mutex_);
     caca_create_frame(canvas_, ++frame_);
+
+    set_needs_display();
 }
 
 void caca_game::pop_frame()
 {
     lock_guard<recursive_mutex> lock(mutex_);
     caca_set_frame(canvas_, --frame_);
+
+    set_needs_display();
 }
 
 int caca_game::frames() const
@@ -299,8 +352,6 @@ int caca_game::frames() const
 
 size_t caca_game::add_to_buffer(int ch)
 {
-    lock_guard<recursive_mutex> lock(mutex_);
-
     buf_.put(ch);
 
     return buf_.str().length();
@@ -308,19 +359,18 @@ size_t caca_game::add_to_buffer(int ch)
 
 void caca_game::clear_buffer()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
     buf_.str("");
 }
 
 string caca_game::get_buffer()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
     return buf_.str();
 }
 
-void caca_game::add_event(unsigned millis, function<void()> callback)
+void caca_game::add_event(unsigned millis, const function<void()> callback)
 {
-    unique_lock<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(eventsMutex_);
+
     timed_events_.emplace_back(millis, callback);
 }
 
