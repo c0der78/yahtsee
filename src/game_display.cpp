@@ -73,11 +73,14 @@ void game::display_already_scored()
     display_alert(2000, "You've already scored that.");
 }
 
-void game::display_dice(shared_ptr<yaht::player> player, int x, int y)
+void game::display_dice(shared_ptr<player> player, int x, int y)
 {
     char buf[BUFSIZ + 1] = {0};
 
-    snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
+    if (player == this_player())
+        snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
+    else
+        snprintf(buf, BUFSIZ, "%s's Roll (%d of 3):", player->name().c_str(), player->roll_count());
 
     x += 13;
     y += 4;
@@ -100,9 +103,16 @@ void game::display_dice(shared_ptr<yaht::player> player, int x, int y)
 
         x += 2;
     }
+
     y += 2;
 
-    put(xs, y, "Press '?' for help on how to score.");
+    if (player == this_player())
+        put(xs, y, "Press '?' for help on how to score.");
+    else
+    {
+        snprintf(buf, BUFSIZ, "Waiting for %s's turn to finish...", player->name().c_str());
+        put(xs, y, buf);
+    }
 }
 
 void game::display_dice_roll()
@@ -110,7 +120,6 @@ void game::display_dice_roll()
     display_alert([&](const alert_box & box)
     {
         display_dice(current_player(), box.x(), box.y());
-
     });
 }
 

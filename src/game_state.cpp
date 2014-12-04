@@ -114,6 +114,13 @@ void game::state_multiplayer_menu(int input)
 
 void game::state_ask_number_of_players(int input)
 {
+    if (input == CACA_KEY_ESCAPE)
+    {
+        set_state(&game::state_game_menu);
+        display_game_menu();
+        return;
+    }
+
     if (isdigit(input))
     {
         numPlayers_ = input - '0';

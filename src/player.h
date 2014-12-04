@@ -6,6 +6,7 @@
 
 class connection;
 
+
 class player : public arg3::yaht::player
 {
 public:
@@ -26,7 +27,20 @@ public:
 
     bool operator==(const player &other) const;
 
+    void set_next_roll(const vector<arg3::die::value_type> &values);
+
+
+    class engine : public arg3::die::engine
+    {
+    public:
+        arg3::die::value_type generate(arg3::die::value_type from, arg3::die::value_type to);
+    private:
+        vector<arg3::die::value_type> nextRoll_;
+        friend class player;
+    };
+
 private:
+
     connection *connection_;
     string id_;
     string name_;

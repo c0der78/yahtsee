@@ -173,7 +173,15 @@ void game::action_network_player_left(const shared_ptr<player> &p)
     display_alert(2000, buf);
 }
 
+void game::action_player_roll_dice(const shared_ptr<player> &player)
+{
+    player->roll();
 
+    display_dice_roll();
+
+    matchmaker_.notify_player_roll();
+
+}
 void game::action_roll_dice()
 {
     auto player = current_player();
@@ -186,11 +194,7 @@ void game::action_roll_dice()
 
     if (player->roll_count() < 3)
     {
-        player->roll();
-
-        display_dice_roll();
-
-        matchmaker_.notify_player_roll();
+        action_player_roll_dice(player);
     }
     else
     {
@@ -205,6 +209,8 @@ void game::action_finish_turn()
     next_player();
 
     refresh(true);
+
+    matchmaker_.notify_player_turn_finished();
 }
 
 void game::action_select_die(shared_ptr<yaht::player> player, int d)

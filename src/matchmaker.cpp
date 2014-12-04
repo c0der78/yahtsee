@@ -213,5 +213,40 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
 void matchmaker::notify_player_roll()
 {
+    json::object json;
+
+    json.set_int("action", PLAYER_ROLL);
+
+    auto dice = game_->current_player()->d1ce();
+
+    auto player = game_->current_player();
+
+    json::array values;
+
+    for (size_t i = 0; i < player->die_count(); i++)
+    {
+        json::object inner;
+
+        inner.set_bool("kept", player->is_kept(i));
+        inner.set_int("value", player->d1e(i).value());
+
+        values.add(inner);
+    }
+
+    json.set_string("player_id", player->id());
+
+    json.set_array("roll", values);
+
+    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    {
+        conn->writeln(json.to_string());
+    });
+}
+
+void matchmaker::notify_player_turn_finished()
+{
 
 }
+
+
+

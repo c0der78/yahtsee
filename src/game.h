@@ -95,7 +95,7 @@ private:
 
     void display_already_scored();
 
-    void display_dice(shared_ptr<arg3::yaht::player> player, int x, int y);
+    void display_dice(shared_ptr<player> player, int x, int y);
 
     void display_help();
 
@@ -134,6 +134,8 @@ private:
     void action_network_player_left(const shared_ptr<player> &p);
 
     void action_roll_dice();
+
+    void action_player_roll_dice(const shared_ptr<player> &p);
 
     void action_select_die(shared_ptr<arg3::yaht::player> player, int d);
 

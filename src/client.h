@@ -3,6 +3,7 @@
 
 #include <arg3net/socket_factory.h>
 #include <arg3net/buffered_socket.h>
+#include <arg3json/json.h>
 #include <map>
 #include <thread>
 
@@ -10,7 +11,13 @@ class game;
 
 typedef enum
 {
-    CONNECTION_INIT, CLIENT_INIT, GAME_START, PLAYER_JOINED, PLAYER_LEFT
+    CONNECTION_INIT,
+    REMOTE_CONNECTION_INIT,
+    GAME_START,
+    PLAYER_JOINED,
+    PLAYER_LEFT,
+    PLAYER_ROLL,
+    PLAYER_TURN_FINISHED
 } client_action;
 
 /*!
@@ -37,6 +44,13 @@ public:
 
 protected:
 
+    void handle_player_roll(const arg3::json::object &);
+    void handle_game_start(const arg3::json::object &);
+    void handle_connection_init(const arg3::json::object &);
+    void handle_remote_connection_init(const arg3::json::object &);
+    void handle_player_joined(const arg3::json::object &);
+    void handle_player_left(const arg3::json::object &);
+    void handle_player_turn_finished(const arg3::json::object &);
     game *game_;
 };
 
