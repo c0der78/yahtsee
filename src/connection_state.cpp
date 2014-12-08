@@ -66,10 +66,8 @@ void connection::handle_player_roll(const json::object &packet)
 }
 void connection::handle_remote_connection_init(const json::object &packet)
 {
-    string name = packet.get_string("name");
-    string id = packet.get_string("id");
 
-    game_->action_add_network_player(make_shared<player>(this, id, name));
+    game_->action_add_network_player(make_shared<player>(this, packet));
 }
 
 void connection::handle_player_joined(const json::object &packet)
@@ -110,7 +108,10 @@ void connection::handle_player_turn_finished(const json::object &packet)
     auto player = game_->find_player_by_id(id);
 
     if (player == nullptr)
+    {
+        logf("turn finish: player %s not found", player->id().c_str());
         return;
+    }
 
     json::array upper = packet.get_array("upper");
 
@@ -129,15 +130,7 @@ void connection::handle_player_turn_finished(const json::object &packet)
         player->score().lower_score(type, lower.get_int(i));
     }
 
-    game_->next_player();
-
-    game_->set_state(&game::state_playing);
-
-    game_->next_player();
-
-    game_->set_needs_display();
-
-    game_->set_needs_clear();
+    game_->action_network_player_finished(player);
 }
 
 

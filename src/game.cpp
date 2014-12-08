@@ -108,50 +108,66 @@ bool game::is_online() const
 
 void game::on_display()
 {
-    shared_ptr<player> player = current_player();
+    int x = 46;
 
-    if (player != nullptr && is_playing())
+    if (current_player())
+        put(50, 2, current_player()->name().c_str());
+
+    if (is_playing())
     {
-        if (flags_ & FLAG_NEEDS_PLAYER_RESET)
+        for (auto &player : players_)
         {
-            player->reset();
-
-            flags_ &= ~FLAG_NEEDS_PLAYER_RESET;
-        }
-
-        int x = 46;
-
-        put(50, 2, player->name().c_str());
-
-        switch (displayMode_)
-        {
-        case MINIMAL:
-            if (minimalLower_)
+            if (flags_ & FLAG_NEEDS_PLAYER_RESET)
             {
-                display_lower_scores(player->score(), player->calculate_total_upper_score(), x, 9);
-                put(0, 32, HELP);
+                player->reset();
             }
-            else
+
+            switch (displayMode_)
             {
-                display_upper_scores(player->score(), x , 9 );
-                put(0, 27, HELP);
+            case MINIMAL:
+                if (minimalLower_)
+                {
+                    display_lower_scores(player->score(), player->calculate_total_upper_score(), x, 9);
+                }
+                else
+                {
+                    display_upper_scores(player->score(), x, 9 );
+                }
+                break;
+            case VERTICAL:
+            {
+                yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
+                display_lower_scores(player->score(), lower_score_total, x, 28);
+                break;
             }
-            break;
-        case VERTICAL:
-        {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
-            display_lower_scores(player->score(), lower_score_total, 46, 28);
-            put(0, 51, HELP);
-            break;
+            case HORIZONTAL:
+            {
+                yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
+                display_lower_scores(player->score(), lower_score_total, x + 76, 2);
+                break;
+            }
+            }
+
+            x += 5;
         }
-        case HORIZONTAL:
-        {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
-            display_lower_scores(player->score(), lower_score_total, 122, 2);
-            put(76, 25, HELP);
-            break;
-        }
-        }
+    }
+
+    if (flags_ & FLAG_NEEDS_PLAYER_RESET)
+    {
+        flags_ &= ~FLAG_NEEDS_PLAYER_RESET;
+    }
+
+    switch (displayMode_)
+    {
+    case MINIMAL:
+        put(0, minimalLower_ ? 32 : 27, HELP);
+        break;
+    case VERTICAL:
+        put(0, 51, HELP);
+        break;
+    case HORIZONTAL:
+        put(76, 25, HELP);
+        break;
     }
 }
 

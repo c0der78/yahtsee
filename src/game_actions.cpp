@@ -17,8 +17,7 @@ void game::action_host_game()
 
     if (!response)
     {
-
-        logf("could not host");
+        logf("could not host game %s", error.c_str());
 
         display_alert(2000, { "Unable to register game at this time.", error }, nullptr, [&]()
         {
@@ -54,6 +53,8 @@ void game::action_join_game()
 
     if (!result)
     {
+        logf("could not join game %s", error.c_str());
+
         display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]()
         {
             set_state(&game::state_multiplayer_menu);
@@ -77,7 +78,7 @@ void game::action_joined_game()
 
 void game::action_disconnected()
 {
-    if (!alive()) return;
+    if (!matchmaker_.is_valid()) return;
 
     clear_alerts();
 
@@ -89,6 +90,8 @@ void game::action_disconnected()
 
         display_game_menu();
     });
+
+    logf("disconnected");
 }
 
 void game::action_add_network_player(const shared_ptr<player> &player)
@@ -211,6 +214,22 @@ void game::action_finish_turn()
     set_state(&game::state_playing);
 
     next_player();
+
+    set_needs_display();
+
+    set_needs_clear();
+}
+
+void game::action_network_player_finished(const shared_ptr<player> &p)
+{
+    set_state(&game::state_playing);
+
+    next_player();
+
+    if (current_player()->id() == this_player()->id())
+    {
+        display_alert(1000, "It is now your turn.");
+    }
 
     set_needs_display();
 

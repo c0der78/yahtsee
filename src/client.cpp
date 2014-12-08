@@ -1,6 +1,7 @@
 #include "client.h"
 #include "player.h"
 #include "game.h"
+#include "log.h"
 
 using namespace arg3;
 using namespace arg3::net;
@@ -65,10 +66,13 @@ void client::on_connect()
     packet.set_string("id", game_->this_player()->id());
 
     writeln(packet.to_string());
+
+    logf("client connected, sending %s", packet.to_string().c_str());
 }
 
 void client::on_close()
 {
+    logf("client closed");
     game_->action_disconnected();
 }
 
@@ -76,6 +80,8 @@ bool client::start(const std::string &host, int port)
 {
     if (!connect(host, port))
         return false;
+
+    set_non_blocking(true);
 
     run();
 
@@ -98,6 +104,8 @@ void client::run()
 {
     std::chrono::milliseconds dura( 200 );
 
+    logf("client starting");
+
     while (is_valid())
     {
         if (!read_to_buffer())
@@ -105,13 +113,25 @@ void client::run()
             close();
             break;
         }
+        else if (input().size() > 0)
+        {
+            logf("read %zu bytes %s", input().size(), (char *) input().data());
+        }
+
+        size_t outSize = output().size();
 
         if (!write_from_buffer())
         {
             close();
             break;
         }
+        else if (outSize > 0)
+        {
+            logf("wrote %zu bytes", outSize);
+        }
 
         std::this_thread::sleep_for( dura );
     }
+
+    logf("client finished");
 }

@@ -35,7 +35,6 @@ matchmaker::matchmaker(matchmaker &&other) :
     gameId_(std::move(other.gameId_)), api_(std::move(other.api_)), client_(std::move(other.client_)),
     client_factory_(std::move(other.client_factory_)), server_(std::move(other.server_)), game_(other.game_)
 {
-    client_.set_non_blocking(true);
 }
 
 
@@ -112,6 +111,8 @@ bool matchmaker::join_best_game(string *error)
             *error = buf;
     }
 
+    logf("joining game");
+
     return rval;
 }
 
@@ -165,7 +166,7 @@ void matchmaker::unregister()
         if (api_.response().code() != net::http::OK)
             logf("Unable to unregister game");
         else
-            logf("game unregistered %s", gameId_.c_str());
+            logf("game %s unregistered", gameId_.c_str());
 
         gameId_.clear();
     }
@@ -183,7 +184,6 @@ void matchmaker::notify_game_start()
 
     client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
     {
-        logf("writing game start to socket %d", conn->raw_socket());
         conn->writeln(json.to_string());
     });
 
@@ -261,19 +261,24 @@ void matchmaker::notify_player_roll()
 
     json.set_array("roll", values);
 
-    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    client_factory_.for_connections([&json, &player](const shared_ptr<connection> &conn)
     {
-        conn->writeln(json.to_string());
+        if (conn.get() != player->connect1on())
+            conn->writeln(json.to_string());
     });
+
+    logf("notify player roll %s", json.to_string().c_str());
 }
 
 void matchmaker::notify_player_turn_finished()
 {
-    if (is_valid()) return;
+    if (!is_valid()) return;
 
     json::object json;
 
     json::array upper, lower;
+
+    json.set_int("action", PLAYER_TURN_FINISHED);
 
     auto player = game_->current_player();
 
@@ -299,10 +304,13 @@ void matchmaker::notify_player_turn_finished()
 
     json.set_string("player_id", player->id());
 
-    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
+    client_factory_.for_connections([&json, &player](const shared_ptr<connection> &conn)
     {
-        conn->writeln(json.to_string());
+        if (conn.get() != player->connect1on())
+            conn->writeln(json.to_string());
     });
+
+    logf("notify player turn finished %s", json.to_string().c_str());
 }
 
 
