@@ -39,7 +39,7 @@ player::player(connection *conn, const json::object &json) : yaht::player()
     from_json(json);
 }
 
-connection *player::connect1on() const
+connection *player::c0nnection() const
 {
     return connection_;
 }

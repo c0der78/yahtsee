@@ -12,6 +12,22 @@ const char *matchmaker::GAME_API_URL = "connect.arg3.com";
 const char *matchmaker::GAME_API_URL = "localhost.arg3.com:1337";
 #endif
 
+void matchmaker::send_network_message(const string &value)
+{
+    if (server_.is_valid())
+    {
+        client_factory_.for_connections([&value](const shared_ptr<connection> &conn)
+        {
+            conn->writeln(value);
+        });
+    }
+
+    if (client_.is_valid())
+    {
+        client_.writeln(value);
+    }
+}
+
 matchmaker::matchmaker(game *game) : api_(GAME_API_URL), client_(game), client_factory_(game), server_(&client_factory_), game_(game)
 {
 #ifndef DEBUG
@@ -182,10 +198,7 @@ void matchmaker::notify_game_start()
 
     json.set_string("start_id", game_->current_player()->id());
 
-    client_factory_.for_connections([&json](const shared_ptr<connection> &conn)
-    {
-        conn->writeln(json.to_string());
-    });
+    send_network_message(json.to_string());
 
     logf("notify game started %s", json.to_string().c_str());
 
@@ -203,11 +216,7 @@ void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 
     json.set("player", p->to_json());
 
-    client_factory_.for_connections([&json, &p](const shared_ptr<connection> &conn)
-    {
-        if (conn.get() != p->connect1on())
-            conn->writeln(json.to_string());
-    });
+    send_network_message(json.to_string());
 
     logf("notify player joined %s", json.to_string().c_str());
 }
@@ -223,18 +232,13 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
     json.set_string("player", p->to_json());
 
-    client_factory_.for_connections([&json, &p](const shared_ptr<connection> &conn)
-    {
-        if (conn.get() != p->connect1on())
-            conn->writeln(json.to_string());
-    });
+    send_network_message(json.to_string());
 
     logf("notify player left %s", json.to_string().c_str());
 }
 
 void matchmaker::notify_player_roll()
 {
-
     if (!is_valid()) return;
 
     json::object json;
@@ -261,11 +265,7 @@ void matchmaker::notify_player_roll()
 
     json.set_array("roll", values);
 
-    client_factory_.for_connections([&json, &player](const shared_ptr<connection> &conn)
-    {
-        if (conn.get() != player->connect1on())
-            conn->writeln(json.to_string());
-    });
+    send_network_message(json.to_string());
 
     logf("notify player roll %s", json.to_string().c_str());
 }
@@ -304,11 +304,7 @@ void matchmaker::notify_player_turn_finished()
 
     json.set_string("player_id", player->id());
 
-    client_factory_.for_connections([&json, &player](const shared_ptr<connection> &conn)
-    {
-        if (conn.get() != player->connect1on())
-            conn->writeln(json.to_string());
-    });
+    send_network_message(json.to_string());
 
     logf("notify player turn finished %s", json.to_string().c_str());
 }

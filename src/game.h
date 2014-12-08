@@ -189,6 +189,7 @@ private:
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
     static const int FLAG_NEEDS_PLAYER_RESET = (1 << 2);
+    static const int FLAG_NEEDS_SCORE_DISPLAY = (1 << 3);
 
     friend class connection;
     friend class client;

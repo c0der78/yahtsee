@@ -39,7 +39,7 @@ void connection::on_connect()
 
     game_->for_players([&](const shared_ptr<player> &p)
     {
-        if (p->connect1on() != this)
+        if (p->c0nnection() != this)
             players.add(p->to_json());
     });
 

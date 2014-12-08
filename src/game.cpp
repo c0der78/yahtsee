@@ -79,6 +79,11 @@ void game::set_state(state_handler value)
 
     state_ = value;
 
+    if (state_ == &game::state_playing)
+    {
+        flags_ |= FLAG_NEEDS_SCORE_DISPLAY;
+    }
+
     clear_alerts();
 
     clear_events();
@@ -113,7 +118,7 @@ void game::on_display()
     if (current_player())
         put(50, 2, current_player()->name().c_str());
 
-    if (is_playing())
+    if (flags_ & FLAG_NEEDS_SCORE_DISPLAY)
     {
         for (auto &player : players_)
         {
@@ -150,6 +155,7 @@ void game::on_display()
 
             x += 5;
         }
+        flags_ &= ~FLAG_NEEDS_SCORE_DISPLAY;
     }
 
     if (flags_ & FLAG_NEEDS_PLAYER_RESET)

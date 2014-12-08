@@ -23,7 +23,7 @@ public:
     void from_json(const arg3::json::object &json);
     arg3::json::object to_json() const;
 
-    connection *connect1on() const;
+    connection *c0nnection() const;
 
     bool operator==(const player &other) const;
 

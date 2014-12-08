@@ -148,6 +148,7 @@ void game::state_waiting_for_connections(int input)
         matchmaker_.stop();
         set_state(&game::state_multiplayer_menu);
         display_multiplayer_menu();
+        set_needs_display();
     }
     else if (tolower(input) == 's' && players_.size() > 1)
     {

@@ -115,7 +115,7 @@ void client::run()
         }
         else if (input().size() > 0)
         {
-            logf("read %zu bytes %s", input().size(), (char *) input().data());
+            logf("read %zu bytes %s", input().size(), string(input().begin(), input().end()).c_str());
         }
 
         size_t outSize = output().size();

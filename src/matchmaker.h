@@ -33,6 +33,8 @@ private:
 
     void unregister();
 
+    void send_network_message(const string &value);
+
     constexpr static const char *GAME_TYPE = "yahtsee";
 
     static const char *GAME_API_URL;

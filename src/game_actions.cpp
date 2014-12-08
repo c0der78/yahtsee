@@ -125,7 +125,7 @@ void game::action_remove_network_player(connection *c)
 {
     auto it = find_if(players_.begin(), players_.end(), [&c](const shared_ptr<player> &p)
     {
-        return p->connect1on() == c;
+        return p->c0nnection() == c;
     });
 
     if (it != players_.end())
@@ -180,8 +180,6 @@ void game::action_player_roll_dice(const shared_ptr<player> &player)
 
     display_dice_roll();
 
-    matchmaker_.notify_player_roll();
-
 }
 void game::action_roll_dice()
 {
@@ -200,6 +198,8 @@ void game::action_roll_dice()
     if (player->roll_count() < 3)
     {
         action_player_roll_dice(player);
+
+        matchmaker_.notify_player_roll();
     }
     else
     {
