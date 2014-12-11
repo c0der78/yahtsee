@@ -12,9 +12,9 @@ die::value_type player::engine::generate(die::value_type from, die::value_type t
 
     if (!nextRoll_.empty())
     {
-        value = nextRoll_.back();
+        value = nextRoll_.front();
 
-        nextRoll_.pop_back();
+        nextRoll_.pop();
     }
     else
     {
@@ -27,14 +27,25 @@ die::value_type player::engine::generate(die::value_type from, die::value_type t
     return value;
 }
 
+void player::engine::reset()
+{
+    while (!nextRoll_.empty())
+        nextRoll_.pop();
+}
+
+void player::engine::set_next_roll(const queue<die::value_type> &roll)
+{
+    player_engine.nextRoll_ = roll;
+}
+
 player::player(const string &name) : yaht::player(&player_engine), connection_(NULL), id_(generate_uuid()), name_(name)
 {}
 
-player::player(connection *conn, const string &id, const string &name) : yaht::player(), connection_(conn), id_(id), name_(name)
+player::player(connection *conn, const string &id, const string &name) : yaht::player(&player_engine), connection_(conn), id_(id), name_(name)
 {
 }
 
-player::player(connection *conn, const json::object &json) : yaht::player()
+player::player(connection *conn, const json::object &json) : yaht::player(&player_engine)
 {
     from_json(json);
 }
@@ -75,7 +86,3 @@ bool player::operator==(const player &other) const
     return id_ == other.id_;
 }
 
-void player::set_next_roll(const vector<die::value_type> &roll)
-{
-    player_engine.nextRoll_ = roll;
-}

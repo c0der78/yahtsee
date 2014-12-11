@@ -76,22 +76,12 @@ void game::action_joined_game()
     display_client_waiting_to_start();
 }
 
-void game::action_disconnected()
+void game::action_disconnect()
 {
-    if (!matchmaker_.is_valid()) return;
-
-    clear_alerts();
-
-    display_alert("Disconnected from server.");
-
-    pop_alert(2000, [&]()
+    if (flags_ & FLAG_JOINING)
     {
-        set_state(&game::state_game_menu);
-
-        display_game_menu();
-    });
-
-    logf("disconnected");
+        matchmaker_.notify_player_left(this_player());
+    }
 }
 
 void game::action_add_network_player(const shared_ptr<player> &player)
@@ -162,16 +152,29 @@ void game::action_network_player_joined(const shared_ptr<player> &p)
 
 void game::action_network_player_left(const shared_ptr<player> &p)
 {
-    auto it = remove_if(players_.begin(), players_.end(), [&p](const shared_ptr<player> &o)
+    players_.erase(remove_if(players_.begin(), players_.end(), [&p](const shared_ptr<player> &o)
     {
         return p->id() == o->id();
+    }), players_.end());
+
+    if (players_.size() == 1)
+    {
+        logf("reseting game");
+
+        set_state(&game::state_game_menu);
+
+        players_.clear();
+    }
+    else
+    {
+        logf("still have %zu players", players_.size());
+    }
+
+    display_alert(2000, p->name() + " has left the game.", nullptr, [&]()
+    {
+        if (players_.empty())
+            display_game_menu();
     });
-
-    if (it == players_.end()) return;
-
-    players_.erase(it, players_.end());
-
-    display_alert(2000, p->name() + " has left the game.");
 }
 
 void game::action_player_roll_dice(const shared_ptr<player> &player)
@@ -203,7 +206,10 @@ void game::action_roll_dice()
     }
     else
     {
-        display_alert(2000, "You must choose a score after three rolls.");
+        display_alert(2000, "You must choose a score after three rolls.", nullptr, [&]()
+        {
+            display_dice_roll();
+        });
     }
 }
 
@@ -214,8 +220,6 @@ void game::action_finish_turn()
     set_state(&game::state_playing);
 
     next_player();
-
-    set_needs_display();
 
     set_needs_clear();
 }
@@ -231,7 +235,7 @@ void game::action_network_player_finished(const shared_ptr<player> &p)
         display_alert(1000, "It is now your turn.");
     }
 
-    set_needs_display();
+    set_needs_score_display();
 
     set_needs_clear();
 }

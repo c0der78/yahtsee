@@ -73,7 +73,6 @@ void client::on_connect()
 void client::on_close()
 {
     logf("client closed");
-    game_->action_disconnected();
 }
 
 bool client::start(const std::string &host, int port)

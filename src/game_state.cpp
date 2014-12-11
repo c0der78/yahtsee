@@ -172,6 +172,8 @@ void game::state_quit_confirm(int input)
     }
     else
     {
+        action_disconnect();
+
         set_state(nullptr);
     }
 }
@@ -189,7 +191,7 @@ void game::state_playing(int input)
             displayMode_ = HORIZONTAL;
         else
             displayMode_ = static_cast<display_mode>(++mode);
-        set_needs_display();
+        set_needs_score_display();
         set_needs_clear();
         return;
     }
@@ -200,7 +202,7 @@ void game::state_playing(int input)
             displayMode_ = MINIMAL;
         else
             displayMode_ = static_cast<display_mode>(--mode);
-        set_needs_display();
+        set_needs_score_display();
         set_needs_clear();
         return;
     }
@@ -209,7 +211,7 @@ void game::state_playing(int input)
         if (displayMode_ == MINIMAL)
         {
             minimalLower_ = !minimalLower_;
-            set_needs_display();
+            set_needs_score_display();
             set_needs_clear();
         }
         return;

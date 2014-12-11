@@ -230,7 +230,7 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
     json.set_int("action", PLAYER_LEFT);
 
-    json.set_string("player", p->to_json());
+    json.set("player", p->to_json());
 
     send_network_message(json.to_string());
 

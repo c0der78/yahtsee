@@ -73,6 +73,13 @@ void game::recover_state()
     clear_events();
 }
 
+void game::set_needs_score_display()
+{
+    flags_ |= FLAG_NEEDS_SCORE_DISPLAY;
+
+    set_needs_display();
+}
+
 void game::set_state(state_handler value)
 {
     lastState_ = state_;
@@ -81,7 +88,7 @@ void game::set_state(state_handler value)
 
     if (state_ == &game::state_playing)
     {
-        flags_ |= FLAG_NEEDS_SCORE_DISPLAY;
+        set_needs_score_display();
     }
 
     clear_alerts();
@@ -122,11 +129,6 @@ void game::on_display()
     {
         for (auto &player : players_)
         {
-            if (flags_ & FLAG_NEEDS_PLAYER_RESET)
-            {
-                player->reset();
-            }
-
             switch (displayMode_)
             {
             case MINIMAL:
@@ -156,11 +158,6 @@ void game::on_display()
             x += 5;
         }
         flags_ &= ~FLAG_NEEDS_SCORE_DISPLAY;
-    }
-
-    if (flags_ & FLAG_NEEDS_PLAYER_RESET)
-    {
-        flags_ &= ~FLAG_NEEDS_PLAYER_RESET;
     }
 
     switch (displayMode_)
@@ -365,12 +362,29 @@ void game::for_players(std::function<void(const shared_ptr<player> &p)> funk)
 void game::add_player(const shared_ptr<player> &p)
 {
     players_.push_back(p);
+
+    if (state_ == &game::state_playing)
+    {
+        set_needs_score_display();
+    }
 }
 
 void game::next_player()
 {
+    if (currentPlayer_ < players_.size())
+    {
+        auto player = players_[currentPlayer_];
+        player->reset();
+        player_engine.reset();
+    }
+
     if (++currentPlayer_ >= players_.size())
         currentPlayer_ = 0;
+
+    if (state_ == &game::state_playing)
+    {
+        set_needs_score_display();
+    }
 }
 
 shared_ptr<player> game::get_player(size_t index) const
@@ -388,6 +402,11 @@ void game::set_current_player(const shared_ptr<player> &p)
 
     if (it != players_.end())
         currentPlayer_ = distance(players_.begin(), it);
+
+    if (state_ == &game::state_playing)
+    {
+        set_needs_score_display();
+    }
 }
 
 shared_ptr<player> game::current_player() const

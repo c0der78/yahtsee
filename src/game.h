@@ -146,7 +146,7 @@ private:
 
     void action_finish_turn();
 
-    void action_disconnected();
+    void action_disconnect();
 
     void action_network_player_finished(const shared_ptr<player> &p);
 
@@ -161,6 +161,8 @@ private:
     void init_canvas(caca_canvas_t *canvas);
 
     void set_display_mode(display_mode mode);
+
+    void set_needs_score_display();
 
     int get_alert_x() const;
 
@@ -188,8 +190,7 @@ private:
 
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
-    static const int FLAG_NEEDS_PLAYER_RESET = (1 << 2);
-    static const int FLAG_NEEDS_SCORE_DISPLAY = (1 << 3);
+    static const int FLAG_NEEDS_SCORE_DISPLAY = (1 << 2);
 
     friend class connection;
     friend class client;

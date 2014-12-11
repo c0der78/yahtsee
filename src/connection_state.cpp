@@ -45,13 +45,13 @@ void connection::handle_player_roll(const json::object &packet)
 
     json::array roll = packet.get_array("roll");
 
-    vector<arg3::die::value_type> values;
+    queue<arg3::die::value_type> values;
 
     for (size_t i = 0; i < roll.size(); i++)
     {
         json::object inner = roll.get(i);
 
-        values.push_back(inner.get_int("value"));
+        values.push(inner.get_int("value"));
 
         p->keep_die(i, inner.get_bool("kept"));
     }
@@ -59,7 +59,7 @@ void connection::handle_player_roll(const json::object &packet)
     if (game_->current_player() != p)
         game_->set_current_player(p);
 
-    p->set_next_roll(values);
+    player_engine.set_next_roll(values);
 
     game_->action_player_roll_dice(p);
 

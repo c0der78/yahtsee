@@ -3,6 +3,7 @@
 
 #include <arg3dice/yaht/player.h>
 #include <arg3json/object.h>
+#include <queue>
 
 class connection;
 
@@ -27,15 +28,14 @@ public:
 
     bool operator==(const player &other) const;
 
-    void set_next_roll(const vector<arg3::die::value_type> &values);
-
-
     class engine : public arg3::die::engine
     {
     public:
         arg3::die::value_type generate(arg3::die::value_type from, arg3::die::value_type to);
+        void reset();
+        void set_next_roll(const queue<arg3::die::value_type> &values);
     private:
-        vector<arg3::die::value_type> nextRoll_;
+        queue<arg3::die::value_type> nextRoll_;
         friend class player;
     };
 
@@ -45,6 +45,8 @@ private:
     string id_;
     string name_;
 };
+
+extern player::engine player_engine;
 
 
 #endif
