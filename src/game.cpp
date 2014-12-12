@@ -123,7 +123,16 @@ void game::on_display()
     int x = 46;
 
     if (current_player())
+    {
+        if (current_player() == this_player())
+            set_color(CACA_GREEN);
+        else
+            set_color(CACA_RED);
+
         put(50, 2, current_player()->name().c_str());
+
+        set_color(CACA_DEFAULT);
+    }
 
     if (flags_ & FLAG_NEEDS_SCORE_DISPLAY)
     {

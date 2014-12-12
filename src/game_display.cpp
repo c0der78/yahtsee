@@ -143,6 +143,8 @@ yaht::scoresheet::value_type game::display_upper_scores(const yaht::scoresheet &
 {
     yaht::scoresheet::value_type total_score = 0;
 
+    set_color(CACA_CYAN);
+
     for (int i = 0; i <= yaht::Constants::NUM_DICE; i++, y += 2)
     {
         auto value = score.upper_score(i + 1);
@@ -163,6 +165,8 @@ yaht::scoresheet::value_type game::display_upper_scores(const yaht::scoresheet &
 
     put(x, y + 4, std::to_string(lower_score_total).c_str());
 
+    set_color(CACA_DEFAULT);
+
     return lower_score_total;
 
 }
@@ -170,6 +174,8 @@ yaht::scoresheet::value_type game::display_upper_scores(const yaht::scoresheet &
 void game::display_lower_scores(const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
 {
     yaht::scoresheet::value_type total_score = 0;
+
+    set_color(CACA_CYAN);
 
     for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++)
     {
@@ -199,4 +205,7 @@ void game::display_lower_scores(const yaht::scoresheet &score, yaht::scoresheet:
     put(x, y + 2, std::to_string(lower_score_total).c_str());
 
     put(x, y + 4, std::to_string(total_score + lower_score_total).c_str());
+
+    set_color(CACA_DEFAULT);
+
 }

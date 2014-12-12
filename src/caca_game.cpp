@@ -257,6 +257,11 @@ int caca_game::get_cursor_y() const
     return caca_wherey(canvas_);
 }
 
+void caca_game::set_color(int fg)
+{
+    caca_set_color_ansi(canvas_, fg, CACA_TRANSPARENT);
+}
+
 void caca_game::put(int x, int y, const char *value)
 {
     if (value && *value)

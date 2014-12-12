@@ -68,6 +68,8 @@ public:
 
     int get_cursor_y() const;
 
+    void set_color(int fg);
+
     void put(int x, int y, const char *value);
 
     void put(int x, int y, int value);
