@@ -108,8 +108,6 @@ void game::set_state(state_handler value)
 
     state_ = find_state(value);
 
-    logf("setting state %x", value);
-
     if (state_ && state_->on_init)
     {
         bind(state_->on_init, this)();
