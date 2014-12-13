@@ -37,8 +37,6 @@ void game::action_host_game()
 
     set_state(&game::state_waiting_for_connections);
 
-    display_alert("Waiting for connections...");
-
 }
 
 void game::action_join_game()
@@ -131,6 +129,7 @@ void game::action_remove_network_player(connection *c)
             display_alert(2000, p->name() + " has left the game.", nullptr, [&]()
             {
                 set_state(&game::state_game_menu);
+
                 display_game_menu();
             });
         }
@@ -177,18 +176,11 @@ void game::action_network_player_left(const shared_ptr<player> &p)
     });
 }
 
-void game::action_player_roll_dice(const shared_ptr<player> &player)
-{
-    player->roll();
-
-    display_dice_roll();
-
-}
 void game::action_roll_dice()
 {
     auto player = current_player();
 
-    if (player->id() != this_player()->id())
+    if (is_online() && player->id() != this_player()->id())
     {
         display_alert(2000, "Its not your turn.", nullptr, [&]()
         {
@@ -200,16 +192,16 @@ void game::action_roll_dice()
 
     if (player->roll_count() < 3)
     {
-        action_player_roll_dice(player);
+
+        player->roll();
+
+        set_state(&game::state_rolling_dice);
 
         matchmaker_.notify_player_roll();
     }
     else
     {
-        display_alert(2000, "You must choose a score after three rolls.", nullptr, [&]()
-        {
-            display_dice_roll();
-        });
+        display_alert(2000, "You must choose a score after three rolls.");
     }
 }
 
@@ -235,7 +227,7 @@ void game::action_network_player_finished(const shared_ptr<player> &p)
         display_alert(1000, "It is now your turn.");
     }
 
-    set_needs_score_display();
+    set_needs_display();
 
     set_needs_clear();
 }

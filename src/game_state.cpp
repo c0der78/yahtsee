@@ -9,7 +9,6 @@ void game::state_ask_name(int ch)
     if ( ch == CACA_KEY_ESCAPE)
     {
         set_state(&game::state_game_menu);
-        display_game_menu();
         return;
     }
 
@@ -43,14 +42,6 @@ void game::state_ask_name(int ch)
     else if (isalnum(ch))
     {
         add_to_buffer(ch);
-
-        int x = get_cursor_x();
-
-        int y = get_cursor_y();
-
-        put(x + 1, y, ch);
-
-        set_cursor(x + 1, y);
     }
 
     set_needs_display();
@@ -73,7 +64,6 @@ void game::state_game_menu(int input)
     if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
     {
         set_state(&game::state_quit_confirm);
-        display_confirm_quit();
         return;
     }
 
@@ -81,11 +71,9 @@ void game::state_game_menu(int input)
     {
     case 'n':
         set_state(&game::state_ask_number_of_players);
-        display_ask_number_of_players();
         break;
     case 'm':
         set_state(&game::state_multiplayer_menu);
-        display_multiplayer_menu();
         break;
     case 's':
         break;
@@ -97,7 +85,6 @@ void game::state_multiplayer_menu(int input)
     if (input == CACA_KEY_ESCAPE)
     {
         set_state(&game::state_game_menu);
-        display_game_menu();
         return;
     }
 
@@ -106,12 +93,10 @@ void game::state_multiplayer_menu(int input)
     case 'h':
         flags_ |= FLAG_HOSTING;
         set_state(&game::state_ask_name);
-        display_ask_name();
         break;
     case 'j':
         flags_ |= FLAG_JOINING;
         set_state(&game::state_ask_name);
-        display_ask_name();
         break;
     }
 }
@@ -121,7 +106,6 @@ void game::state_ask_number_of_players(int input)
     if (input == CACA_KEY_ESCAPE)
     {
         set_state(&game::state_game_menu);
-        display_game_menu();
         return;
     }
 
@@ -136,7 +120,6 @@ void game::state_ask_number_of_players(int input)
         }
 
         set_state(&game::state_ask_name);
-        display_ask_name();
     }
 }
 
@@ -147,8 +130,6 @@ void game::state_waiting_for_connections(int input)
         flags_ = 0;
         matchmaker_.stop();
         set_state(&game::state_multiplayer_menu);
-        display_multiplayer_menu();
-        set_needs_display();
     }
     else if (tolower(input) == 's' && players_.size() > 1)
     {
@@ -191,7 +172,7 @@ void game::state_playing(int input)
             displayMode_ = HORIZONTAL;
         else
             displayMode_ = static_cast<display_mode>(++mode);
-        set_needs_score_display();
+        set_needs_display();
         set_needs_clear();
         return;
     }
@@ -202,7 +183,7 @@ void game::state_playing(int input)
             displayMode_ = MINIMAL;
         else
             displayMode_ = static_cast<display_mode>(--mode);
-        set_needs_score_display();
+        set_needs_display();
         set_needs_clear();
         return;
     }
@@ -211,7 +192,7 @@ void game::state_playing(int input)
         if (displayMode_ == MINIMAL)
         {
             minimalLower_ = !minimalLower_;
-            set_needs_score_display();
+            set_needs_display();
             set_needs_clear();
         }
         return;
@@ -226,7 +207,11 @@ void game::state_playing(int input)
     switch (tolower(input))
     {
     case 'r':
-        set_state(&game::state_rolling_dice);
+        if (flags_ & FLAG_WAITING_FOR_TURN)
+        {
+            display_alert(2000, "It is not your turn yet.");
+            break;
+        }
         action_roll_dice();
         break;
     case '?':
@@ -302,10 +287,8 @@ void game::state_rolling_dice(int input)
 
     case '?':
         set_state(&game::state_help_menu);
-        display_help();
         break;
     case 'r':
-        set_state(&game::state_rolling_dice);
         action_roll_dice();
         break;
     case 'f':

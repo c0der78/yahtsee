@@ -182,6 +182,9 @@ void caca_game::update_display()
     {
         on_display();
 
+        if (!alert_boxes_.empty())
+            alert_boxes_.top().display();
+
         caca_refresh_display(display_);
 
         flags_ &= ~FLAG_NEEDS_DISPLAY;
@@ -311,9 +314,6 @@ void caca_game::pop_alert()
         unique_lock<recursive_mutex> lock(alertsMutex_);
 
         alert_boxes_.pop();
-
-        if (!alert_boxes_.empty())
-            alert_boxes_.top().display();
 
         set_needs_display();
     }

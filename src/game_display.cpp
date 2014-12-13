@@ -22,7 +22,16 @@ void game::display_ask_name()
         int mod = (strlen(buf) / 2);
 
         put(a.center_x() - mod, a.center_y() - 1, buf);
-        set_cursor(a.center_x() - mod, a.center_y());
+
+        int x = a.center_x() - mod;
+        int y = a.center_y();
+
+        for (auto &ch : get_buffer())
+        {
+            put(x++, y, ch);
+        }
+
+        set_cursor(x, y);
     });
 }
 
@@ -31,6 +40,11 @@ void game::display_ask_number_of_players()
     display_alert("How many players are playing?");
 }
 
+void game::display_waiting_for_connections()
+{
+
+    display_alert("Waiting for connections...");
+}
 
 void game::display_multiplayer_menu()
 {
@@ -77,7 +91,7 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
 {
     char buf[BUFSIZ + 1] = {0};
 
-    if (player == this_player())
+    if (players_.size() == 1 || player == this_player())
         snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
     else
         snprintf(buf, BUFSIZ, "%s's roll (%d of 3):", player->name().c_str(), player->roll_count());
@@ -106,7 +120,7 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
 
     y += 2;
 
-    if (player == this_player())
+    if (!is_online() || player == this_player())
         put(xs, y, "Press '?' for help on how to score.");
     else
     {

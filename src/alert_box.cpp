@@ -18,8 +18,6 @@ void alert_box::display()
 
     if (callback_ != nullptr)
         callback_(*this);
-
-    game_->set_needs_display();
 }
 
 int alert_box::width() const

@@ -21,13 +21,9 @@ public:
 
     typedef void (game::*state_handler)(int);
 
-    typedef std::function<void(int)> game_state;
-
     game();
 
     void reset();
-
-    state_handler state() const;
 
     void recover_state();
 
@@ -110,11 +106,18 @@ private:
 
     void display_multiplayer_menu();
 
+    void display_player_scores();
+
     arg3::yaht::scoresheet::value_type display_upper_scores(const arg3::yaht::scoresheet &score, int x, int y);
 
     void display_lower_scores(const arg3::yaht::scoresheet &score, arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
 
     void display_client_waiting_to_start();
+
+    void display_waiting_for_connections();
+
+    /* state initializers/destructors */
+    void exit_multiplayer();
 
     /* actions */
 
@@ -133,8 +136,6 @@ private:
     void action_network_player_left(const shared_ptr<player> &p);
 
     void action_roll_dice();
-
-    void action_player_roll_dice(const shared_ptr<player> &p);
 
     void action_select_die(shared_ptr<arg3::yaht::player> player, int d);
 
@@ -162,8 +163,6 @@ private:
 
     void set_display_mode(display_mode mode);
 
-    void set_needs_score_display();
-
     int get_alert_x() const;
 
     int get_alert_y() const;
@@ -176,9 +175,21 @@ private:
 
     shared_ptr<player> find_player_by_id(const string &id) const;
 
+    typedef struct
+    {
+        void (game::*on_init)();
+        void (game::*on_execute)(int);
+        void (game::*on_display)();
+        void (game::*on_exit)();
+    } game_state;
+
+    static const game_state state_table[];
+
+    static const game_state *find_state(state_handler value);
+
     void *upperbuf_, *lowerbuf_, *menubuf_, *headerbuf_, *helpbuf_;
     size_t upperbufSize_, lowerbufSize_, menubufSize_, headerbufSize_, helpbufSize_;
-    state_handler state_, lastState_;
+    const game_state *state_, *lastState_;
     display_mode displayMode_;
     bool minimalLower_;
     unsigned numPlayers_;
@@ -190,7 +201,7 @@ private:
 
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
-    static const int FLAG_NEEDS_SCORE_DISPLAY = (1 << 2);
+    static const int FLAG_WAITING_FOR_TURN = (1 << 2);
 
     friend class connection;
     friend class client;

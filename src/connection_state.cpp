@@ -61,7 +61,11 @@ void connection::handle_player_roll(const json::object &packet)
 
     player_engine.set_next_roll(values);
 
-    game_->action_player_roll_dice(p);
+    p->roll();
+
+    game_->pop_alert();
+
+    game_->display_dice_roll();
 
 }
 void connection::handle_remote_connection_init(const json::object &packet)

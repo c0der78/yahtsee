@@ -10,6 +10,20 @@ using namespace std::placeholders;
 
 const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
+const game::game_state game::state_table[] =
+{
+    { NULL, &game::state_playing, &game::display_player_scores, NULL},
+    { &game::display_game_menu, &game::state_game_menu, NULL, NULL},
+    { &game::display_ask_name, &game::state_ask_name, NULL, NULL},
+    { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL},
+    { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL},
+    { &game::display_help, &game::state_help_menu, NULL, NULL},
+    { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL},
+    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL},
+    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
 game::game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbufSize_(0),
     lowerbufSize_(0), menubufSize_(0), headerbufSize_(0), helpbufSize_(0), displayMode_(MINIMAL), numPlayers_(0),
     matchmaker_(this), flags_(0), currentPlayer_(0)
@@ -56,11 +70,6 @@ void game::reset()
     }
 }
 
-game::state_handler game::state() const
-{
-    return state_;
-}
-
 void game::recover_state()
 {
     if (lastState_ != nullptr)
@@ -73,39 +82,51 @@ void game::recover_state()
     clear_events();
 }
 
-void game::set_needs_score_display()
+const game::game_state *game::find_state(state_handler value)
 {
-    flags_ |= FLAG_NEEDS_SCORE_DISPLAY;
-
-    set_needs_display();
+    for (size_t i = 0; state_table[i].on_execute != NULL; i++)
+    {
+        if (state_table[i].on_execute == value)
+            return &state_table[i];
+    }
+    return nullptr;
 }
 
 void game::set_state(state_handler value)
 {
-    lastState_ = state_;
-
-    state_ = value;
-
-    if (state_ == &game::state_playing)
-    {
-        set_needs_score_display();
-    }
-
     clear_alerts();
 
     clear_events();
+
+    if (state_ && state_->on_execute != value)
+    {
+        lastState_ = state_;
+
+        if (lastState_ && lastState_->on_exit)
+            bind(lastState_->on_exit, this)();
+    }
+
+    state_ = find_state(value);
+
+    logf("setting state %x", value);
+
+    if (state_ && state_->on_init)
+    {
+        bind(state_->on_init, this)();
+
+        set_needs_display();
+    }
+
 }
 
 bool game::is_state(state_handler value)
 {
-    return state_ == value;
+    return state_->on_execute == value;
 }
 
 void game::on_start()
 {
     set_state(&game::state_game_menu);
-
-    display_game_menu();
 }
 
 bool game::alive() const
@@ -119,6 +140,12 @@ bool game::is_online() const
 }
 
 void game::on_display()
+{
+    if (state_ && state_->on_display)
+        bind(state_->on_display, this)();
+}
+
+void game::display_player_scores()
 {
     int x = 46;
 
@@ -134,39 +161,35 @@ void game::on_display()
         set_color(CACA_DEFAULT);
     }
 
-    if (flags_ & FLAG_NEEDS_SCORE_DISPLAY)
+    for (auto &player : players_)
     {
-        for (auto &player : players_)
+        switch (displayMode_)
         {
-            switch (displayMode_)
+        case MINIMAL:
+            if (minimalLower_)
             {
-            case MINIMAL:
-                if (minimalLower_)
-                {
-                    display_lower_scores(player->score(), player->calculate_total_upper_score(), x, 9);
-                }
-                else
-                {
-                    display_upper_scores(player->score(), x, 9 );
-                }
-                break;
-            case VERTICAL:
+                display_lower_scores(player->score(), player->calculate_total_upper_score(), x, 9);
+            }
+            else
             {
-                yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
-                display_lower_scores(player->score(), lower_score_total, x, 28);
-                break;
+                display_upper_scores(player->score(), x, 9 );
             }
-            case HORIZONTAL:
-            {
-                yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
-                display_lower_scores(player->score(), lower_score_total, x + 76, 2);
-                break;
-            }
-            }
-
-            x += 5;
+            break;
+        case VERTICAL:
+        {
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
+            display_lower_scores(player->score(), lower_score_total, x, 28);
+            break;
         }
-        flags_ &= ~FLAG_NEEDS_SCORE_DISPLAY;
+        case HORIZONTAL:
+        {
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
+            display_lower_scores(player->score(), lower_score_total, x + 76, 2);
+            break;
+        }
+        }
+
+        x += 5;
     }
 
     switch (displayMode_)
@@ -194,7 +217,8 @@ void game::on_quit()
 
 void game::on_key_press(int input)
 {
-    bind(state_, this, _1)(input);
+    if (state_ && state_->on_execute)
+        bind(state_->on_execute, this, _1)(input);
 }
 
 bool game::is_playing()
@@ -282,7 +306,7 @@ void game::display_alert(int millis, const function<void(const alert_box &)> fun
 
 void game::display_alert(const string &message, const function<void(const alert_box &a)> funk)
 {
-    display_alert([ &, funk](const alert_box & a)
+    display_alert([ message, funk](const alert_box & a)
     {
         a.center(message);
 
@@ -300,7 +324,7 @@ void game::display_alert(int millis, const string &message, const function<void(
 
 void game::display_alert(const vector<string> &messages, const std::function<void(const alert_box &a)> funk)
 {
-    display_alert([ &, funk](const alert_box & a)
+    display_alert([ &, messages, funk](const alert_box & a)
     {
         const int ymod = messages.size() / 2;
 
@@ -372,10 +396,7 @@ void game::add_player(const shared_ptr<player> &p)
 {
     players_.push_back(p);
 
-    if (state_ == &game::state_playing)
-    {
-        set_needs_score_display();
-    }
+    set_needs_display();
 }
 
 void game::next_player()
@@ -390,10 +411,14 @@ void game::next_player()
     if (++currentPlayer_ >= players_.size())
         currentPlayer_ = 0;
 
-    if (state_ == &game::state_playing)
+    if (is_online())
     {
-        set_needs_score_display();
+        if ( currentPlayer_ != 0)
+            flags_ |= FLAG_WAITING_FOR_TURN;
+        else
+            flags_ &= ~FLAG_WAITING_FOR_TURN;
     }
+    set_needs_display();
 }
 
 shared_ptr<player> game::get_player(size_t index) const
@@ -412,10 +437,14 @@ void game::set_current_player(const shared_ptr<player> &p)
     if (it != players_.end())
         currentPlayer_ = distance(players_.begin(), it);
 
-    if (state_ == &game::state_playing)
+    if (is_online())
     {
-        set_needs_score_display();
+        if ( currentPlayer_ != 0)
+            flags_ |= FLAG_WAITING_FOR_TURN;
+        else
+            flags_ &= ~FLAG_WAITING_FOR_TURN;
     }
+    set_needs_display();
 }
 
 shared_ptr<player> game::current_player() const
