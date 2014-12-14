@@ -51,9 +51,12 @@ void connection::handle_player_roll(const json::object &packet)
     {
         json::object inner = roll.get(i);
 
-        values.push(inner.get_int("value"));
+        auto kept = inner.get_bool("kept");
 
-        p->keep_die(i, inner.get_bool("kept"));
+        if (!kept)
+            values.push(inner.get_int("value"));
+
+        p->keep_die(i, kept);
     }
 
     if (game_->current_player() != p)
@@ -66,6 +69,8 @@ void connection::handle_player_roll(const json::object &packet)
     game_->pop_alert();
 
     game_->display_dice_roll();
+
+    game_->set_needs_display();
 
 }
 void connection::handle_remote_connection_init(const json::object &packet)

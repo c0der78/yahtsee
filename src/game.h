@@ -75,6 +75,8 @@ private:
 
     void state_waiting_for_connections(int input);
 
+    void state_client_waiting_to_start(int input);
+
     /* display methods */
 
     void display_alert(int millis, const function<void(const alert_box &)> funk, const function<void()> pop = nullptr);

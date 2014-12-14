@@ -124,6 +124,11 @@ void game::state_waiting_for_connections(int input)
     }
 }
 
+void game::state_client_waiting_to_start(int input)
+{
+
+}
+
 void game::state_quit_confirm(int input)
 {
     if (tolower(input) == 'n')

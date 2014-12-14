@@ -217,18 +217,27 @@ void game::action_finish_turn()
 
 void game::action_network_player_finished(const shared_ptr<player> &p)
 {
-    set_state(&game::state_playing);
-
     next_player();
 
     if (current_player()->id() == this_player()->id())
     {
-        display_alert(1000, "It is now your turn.");
+        display_alert(2000, "It is now your turn.", nullptr, [&]()
+        {
+
+            set_state(&game::state_playing);
+
+            set_needs_display();
+
+            set_needs_clear();
+        });
     }
+    else
+    {
 
-    set_needs_display();
+        set_needs_display();
 
-    set_needs_clear();
+        set_needs_clear();
+    }
 }
 
 void game::action_select_die(shared_ptr<yaht::player> player, int d)

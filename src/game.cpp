@@ -19,6 +19,7 @@ const game::game_state game::state_table[] =
     { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL},
     { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL},
     { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer},
+    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer},
     {NULL, NULL, NULL, NULL}
 };
 

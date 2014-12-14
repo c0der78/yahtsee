@@ -156,11 +156,12 @@ void caca_game::update_events()
 {
     unique_lock<recursive_mutex> lock(eventsMutex_);
 
-    timed_events_.erase(remove_if(timed_events_.begin(), timed_events_.end(), [](const game_event & ev)
+    timed_events_.erase(remove_if(timed_events_.begin(), timed_events_.end(), [&](const game_event & ev)
     {
         if (ev.ready())
         {
             ev.perform();
+            set_needs_clear();
             return true;
         }
         return false;
