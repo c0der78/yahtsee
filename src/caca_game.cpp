@@ -196,10 +196,6 @@ void caca_game::clear_display()
 {
     lock_guard<recursive_mutex> lock(mutex_);
 
-    clear_alerts();
-
-    clear_events();
-
     caca_clear_canvas(canvas_);
 
     init_canvas(canvas_);
@@ -265,6 +261,14 @@ void caca_game::set_color(int fg)
     caca_set_color_ansi(canvas_, fg, CACA_TRANSPARENT);
 }
 
+void caca_game::put_color(int x, int y, int fg)
+{
+
+    uint32_t attr = ((uint32_t)(CACA_TRANSPARENT | 0x40) << 18) | ((uint32_t)(fg | 0x40) << 4);
+
+    caca_put_attr(canvas_, x, y, attr);
+}
+
 void caca_game::put(int x, int y, const char *value)
 {
     if (value && *value)
@@ -286,11 +290,11 @@ void caca_game::put(int x, int y, int value)
     set_needs_display();
 }
 
-void caca_game::display_alert(int x, int y, int width, int height, const function<void(const alert_box &)> callback)
+void caca_game::display_alert(dimensional *dimensions, const function<void(const alert_box &)> callback)
 {
     unique_lock<recursive_mutex> lock(alertsMutex_);
 
-    alert_boxes_.push(std::move(alert_box(this, x, y, width, height, callback)));
+    alert_boxes_.push(std::move(alert_box(this, dimensions, callback)));
 
     alert_boxes_.top().display();
 

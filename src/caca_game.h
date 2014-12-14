@@ -70,11 +70,13 @@ public:
 
     void set_color(int fg);
 
+    void put_color(int x, int y, int fg);
+
     void put(int x, int y, const char *value);
 
     void put(int x, int y, int value);
 
-    void display_alert(int x, int y, int width, int height, const function<void(const alert_box &)> callback);
+    void display_alert(dimensional *dimensions, const function<void(const alert_box &)> callback);
 
     const alert_box &displayed_alert() const;
 

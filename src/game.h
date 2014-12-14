@@ -4,6 +4,7 @@
 #include "caca_game.h"
 #include "matchmaker.h"
 
+#include <stack>
 
 typedef enum
 {
@@ -25,7 +26,7 @@ public:
 
     void reset();
 
-    void recover_state();
+    void pop_state();
 
     void on_start();
 
@@ -108,9 +109,9 @@ private:
 
     void display_player_scores();
 
-    arg3::yaht::scoresheet::value_type display_upper_scores(const arg3::yaht::scoresheet &score, int x, int y);
+    arg3::yaht::scoresheet::value_type display_upper_scores(int color, const arg3::yaht::scoresheet &score, int x, int y);
 
-    void display_lower_scores(const arg3::yaht::scoresheet &score, arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
+    void display_lower_scores(int color, const arg3::yaht::scoresheet &score, arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
 
     void display_client_waiting_to_start();
 
@@ -118,6 +119,10 @@ private:
 
     /* state initializers/destructors */
     void exit_multiplayer();
+
+    void exit_game();
+
+    void finish_menu();
 
     /* actions */
 
@@ -163,14 +168,6 @@ private:
 
     void set_display_mode(display_mode mode);
 
-    int get_alert_x() const;
-
-    int get_alert_y() const;
-
-    int get_alert_w() const;
-
-    int get_alert_h() const;
-
     void next_player();
 
     shared_ptr<player> find_player_by_id(const string &id) const;
@@ -183,13 +180,30 @@ private:
         void (game::*on_exit)();
     } game_state;
 
+
+    class alert_dimensions : public dimensional
+    {
+    public:
+        alert_dimensions(game *game);
+
+        int x() const;
+
+        int y() const;
+
+        int w() const;
+
+        int h() const;
+    private:
+        game *game_;
+    };
+
     static const game_state state_table[];
 
     static const game_state *find_state(state_handler value);
 
     void *upperbuf_, *lowerbuf_, *menubuf_, *headerbuf_, *helpbuf_;
     size_t upperbufSize_, lowerbufSize_, menubufSize_, headerbufSize_, helpbufSize_;
-    const game_state *state_, *lastState_;
+    stack<const game_state *> states_;
     display_mode displayMode_;
     bool minimalLower_;
     unsigned numPlayers_;

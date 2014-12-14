@@ -8,6 +8,15 @@ using namespace std;
 
 class caca_game;
 
+class dimensional
+{
+public:
+    virtual int x() const = 0;
+    virtual int y() const = 0;
+    virtual int w() const = 0;
+    virtual int h() const = 0;
+};
+
 class alert_box
 {
 public:
@@ -33,11 +42,10 @@ public:
     int center_x(const string &text) const;
 private:
 
-    alert_box(caca_game *game, int x, int y, int width, int height, std::function<void(const alert_box &)> callback);
+    alert_box(caca_game *game, dimensional *dimensions, std::function<void(const alert_box &)> callback);
 
     caca_game *game_;
-    int x_, y_;
-    int width_, height_;
+    dimensional *dimensions_;
     std::function<void(const alert_box &)> callback_;
 
     friend class caca_game;

@@ -8,19 +8,17 @@ using namespace arg3;
 
 using namespace std::placeholders;
 
-const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
-
 const game::game_state game::state_table[] =
 {
-    { NULL, &game::state_playing, &game::display_player_scores, NULL},
-    { &game::display_game_menu, &game::state_game_menu, NULL, NULL},
+    { &game::finish_menu, &game::state_playing, &game::display_player_scores, NULL},
+    { &game::display_game_menu, &game::state_game_menu, NULL, &game::exit_game},
     { &game::display_ask_name, &game::state_ask_name, NULL, NULL},
     { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL},
     { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL},
     { &game::display_help, &game::state_help_menu, NULL, NULL},
     { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL},
     { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL},
-    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, NULL},
+    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer},
     {NULL, NULL, NULL, NULL}
 };
 
@@ -70,16 +68,27 @@ void game::reset()
     }
 }
 
-void game::recover_state()
+void game::pop_state()
 {
-    if (lastState_ != nullptr)
+    if (!states_.empty())
     {
-        state_ = lastState_;
+        auto state = states_.top();
+
+        states_.pop();
+
+        if (state && state->on_exit)
+            bind(state->on_exit, this)();
+
+        if (!states_.empty())
+        {
+            state = states_.top();
+
+            if (state && state->on_init)
+                bind(state->on_init, this)();
+
+            set_needs_display();
+        }
     }
-
-    clear_alerts();
-
-    clear_events();
 }
 
 const game::game_state *game::find_state(state_handler value)
@@ -98,28 +107,24 @@ void game::set_state(state_handler value)
 
     clear_events();
 
-    if (state_ && state_->on_execute != value)
+    auto state = find_state(value);
+
+    if (state)
     {
-        lastState_ = state_;
+        if (state->on_init)
+        {
+            bind(state->on_init, this)();
 
-        if (lastState_ && lastState_->on_exit)
-            bind(lastState_->on_exit, this)();
+            set_needs_display();
+        }
+
+        states_.push(state);
     }
-
-    state_ = find_state(value);
-
-    if (state_ && state_->on_init)
-    {
-        bind(state_->on_init, this)();
-
-        set_needs_display();
-    }
-
 }
 
 bool game::is_state(state_handler value)
 {
-    return state_->on_execute == value;
+    return !states_.empty() && states_.top()->on_execute == value;
 }
 
 void game::on_start()
@@ -129,7 +134,7 @@ void game::on_start()
 
 bool game::alive() const
 {
-    return state_ != nullptr;
+    return !states_.empty();
 }
 
 bool game::is_online() const
@@ -139,68 +144,12 @@ bool game::is_online() const
 
 void game::on_display()
 {
-    if (state_ && state_->on_display)
-        bind(state_->on_display, this)();
-}
-
-void game::display_player_scores()
-{
-    int x = 46;
-
-    if (current_player())
+    if (!states_.empty())
     {
-        if (current_player() == this_player())
-            set_color(CACA_GREEN);
-        else
-            set_color(CACA_RED);
+        auto state = states_.top();
 
-        put(50, 2, current_player()->name().c_str());
-
-        set_color(CACA_DEFAULT);
-    }
-
-    for (auto &player : players_)
-    {
-        switch (displayMode_)
-        {
-        case MINIMAL:
-            if (minimalLower_)
-            {
-                display_lower_scores(player->score(), player->calculate_total_upper_score(), x, 9);
-            }
-            else
-            {
-                display_upper_scores(player->score(), x, 9 );
-            }
-            break;
-        case VERTICAL:
-        {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
-            display_lower_scores(player->score(), lower_score_total, x, 28);
-            break;
-        }
-        case HORIZONTAL:
-        {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(player->score(), x , 9 );
-            display_lower_scores(player->score(), lower_score_total, x + 76, 2);
-            break;
-        }
-        }
-
-        x += 5;
-    }
-
-    switch (displayMode_)
-    {
-    case MINIMAL:
-        put(0, minimalLower_ ? 32 : 27, HELP);
-        break;
-    case VERTICAL:
-        put(0, 51, HELP);
-        break;
-    case HORIZONTAL:
-        put(76, 25, HELP);
-        break;
+        if (state && state->on_display)
+            bind(state->on_display, this)();
     }
 }
 
@@ -210,18 +159,91 @@ void game::on_resize(int width, int height)
 
 void game::on_quit()
 {
-    state_ = nullptr;
+    while (!states_.empty())
+        states_.pop();
 }
 
 void game::on_key_press(int input)
 {
-    if (state_ && state_->on_execute)
-        bind(state_->on_execute, this, _1)(input);
+    // check non ascii commands
+    switch (input)
+    {
+    case CACA_KEY_UP:
+    {
+        int mode = displayMode_;
+        if (mode == MINIMAL)
+            displayMode_ = HORIZONTAL;
+        else
+            displayMode_ = static_cast<display_mode>(++mode);
+        set_needs_display();
+        set_needs_clear();
+        return;
+    }
+    case CACA_KEY_DOWN:
+    {
+        int mode = displayMode_;
+        if (mode == HORIZONTAL)
+            displayMode_ = MINIMAL;
+        else
+            displayMode_ = static_cast<display_mode>(--mode);
+        set_needs_display();
+        set_needs_clear();
+        return;
+    }
+    case CACA_KEY_LEFT:
+    case CACA_KEY_RIGHT:
+        if (displayMode_ == MINIMAL)
+        {
+            minimalLower_ = !minimalLower_;
+            set_needs_display();
+            set_needs_clear();
+        }
+        return;
+
+    case CACA_KEY_ESCAPE:
+        pop_state();
+        return;
+    }
+
+    if (!states_.empty())
+    {
+        auto state = states_.top();
+
+        if (state && state->on_execute)
+            bind(state->on_execute, this, _1)(input);
+    }
 }
 
 bool game::is_playing()
 {
     return is_state(&game::state_playing);
+}
+
+void game::exit_multiplayer()
+{
+    flags_ &= ~(FLAG_HOSTING | FLAG_JOINING);
+
+    matchmaker_.stop();
+}
+
+void game::exit_game()
+{
+    set_state(&game::state_quit_confirm);
+}
+
+void game::finish_menu()
+{
+    while (!states_.empty())
+    {
+        auto state = states_.top();
+
+        if (state && state->on_execute == &game::state_game_menu)
+        {
+            break;
+        }
+
+        states_.pop();
+    }
 }
 
 void game::init_canvas(caca_canvas_t *canvas)
@@ -292,7 +314,9 @@ void game::set_display_mode(display_mode mode)
 
 void game::display_alert(const function<void(const alert_box &a)> funk)
 {
-    caca_game::display_alert(get_alert_x(), get_alert_y(), get_alert_w(), get_alert_h(), funk);
+    static alert_dimensions dimensions(this);
+
+    caca_game::display_alert(&dimensions, funk);
 }
 
 void game::display_alert(int millis, const function<void(const alert_box &)> funk, const function<void()> pop)
@@ -350,9 +374,11 @@ void game::display_alert(int millis, const vector<string> &messages, const funct
     pop_alert(millis, pop);
 }
 
-int game::get_alert_x() const
+game::alert_dimensions::alert_dimensions(game *game) : game_(game) {}
+
+int game::alert_dimensions::x() const
 {
-    switch (displayMode_)
+    switch (game_->displayMode_)
     {
     default:
         return 8;
@@ -361,9 +387,9 @@ int game::get_alert_x() const
     }
 }
 
-int game::get_alert_y() const
+int game::alert_dimensions::y() const
 {
-    switch (displayMode_)
+    switch (game_->displayMode_)
     {
     case VERTICAL:
         return 20;
@@ -373,11 +399,11 @@ int game::get_alert_y() const
     }
 }
 
-int game::get_alert_w() const
+int game::alert_dimensions::w() const
 {
     return 60;
 }
-int game::get_alert_h() const
+int game::alert_dimensions::h() const
 {
     return 15;
 }

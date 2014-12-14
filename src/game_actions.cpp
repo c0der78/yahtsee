@@ -192,7 +192,6 @@ void game::action_roll_dice()
 
     if (player->roll_count() < 3)
     {
-
         player->roll();
 
         set_state(&game::state_rolling_dice);
@@ -244,7 +243,6 @@ void game::action_select_die(shared_ptr<yaht::player> player, int d)
     box.display();
 }
 
-
 void game::action_lower_score(shared_ptr<yaht::player> player, yaht::scoresheet::type type)
 {
     if (!player->score().lower_score(type))
@@ -281,7 +279,6 @@ void game::action_score_best(shared_ptr<yaht::player> player)
 
     if (best_upper.second > best_lower.second)
     {
-
         if (!player->score().upper_score(best_upper.first))
         {
             player->score().upper_score(best_upper.first, best_upper.second);

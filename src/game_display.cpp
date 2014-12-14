@@ -3,6 +3,8 @@
 
 using namespace arg3;
 
+const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
+
 void game::display_game_menu()
 {
     display_alert([&](const alert_box & a)
@@ -21,17 +23,22 @@ void game::display_ask_name()
 
         int mod = (strlen(buf) / 2);
 
-        put(a.center_x() - mod, a.center_y() - 1, buf);
+        int x = a.center_x();
 
-        int x = a.center_x() - mod;
         int y = a.center_y();
+
+        set_cursor(x - mod, y);
+
+        put(x - mod, y - 1, buf);
+
+        for (int i = x - mod + 8; i < x + mod - 8; i++)
+            put_color(i, y - 1, players_.size() + 2);
 
         for (auto &ch : get_buffer())
         {
             put(x++, y, ch);
         }
 
-        set_cursor(x, y);
     });
 }
 
@@ -153,11 +160,73 @@ void game::display_help()
 }
 
 
-yaht::scoresheet::value_type game::display_upper_scores(const yaht::scoresheet &score, int x, int y)
+void game::display_player_scores()
+{
+    int x = 46;
+
+    if (current_player())
+    {
+        set_color(currentPlayer_ + 2);
+
+        put(50, 2, current_player()->name().c_str());
+
+        set_color(CACA_DEFAULT);
+    }
+
+    int color = 2;
+
+    for (auto &player : players_)
+    {
+        switch (displayMode_)
+        {
+        case MINIMAL:
+            if (minimalLower_)
+            {
+                display_lower_scores(color, player->score(), player->calculate_total_upper_score(), x, 9);
+            }
+            else
+            {
+                display_upper_scores(color, player->score(), x, 9 );
+            }
+            break;
+        case VERTICAL:
+        {
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 9 );
+            display_lower_scores(color, player->score(), lower_score_total, x, 28);
+            break;
+        }
+        case HORIZONTAL:
+        {
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 9 );
+            display_lower_scores(color, player->score(), lower_score_total, x + 76, 2);
+            break;
+        }
+        }
+
+        x += 5;
+
+        color++;
+    }
+
+    switch (displayMode_)
+    {
+    case MINIMAL:
+        put(0, minimalLower_ ? 32 : 27, HELP);
+        break;
+    case VERTICAL:
+        put(0, 51, HELP);
+        break;
+    case HORIZONTAL:
+        put(76, 25, HELP);
+        break;
+    }
+}
+
+yaht::scoresheet::value_type game::display_upper_scores(int color, const yaht::scoresheet &score, int x, int y)
 {
     yaht::scoresheet::value_type total_score = 0;
 
-    set_color(CACA_CYAN);
+    set_color(color);
 
     for (int i = 0; i <= yaht::Constants::NUM_DICE; i++, y += 2)
     {
@@ -185,11 +254,11 @@ yaht::scoresheet::value_type game::display_upper_scores(const yaht::scoresheet &
 
 }
 
-void game::display_lower_scores(const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
+void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
 {
     yaht::scoresheet::value_type total_score = 0;
 
-    set_color(CACA_CYAN);
+    set_color(color);
 
     for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++)
     {

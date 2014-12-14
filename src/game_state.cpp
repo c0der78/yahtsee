@@ -1,22 +1,17 @@
 #include "game.h"
 #include "player.h"
 #include "log.h"
+#include <arg3/str_util.h>
 
 using namespace arg3;
 
 void game::state_ask_name(int ch)
 {
-    if ( ch == CACA_KEY_ESCAPE)
-    {
-        set_state(&game::state_game_menu);
-        return;
-    }
-
     if (ch == CACA_KEY_RETURN || ch == 10)
     {
         string name = get_buffer();
 
-        players_.push_back(make_shared<player>(name));
+        players_.push_back(make_shared<player>(capitalize(name)));
 
         if (flags_ & FLAG_HOSTING)
         {
@@ -49,26 +44,19 @@ void game::state_ask_name(int ch)
 
 void game::state_help_menu(int ch)
 {
-    if (ch == CACA_KEY_ESCAPE || tolower(ch) == 'q')
+    if (tolower(ch) == 'q')
     {
-        recover_state();
-
-        set_needs_display();
-
-        set_needs_clear();
+        pop_state();
     }
 }
 
 void game::state_game_menu(int input)
 {
-    if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
-    {
-        set_state(&game::state_quit_confirm);
-        return;
-    }
-
     switch (tolower(input))
     {
+    case 'q':
+        set_state(&game::state_quit_confirm);
+        break;
     case 'n':
         set_state(&game::state_ask_number_of_players);
         break;
@@ -82,14 +70,11 @@ void game::state_game_menu(int input)
 
 void game::state_multiplayer_menu(int input)
 {
-    if (input == CACA_KEY_ESCAPE)
-    {
-        set_state(&game::state_game_menu);
-        return;
-    }
-
     switch (tolower(input))
     {
+    case 'q':
+        set_state(&game::state_game_menu);
+        break;
     case 'h':
         flags_ |= FLAG_HOSTING;
         set_state(&game::state_ask_name);
@@ -103,12 +88,6 @@ void game::state_multiplayer_menu(int input)
 
 void game::state_ask_number_of_players(int input)
 {
-    if (input == CACA_KEY_ESCAPE)
-    {
-        set_state(&game::state_game_menu);
-        return;
-    }
-
     if (isdigit(input))
     {
         numPlayers_ = input - '0';
@@ -125,21 +104,23 @@ void game::state_ask_number_of_players(int input)
 
 void game::state_waiting_for_connections(int input)
 {
-    if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
+    switch (tolower(input))
     {
-        flags_ = 0;
-        matchmaker_.stop();
+    case 'q':
         set_state(&game::state_multiplayer_menu);
-    }
-    else if (tolower(input) == 's' && players_.size() > 1)
-    {
-        set_state(&game::state_playing);
+        break;
+    case 's':
+        if (players_.size() > 1)
+        {
+            set_state(&game::state_playing);
 
-        matchmaker_.notify_game_start();
+            matchmaker_.notify_game_start();
 
-        set_needs_display();
+            set_needs_display();
 
-        set_needs_clear();
+            set_needs_clear();
+        }
+        break;
     }
 }
 
@@ -147,9 +128,7 @@ void game::state_quit_confirm(int input)
 {
     if (tolower(input) == 'n')
     {
-        recover_state();
-        set_needs_display();
-        set_needs_clear();
+        pop_state();
     }
     else
     {
@@ -159,49 +138,8 @@ void game::state_quit_confirm(int input)
     }
 }
 
-
 void game::state_playing(int input)
 {
-    // check non ascii commands
-    switch (input)
-    {
-    case CACA_KEY_UP:
-    {
-        int mode = displayMode_;
-        if (mode == MINIMAL)
-            displayMode_ = HORIZONTAL;
-        else
-            displayMode_ = static_cast<display_mode>(++mode);
-        set_needs_display();
-        set_needs_clear();
-        return;
-    }
-    case CACA_KEY_DOWN:
-    {
-        int mode = displayMode_;
-        if (mode == HORIZONTAL)
-            displayMode_ = MINIMAL;
-        else
-            displayMode_ = static_cast<display_mode>(--mode);
-        set_needs_display();
-        set_needs_clear();
-        return;
-    }
-    case CACA_KEY_LEFT:
-    case CACA_KEY_RIGHT:
-        if (displayMode_ == MINIMAL)
-        {
-            minimalLower_ = !minimalLower_;
-            set_needs_display();
-            set_needs_clear();
-        }
-        return;
-
-    case CACA_KEY_ESCAPE:
-        set_state(&game::state_quit_confirm);
-        display_confirm_quit();
-        return;
-    }
 
     //check ascii commands in lower case
     switch (tolower(input))
@@ -216,28 +154,17 @@ void game::state_playing(int input)
         break;
     case '?':
         set_state(&game::state_help_menu);
-        display_help();
         break;
     case 'q':
         set_state(&game::state_quit_confirm);
-        display_confirm_quit();
         break;
     default: break;
 
     }
 }
 
-
 void game::state_rolling_dice(int input)
 {
-    if (input == CACA_KEY_ESCAPE || tolower(input) == 'q')
-    {
-        set_state(&game::state_playing);
-        set_needs_display();
-        set_needs_clear();
-        return;
-    }
-
     auto player = current_player();
 
     if (isdigit(input))
@@ -284,7 +211,11 @@ void game::state_rolling_dice(int input)
 
     switch (tolower(input))
     {
-
+    case 'q':
+        set_state(&game::state_playing);
+        set_needs_display();
+        set_needs_clear();
+        break;
     case '?':
         set_state(&game::state_help_menu);
         break;
