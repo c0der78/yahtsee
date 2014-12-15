@@ -172,6 +172,8 @@ private:
 
     void next_player();
 
+    static char *resource_file_name(const char *path);
+
     shared_ptr<player> find_player_by_id(const string &id) const;
 
     typedef struct

@@ -247,11 +247,35 @@ void game::finish_menu()
     }
 }
 
+char *game::resource_file_name(const char *path)
+{
+    static int hasResourceDir = -1;
+    static char buf[3][BUFSIZ + 1];
+    static int bufIndex = 0;
+
+    if (hasResourceDir == -1)
+    {
+        hasResourceDir = dir_exists("../Resources") ? 1 : 0;
+    }
+
+    ++bufIndex, bufIndex %= 3;
+
+
+    if (hasResourceDir != 1)
+        strncpy(buf[bufIndex], path, BUFSIZ);
+    else if (path && *path == '/')
+        snprintf(buf[bufIndex], BUFSIZ, "../Resources%s", path);
+    else
+        snprintf(buf[bufIndex], BUFSIZ, "../Resources/%s", path);
+
+    return buf[bufIndex];
+}
+
 void game::init_canvas(caca_canvas_t *canvas)
 {
     caca_canvas_t *temp = caca_create_canvas(0, 0);
 
-    caca_import_canvas_from_file(temp, "upper.txt", "utf8");
+    caca_import_canvas_from_file(temp, resource_file_name("upper.txt"), "utf8");
 
     upperbuf_ = caca_export_canvas_to_memory(temp, "caca", &upperbufSize_);
 
@@ -259,7 +283,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     temp = caca_create_canvas(0, 0);
 
-    caca_import_canvas_from_file(temp, "lower.txt", "utf8");
+    caca_import_canvas_from_file(temp, resource_file_name("lower.txt"), "utf8");
 
     lowerbuf_ = caca_export_canvas_to_memory(temp, "caca", &lowerbufSize_);
 
@@ -267,7 +291,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     temp = caca_create_canvas(0, 0);
 
-    caca_import_canvas_from_file(temp, "menu.txt", "utf8");
+    caca_import_canvas_from_file(temp, resource_file_name("menu.txt"), "utf8");
 
     menubuf_ = caca_export_canvas_to_memory(temp, "caca", &menubufSize_);
 
@@ -275,7 +299,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     temp = caca_create_canvas(0, 0);
 
-    caca_import_canvas_from_file(temp, "help.txt", "utf8");
+    caca_import_canvas_from_file(temp, resource_file_name("help.txt"), "utf8");
 
     helpbuf_ = caca_export_canvas_to_memory(temp, "caca", &helpbufSize_);
 
@@ -283,7 +307,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     temp = caca_create_canvas(0, 0);
 
-    caca_import_canvas_from_file(temp, "header.txt", "utf8");
+    caca_import_canvas_from_file(temp, resource_file_name("header.txt"), "utf8");
 
     headerbuf_ = caca_export_canvas_to_memory(temp, "caca", &headerbufSize_);
 
