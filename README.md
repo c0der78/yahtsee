@@ -1,7 +1,7 @@
 terminal-yahtsee
 ================
 
-a game of yahtzee on the terminal
+a multiplayer game of yahtzee on the terminal
 
 
 #### required libraries
