@@ -19,8 +19,11 @@ a game of yahtzee on the terminal
 Multiplayer?
 - ~~build [arg3connect](http://arg3connect.herokuapp.com) to register/list available online games~~
 - ~~implement turn based game play~~
-- implement server mode w/ protocol
-- implement client mode w/ protocol
+- ~~implement server mode w/ protocol~~
+- ~~implement client mode w/ protocol~~
+- test, test, test
+- make homepage, better screenshots
+- roll yahtsee animation?, win game animation?
 
 
 #### Screenshots
