@@ -2,4 +2,7 @@ SUBDIRS = src
 
 ACLOCAL_FLAGS = -I m4
 
-EXTRA_DIST = upper.txt lower.txt menu.txt fullscreen.txt
+resourcedir = $(sysconfdir)/yahtsee
+
+resource_DATA = resources/header.txt resources/help.txt resources/lower.txt resources/menu.txt resources/upper.txt
+

@@ -181,6 +181,7 @@ private:
         void (game::*on_init)();
         void (game::*on_execute)(int);
         void (game::*on_display)();
+        void (game::*on_hide)();
         void (game::*on_exit)();
     } game_state;
 

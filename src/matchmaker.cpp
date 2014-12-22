@@ -142,7 +142,7 @@ bool matchmaker::host(string *error, int port)
 
     if (port == INVALID)
     {
-        port = (rand() % 99999) + 1024;
+        port = (rand() % 65535) + 1024;
     }
 
     server_.start_in_background(port);

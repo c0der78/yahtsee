@@ -10,16 +10,16 @@ using namespace std::placeholders;
 
 const game::game_state game::state_table[] =
 {
-    { &game::finish_menu, &game::state_playing, &game::display_player_scores, NULL},
-    { &game::display_game_menu, &game::state_game_menu, NULL, &game::exit_game},
-    { &game::display_ask_name, &game::state_ask_name, NULL, NULL},
-    { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL},
-    { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL},
-    { &game::display_help, &game::state_help_menu, NULL, NULL},
-    { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL},
-    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL},
-    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer},
-    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer},
+    { &game::finish_menu, &game::state_playing, &game::display_player_scores, NULL, NULL},
+    { &game::display_game_menu, &game::state_game_menu, NULL, NULL, &game::exit_game},
+    { &game::display_ask_name, &game::state_ask_name, NULL, &game::pop_state, NULL},
+    { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL, NULL},
+    { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, NULL},
+    { &game::display_help, &game::state_help_menu, NULL, NULL, NULL},
+    { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, &game::pop_state, NULL},
+    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, NULL},
+    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, NULL, &game::exit_multiplayer},
+    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, NULL, &game::exit_multiplayer},
     {NULL, NULL, NULL, NULL}
 };
 
@@ -112,6 +112,15 @@ void game::set_state(state_handler value)
 
     if (state)
     {
+        if (!states_.empty())
+        {
+            auto old = states_.top();
+
+            if (old && old->on_hide)
+            {
+                bind(old->on_hide, this)();
+            }
+        }
         if (state->on_init)
         {
             bind(state->on_init, this)();
@@ -249,24 +258,26 @@ void game::finish_menu()
 
 char *game::resource_file_name(const char *path)
 {
-    static int hasResourceDir = -1;
+    static const char *resourceDir = NULL;
     static char buf[3][BUFSIZ + 1];
     static int bufIndex = 0;
 
-    if (hasResourceDir == -1)
+    if (resourceDir == NULL)
     {
-        hasResourceDir = dir_exists("../Resources") ? 1 : 0;
+        if (dir_exists("resources"))
+            resourceDir = "resources";
+        else if (dir_exists("../etc/yahtsee"))
+            resourceDir = "../etc/yahtsee";
     }
 
     ++bufIndex, bufIndex %= 3;
 
-
-    if (hasResourceDir != 1)
+    if (resourceDir == NULL)
         strncpy(buf[bufIndex], path, BUFSIZ);
     else if (path && *path == '/')
-        snprintf(buf[bufIndex], BUFSIZ, "../Resources%s", path);
+        snprintf(buf[bufIndex], BUFSIZ, "%s%s", resourceDir, path);
     else
-        snprintf(buf[bufIndex], BUFSIZ, "../Resources/%s", path);
+        snprintf(buf[bufIndex], BUFSIZ, "%s/%s", resourceDir, path);
 
     return buf[bufIndex];
 }
