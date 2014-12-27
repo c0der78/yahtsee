@@ -234,6 +234,8 @@ void game::exit_multiplayer()
     flags_ &= ~(FLAG_HOSTING | FLAG_JOINING);
 
     matchmaker_.stop();
+
+    players_.clear();
 }
 
 void game::exit_game()

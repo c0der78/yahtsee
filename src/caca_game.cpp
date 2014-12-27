@@ -299,7 +299,7 @@ void caca_game::display_alert(dimensional *dimensions, const function<void(const
 
     alert_boxes_.top().display();
 
-    set_needs_display();
+    caca_refresh_display(display_);
 }
 
 const alert_box &caca_game::displayed_alert() const

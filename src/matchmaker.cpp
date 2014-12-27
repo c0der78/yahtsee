@@ -104,7 +104,11 @@ bool matchmaker::join_best_game(string *error)
     if (response != net::http::OK)
     {
         if (error)
-            *error = api_.response();
+        {
+            json::object json;
+            json.parse(api_.response());
+            *error = json.get_string("error");
+        }
 
         return false;
     }
@@ -159,7 +163,11 @@ bool matchmaker::host(string *error, int port)
     if (response != arg3::net::http::OK)
     {
         if (error)
-            *error = api_.response();
+        {
+            json::object json;
+            json.parse(api_.response());
+            *error = json.get_string("error");
+        }
 
         server_.stop();
 
