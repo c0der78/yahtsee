@@ -11,7 +11,14 @@ void game::action_host_game()
 
     display_alert("Starting server...");
 
-    bool response = matchmaker_.host(&error);
+    auto port = -1;
+
+    if (settings_.contains("port"))
+    {
+        port = settings_.get_int("port");
+    }
+
+    bool response = matchmaker_.host(&error, port);
 
     pop_alert(); // done registration
 

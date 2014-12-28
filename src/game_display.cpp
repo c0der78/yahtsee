@@ -7,9 +7,20 @@ const char *HELP = "Type '?' to show command options.  Use the arrow keys to cyc
 
 void game::display_game_menu()
 {
+
     display_alert([&](const alert_box & a)
     {
-        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, menubuf_, menubufSize_, "caca");
+        caca_canvas_t *temp = caca_create_canvas(0, 0);
+
+        caca_import_canvas_from_file(temp, resource_file_name((flags_ & FLAG_PLAYING) ? "continue_menu.txt" : "menu.txt"), "utf8");
+
+        size_t menubufSize;
+
+        void *menubuf = caca_export_canvas_to_memory(temp, "caca", &menubufSize);
+
+        caca_free_canvas(temp);
+
+        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, menubuf, menubufSize, "caca");
     });
 }
 

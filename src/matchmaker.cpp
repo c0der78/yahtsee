@@ -146,6 +146,7 @@ bool matchmaker::host(string *error, int port)
 
     if (port == INVALID)
     {
+        logf("no port specified, randomizing.");
         port = (rand() % 65535) + 1024;
     }
 

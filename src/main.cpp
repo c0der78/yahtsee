@@ -15,6 +15,8 @@ int main(int argc, char **argv)
 
     srand(time(0));
 
+    game.load_settings();
+
     game.start();
 
     while (game.alive())

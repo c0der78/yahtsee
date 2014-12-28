@@ -63,6 +63,14 @@ void game::state_game_menu(int input)
     case 'm':
         set_state(&game::state_multiplayer_menu);
         break;
+    case 'c':
+        if (flags_ & FLAG_PLAYING)
+        {
+            flags_ &= ~(FLAG_PLAYING);
+            set_needs_clear();
+            set_state(&game::state_playing);
+        }
+        break;
     case 's':
         break;
     }

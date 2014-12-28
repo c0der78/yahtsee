@@ -2,6 +2,7 @@
 #include "player.h"
 #include "log.h"
 #include <cstring>
+#include <fstream>
 #include <arg3/str_util.h>
 
 using namespace arg3;
@@ -10,7 +11,7 @@ using namespace std::placeholders;
 
 const game::game_state game::state_table[] =
 {
-    { &game::finish_menu, &game::state_playing, &game::display_player_scores, NULL, NULL},
+    { &game::clear_states, &game::state_playing, &game::display_player_scores, NULL, &game::stop_playing},
     { &game::display_game_menu, &game::state_game_menu, NULL, NULL, &game::exit_game},
     { &game::display_ask_name, &game::state_ask_name, NULL, &game::pop_state, NULL},
     { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL, NULL},
@@ -23,10 +24,34 @@ const game::game_state game::state_table[] =
     {NULL, NULL, NULL, NULL}
 };
 
-game::game() : upperbuf_(NULL), lowerbuf_(NULL), menubuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbufSize_(0),
-    lowerbufSize_(0), menubufSize_(0), headerbufSize_(0), helpbufSize_(0), displayMode_(MINIMAL), numPlayers_(0),
+game::game() : upperbuf_(NULL), lowerbuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbufSize_(0),
+    lowerbufSize_(0), headerbufSize_(0), helpbufSize_(0), displayMode_(MINIMAL), numPlayers_(0),
     matchmaker_(this), flags_(0), currentPlayer_(0)
 {
+}
+
+
+void game::load_settings()
+{
+    std::ifstream inFile;
+    inFile.open(resource_file_name("yahtsee.json"));
+
+    stringstream strStream;
+    strStream << inFile.rdbuf();
+
+    inFile.close();
+
+    settings_.parse(strStream.str());
+
+    if (settings_.contains("default_display"))
+    {
+        auto mode = settings_.get_string("default_display");
+
+        if (mode == "horizontal")
+            displayMode_ = HORIZONTAL;
+        else if (mode == "vertical")
+            displayMode_ = VERTICAL;
+    }
 }
 
 void game::reset()
@@ -47,13 +72,6 @@ void game::reset()
         lowerbufSize_ = 0;
     }
 
-    if (menubuf_ != NULL)
-    {
-        free(menubuf_);
-        menubuf_ = NULL;
-        menubufSize_ = 0;
-    }
-
     if (helpbuf_ != NULL)
     {
         free(helpbuf_);
@@ -71,6 +89,8 @@ void game::reset()
 
 void game::pop_state()
 {
+    lock_guard<recursive_mutex> lock(mutex_);
+
     if (!states_.empty())
     {
         auto state = states_.top();
@@ -104,6 +124,9 @@ const game::game_state *game::find_state(state_handler value)
 
 void game::set_state(state_handler value)
 {
+
+    lock_guard<recursive_mutex> lock(mutex_);
+
     clear_alerts();
 
     clear_events();
@@ -169,8 +192,7 @@ void game::on_resize(int width, int height)
 
 void game::on_quit()
 {
-    while (!states_.empty())
-        states_.pop();
+    clear_states();
 }
 
 void game::on_key_press(int input)
@@ -238,22 +260,24 @@ void game::exit_multiplayer()
     players_.clear();
 }
 
+void game::stop_playing()
+{
+    flags_ |= FLAG_PLAYING;
+
+    set_state(&game::state_game_menu);
+}
+
 void game::exit_game()
 {
     set_state(&game::state_quit_confirm);
 }
 
-void game::finish_menu()
+void game::clear_states()
 {
+    lock_guard<recursive_mutex> lock(mutex_);
+
     while (!states_.empty())
     {
-        auto state = states_.top();
-
-        if (state && state->on_execute == &game::state_game_menu)
-        {
-            break;
-        }
-
         states_.pop();
     }
 }
@@ -299,14 +323,6 @@ void game::init_canvas(caca_canvas_t *canvas)
     caca_import_canvas_from_file(temp, resource_file_name("lower.txt"), "utf8");
 
     lowerbuf_ = caca_export_canvas_to_memory(temp, "caca", &lowerbufSize_);
-
-    caca_free_canvas(temp);
-
-    temp = caca_create_canvas(0, 0);
-
-    caca_import_canvas_from_file(temp, resource_file_name("menu.txt"), "utf8");
-
-    menubuf_ = caca_export_canvas_to_memory(temp, "caca", &menubufSize_);
 
     caca_free_canvas(temp);
 

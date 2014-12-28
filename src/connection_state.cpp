@@ -28,11 +28,11 @@ void connection::handle_game_start(const json::object &packet)
 
     logf("starting game");
 
-    game_->set_state(&game::state_playing);
-
     game_->set_needs_display();
 
     game_->set_needs_clear();
+
+    game_->set_state(&game::state_playing);
 }
 
 void connection::handle_player_roll(const json::object &packet)

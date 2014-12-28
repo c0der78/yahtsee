@@ -53,6 +53,11 @@ public:
     shared_ptr<player> this_player() const;
 
     bool is_online() const;
+
+    const arg3::json::object &settings() const;
+
+    void load_settings();
+
 private:
 
     /* states */
@@ -124,7 +129,9 @@ private:
 
     void exit_game();
 
-    void finish_menu();
+    void clear_states();
+
+    void stop_playing();
 
     /* actions */
 
@@ -206,8 +213,8 @@ private:
 
     static const game_state *find_state(state_handler value);
 
-    void *upperbuf_, *lowerbuf_, *menubuf_, *headerbuf_, *helpbuf_;
-    size_t upperbufSize_, lowerbufSize_, menubufSize_, headerbufSize_, helpbufSize_;
+    void *upperbuf_, *lowerbuf_, *headerbuf_, *helpbuf_;
+    size_t upperbufSize_, lowerbufSize_, headerbufSize_, helpbufSize_;
     stack<const game_state *> states_;
     display_mode displayMode_;
     bool minimalLower_;
@@ -215,12 +222,17 @@ private:
     matchmaker matchmaker_;
     int flags_;
 
+    recursive_mutex mutex_;
+
     vector<shared_ptr<player>> players_;
     int currentPlayer_;
+
+    arg3::json::object settings_;
 
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
     static const int FLAG_WAITING_FOR_TURN = (1 << 2);
+    static const int FLAG_PLAYING = (1 << 3);
 
     friend class connection;
     friend class client;
