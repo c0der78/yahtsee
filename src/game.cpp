@@ -21,9 +21,9 @@ const game::game_state game::state_table[] =
     { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, 0},
     { &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, 0},
-    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer},
-    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer},
+    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     {NULL, NULL, NULL, NULL}
 };
 
