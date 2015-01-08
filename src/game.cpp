@@ -4,37 +4,47 @@
 #include <cstring>
 #include <fstream>
 #include <arg3/str_util.h>
+#include <libgen.h>
 
 using namespace arg3;
 
 using namespace std::placeholders;
 
+const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
+
 const game::game_state game::state_table[] =
 {
-    { &game::clear_states, &game::state_playing, &game::display_player_scores, NULL, &game::stop_playing},
-    { &game::display_game_menu, &game::state_game_menu, NULL, NULL, &game::exit_game},
-    { &game::display_ask_name, &game::state_ask_name, NULL, &game::pop_state, NULL},
-    { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL, NULL},
-    { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, NULL},
-    { &game::display_help, &game::state_help_menu, NULL, NULL, NULL},
-    { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, &game::pop_state, NULL},
-    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, NULL},
-    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, NULL, &game::exit_multiplayer},
-    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, NULL, &game::exit_multiplayer},
+    { NULL, &game::state_playing, &game::display_player_scores, &game::stop_playing, 0},
+    { &game::display_game_menu, &game::state_game_menu, NULL, &game::exit_game, 0},
+    { &game::display_ask_name, &game::state_ask_name, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL, 0},
+    { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, 0},
+    { &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, 0},
+    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer},
+    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer},
     {NULL, NULL, NULL, NULL}
 };
 
-game::game() : upperbuf_(NULL), lowerbuf_(NULL), headerbuf_(NULL), helpbuf_(NULL), upperbufSize_(0),
-    lowerbufSize_(0), headerbufSize_(0), helpbufSize_(0), displayMode_(MINIMAL), numPlayers_(0),
+game::game() : displayMode_(MINIMAL), numPlayers_(0),
     matchmaker_(this), flags_(0), currentPlayer_(0)
 {
+    for (size_t i = 0; i < BUF_MAX; i++)
+    {
+        bufs[i] = NULL;
+        bufSize[i] = 0;
+    }
 }
 
 
-void game::load_settings()
+void game::load_settings(char *exe)
 {
     std::ifstream inFile;
-    inFile.open(resource_file_name("yahtsee.json"));
+
+    const char *baseDir = dirname(exe);
+
+    inFile.open(resource_file_name("yahtsee.json", baseDir));
 
     stringstream strStream;
     strStream << inFile.rdbuf();
@@ -42,6 +52,9 @@ void game::load_settings()
     inFile.close();
 
     settings_.parse(strStream.str());
+
+    if (!settings_.contains("basedir"))
+        settings_.set_string("basedir", baseDir);
 
     if (settings_.contains("default_display"))
     {
@@ -58,32 +71,14 @@ void game::reset()
 {
     caca_game::reset();
 
-    if (upperbuf_ != NULL)
+    for (size_t i = 0; i < BUF_MAX; i++)
     {
-        free(upperbuf_);
-        upperbuf_ = NULL;
-        upperbufSize_ = 0;
-    }
-
-    if (lowerbuf_ != NULL)
-    {
-        free(lowerbuf_);
-        lowerbuf_ = NULL;
-        lowerbufSize_ = 0;
-    }
-
-    if (helpbuf_ != NULL)
-    {
-        free(helpbuf_);
-        helpbuf_ = NULL;
-        helpbufSize_ = 0;
-    }
-
-    if (headerbuf_ != NULL)
-    {
-        free(headerbuf_);
-        headerbuf_ = NULL;
-        headerbufSize_ = 0;
+        if (bufs[i] != NULL)
+        {
+            free(bufs[i]);
+            bufs[i] = NULL;
+            bufSize[i] = 0;
+        }
     }
 }
 
@@ -124,7 +119,6 @@ const game::game_state *game::find_state(state_handler value)
 
 void game::set_state(state_handler value)
 {
-
     lock_guard<recursive_mutex> lock(mutex_);
 
     clear_alerts();
@@ -139,9 +133,9 @@ void game::set_state(state_handler value)
         {
             auto old = states_.top();
 
-            if (old && old->on_hide)
+            if (old && (old->flags & FLAG_STATE_TRANSIENT))
             {
-                bind(old->on_hide, this)();
+                states_.pop();
             }
         }
         if (state->on_init)
@@ -183,6 +177,19 @@ void game::on_display()
 
         if (state && state->on_display)
             bind(state->on_display, this)();
+    }
+
+    switch (displayMode_)
+    {
+    case MINIMAL:
+        put(0, 25, HELP);
+        break;
+    case VERTICAL:
+        put(0, 51, HELP);
+        break;
+    case HORIZONTAL:
+        put(76, 24, HELP);
+        break;
     }
 }
 
@@ -262,9 +269,7 @@ void game::exit_multiplayer()
 
 void game::stop_playing()
 {
-    flags_ |= FLAG_PLAYING;
-
-    set_state(&game::state_game_menu);
+    flags_ |= FLAG_CONTINUE;
 }
 
 void game::exit_game()
@@ -282,82 +287,86 @@ void game::clear_states()
     }
 }
 
-char *game::resource_file_name(const char *path)
+char *game::resource_file_name(const char *path, const char *dir)
 {
-    static const char *resourceDir = NULL;
-    static char buf[3][BUFSIZ + 1];
+    static char resourceDir[BUFSIZ + 1] = {0};
+    static char bufs[3][BUFSIZ + 1];
     static int bufIndex = 0;
-
-    if (resourceDir == NULL)
-    {
-        if (dir_exists("resources"))
-            resourceDir = "resources";
-        else if (dir_exists("../etc/yahtsee"))
-            resourceDir = "../etc/yahtsee";
-    }
 
     ++bufIndex, bufIndex %= 3;
 
-    if (resourceDir == NULL)
-        strncpy(buf[bufIndex], path, BUFSIZ);
-    else if (path && *path == '/')
-        snprintf(buf[bufIndex], BUFSIZ, "%s%s", resourceDir, path);
-    else
-        snprintf(buf[bufIndex], BUFSIZ, "%s/%s", resourceDir, path);
+    char *buf = bufs[bufIndex];
 
-    return buf[bufIndex];
+    if (!resourceDir[0])
+    {
+        if (dir == NULL)
+            dir = settings_.get_string("basedir").c_str();
+
+        snprintf(resourceDir, BUFSIZ, "%s/../etc/yahtsee", dir);
+
+        if (!dir_exists(resourceDir))
+        {
+            snprintf(resourceDir, BUFSIZ, "%s/resources", dir);
+
+            if (!dir_exists(resourceDir))
+            {
+                snprintf(resourceDir, BUFSIZ, "%s/../resources", dir);
+
+                if (!dir_exists(resourceDir))
+                    resourceDir[0] = 0;
+            }
+        }
+    }
+
+    if (!resourceDir[0])
+        strncpy(buf, path, BUFSIZ);
+    else if (path && *path == '/')
+        snprintf(buf, BUFSIZ, "%s%s", resourceDir, path);
+    else
+        snprintf(buf, BUFSIZ, "%s/%s", resourceDir, path);
+
+    return buf;
+}
+
+void game::load_buf(const char *fileName, int index)
+{
+    caca_canvas_t *temp = caca_create_canvas(0, 0);
+
+    caca_import_canvas_from_file(temp, resource_file_name(fileName), "utf8");
+
+    bufs[index] = caca_export_canvas_to_memory(temp, "caca", &bufSize[index]);
+
+    caca_free_canvas(temp);
 }
 
 void game::init_canvas(caca_canvas_t *canvas)
 {
-    caca_canvas_t *temp = caca_create_canvas(0, 0);
-
-    caca_import_canvas_from_file(temp, resource_file_name("upper.txt"), "utf8");
-
-    upperbuf_ = caca_export_canvas_to_memory(temp, "caca", &upperbufSize_);
-
-    caca_free_canvas(temp);
-
-    temp = caca_create_canvas(0, 0);
-
-    caca_import_canvas_from_file(temp, resource_file_name("lower.txt"), "utf8");
-
-    lowerbuf_ = caca_export_canvas_to_memory(temp, "caca", &lowerbufSize_);
-
-    caca_free_canvas(temp);
-
-    temp = caca_create_canvas(0, 0);
-
-    caca_import_canvas_from_file(temp, resource_file_name("help.txt"), "utf8");
-
-    helpbuf_ = caca_export_canvas_to_memory(temp, "caca", &helpbufSize_);
-
-    caca_free_canvas(temp);
-
-    temp = caca_create_canvas(0, 0);
-
-    caca_import_canvas_from_file(temp, resource_file_name("header.txt"), "utf8");
-
-    headerbuf_ = caca_export_canvas_to_memory(temp, "caca", &headerbufSize_);
-
-    caca_free_canvas(temp);
+    load_buf("upper.txt", BUF_UPPER);
+    load_buf("lower.txt", BUF_LOWER);
+    load_buf("help.txt", BUF_HELP);
+    load_buf("lower_header_minimal.txt", BUF_LOWER_HEADER_MINIMAL);
+    load_buf("lower_header.txt", BUF_LOWER_HEADER);
 
     switch (displayMode_)
     {
     case VERTICAL:
-        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbufSize_, "caca");
-        caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbufSize_, "caca");
-        caca_import_area_from_memory(canvas, 0, 27, lowerbuf_, lowerbufSize_, "caca");
+        caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_UPPER], bufSize[BUF_UPPER], "caca");
+        caca_import_area_from_memory(canvas, 0, 25, bufs[BUF_LOWER_HEADER], bufSize[BUF_LOWER_HEADER], "caca");
+        caca_import_area_from_memory(canvas, 0, 26, bufs[BUF_LOWER], bufSize[BUF_LOWER], "caca");
         break;
     case HORIZONTAL:
-        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbufSize_, "caca");
-        caca_import_area_from_memory(canvas, 0, 8, upperbuf_, upperbufSize_, "caca");
-        caca_import_area_from_memory(canvas, 76, 1, lowerbuf_, lowerbufSize_, "caca");
+        caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_UPPER], bufSize[BUF_UPPER], "caca");
+        caca_import_area_from_memory(canvas, 76, 0, bufs[BUF_LOWER_HEADER], bufSize[BUF_LOWER_HEADER], "caca");
+        caca_import_area_from_memory(canvas, 76, 1, bufs[BUF_LOWER], bufSize[BUF_LOWER], "caca");
         break;
     case MINIMAL:
-        caca_import_area_from_memory(canvas, 0, 0, headerbuf_, headerbufSize_, "caca");
-        caca_import_area_from_memory(canvas, 0, 8, minimalLower_ ? lowerbuf_ : upperbuf_, minimalLower_ ? lowerbufSize_ : upperbufSize_, "caca");
+    {
+        int index = minimalLower_ ? BUF_LOWER : BUF_UPPER;
+        if (minimalLower_)
+            caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_LOWER_HEADER_MINIMAL], bufSize[BUF_LOWER_HEADER_MINIMAL], "caca");
+        caca_import_area_from_memory(canvas, 0, minimalLower_ ? 3 : 0, bufs[index], bufSize[index], "caca");
         break;
+    }
     }
 }
 
@@ -449,7 +458,7 @@ int game::alert_dimensions::y() const
         return 20;
     default:
     case MINIMAL:
-    case HORIZONTAL: return 8;
+    case HORIZONTAL: return 7;
     }
 }
 

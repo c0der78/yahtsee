@@ -3,8 +3,6 @@
 
 using namespace arg3;
 
-const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
-
 void game::display_game_menu()
 {
 
@@ -12,7 +10,7 @@ void game::display_game_menu()
     {
         caca_canvas_t *temp = caca_create_canvas(0, 0);
 
-        caca_import_canvas_from_file(temp, resource_file_name((flags_ & FLAG_PLAYING) ? "continue_menu.txt" : "menu.txt"), "utf8");
+        caca_import_canvas_from_file(temp, resource_file_name((flags_ & FLAG_CONTINUE) ? "continue_menu.txt" : "menu.txt"), "utf8");
 
         size_t menubufSize;
 
@@ -166,7 +164,7 @@ void game::display_help()
 {
     display_alert([&](const alert_box & a)
     {
-        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, helpbuf_, helpbufSize_, "caca");
+        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, bufs[BUF_HELP], bufSize[BUF_HELP], "caca");
     });
 }
 
@@ -179,7 +177,7 @@ void game::display_player_scores()
     {
         set_color(currentPlayer_ + 2);
 
-        put(50, 2, current_player()->name().c_str());
+        put(minimalLower_ ? 21   : 50, 1, current_player()->name().c_str());
 
         set_color(CACA_DEFAULT);
     }
@@ -193,22 +191,22 @@ void game::display_player_scores()
         case MINIMAL:
             if (minimalLower_)
             {
-                display_lower_scores(color, player->score(), player->calculate_total_upper_score(), x, 9);
+                display_lower_scores(color, player->score(), player->calculate_total_upper_score(), x, 3);
             }
             else
             {
-                display_upper_scores(color, player->score(), x, 9 );
+                display_upper_scores(color, player->score(), x, 7 );
             }
             break;
         case VERTICAL:
         {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 9 );
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 7 );
             display_lower_scores(color, player->score(), lower_score_total, x, 28);
             break;
         }
         case HORIZONTAL:
         {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 9 );
+            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 7 );
             display_lower_scores(color, player->score(), lower_score_total, x + 76, 2);
             break;
         }
@@ -217,19 +215,6 @@ void game::display_player_scores()
         x += 5;
 
         color++;
-    }
-
-    switch (displayMode_)
-    {
-    case MINIMAL:
-        put(0, minimalLower_ ? 32 : 27, HELP);
-        break;
-    case VERTICAL:
-        put(0, 51, HELP);
-        break;
-    case HORIZONTAL:
-        put(76, 25, HELP);
-        break;
     }
 }
 
@@ -288,7 +273,6 @@ void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::
             break;
         case yaht::scoresheet::STRAIGHT_SMALL:
         case yaht::scoresheet::STRAIGHT_BIG:
-        case yaht::scoresheet::YACHT:
             y += 3;
             break;
         }

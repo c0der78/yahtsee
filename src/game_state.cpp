@@ -11,6 +11,8 @@ void game::state_ask_name(int ch)
     {
         string name = get_buffer();
 
+        if (name.empty()) return;
+
         players_.push_back(make_shared<player>(capitalize(name)));
 
         if (flags_ & FLAG_HOSTING)
@@ -23,9 +25,11 @@ void game::state_ask_name(int ch)
         }
         else if (players_.size() >= numPlayers_)
         {
-            set_needs_clear();
-
             set_state(&game::state_playing);
+
+            set_needs_display();
+
+            set_needs_clear();
         }
         else
         {
@@ -64,9 +68,9 @@ void game::state_game_menu(int input)
         set_state(&game::state_multiplayer_menu);
         break;
     case 'c':
-        if (flags_ & FLAG_PLAYING)
+        if (flags_ & FLAG_CONTINUE)
         {
-            flags_ &= ~(FLAG_PLAYING);
+            flags_ &= ~(FLAG_CONTINUE);
             set_needs_clear();
             set_state(&game::state_playing);
         }

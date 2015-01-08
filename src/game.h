@@ -13,6 +13,16 @@ typedef enum
     MINIMAL
 } display_mode;
 
+enum
+{
+    BUF_LOWER_HEADER,
+    BUF_LOWER_HEADER_MINIMAL,
+    BUF_UPPER,
+    BUF_LOWER,
+    BUF_HELP,
+    BUF_MAX
+};
+
 class player;
 
 class game : public caca_game
@@ -56,7 +66,7 @@ public:
 
     const arg3::json::object &settings() const;
 
-    void load_settings();
+    void load_settings(char *exe);
 
 private:
 
@@ -179,7 +189,9 @@ private:
 
     void next_player();
 
-    static char *resource_file_name(const char *path);
+    char *resource_file_name(const char *path, const char *dir = NULL);
+
+    void load_buf(const char *fileName, int index);
 
     shared_ptr<player> find_player_by_id(const string &id) const;
 
@@ -188,8 +200,8 @@ private:
         void (game::*on_init)();
         void (game::*on_execute)(int);
         void (game::*on_display)();
-        void (game::*on_hide)();
         void (game::*on_exit)();
+        int flags;
     } game_state;
 
 
@@ -199,11 +211,8 @@ private:
         alert_dimensions(game *game);
 
         int x() const;
-
         int y() const;
-
         int w() const;
-
         int h() const;
     private:
         game *game_;
@@ -213,8 +222,8 @@ private:
 
     static const game_state *find_state(state_handler value);
 
-    void *upperbuf_, *lowerbuf_, *headerbuf_, *helpbuf_;
-    size_t upperbufSize_, lowerbufSize_, headerbufSize_, helpbufSize_;
+    void *bufs[BUF_MAX];
+    size_t bufSize[BUF_MAX];
     stack<const game_state *> states_;
     display_mode displayMode_;
     bool minimalLower_;
@@ -232,7 +241,10 @@ private:
     static const int FLAG_HOSTING = (1 << 0);
     static const int FLAG_JOINING = (1 << 1);
     static const int FLAG_WAITING_FOR_TURN = (1 << 2);
-    static const int FLAG_PLAYING = (1 << 3);
+    static const int FLAG_CONTINUE = (1 << 3);
+
+
+    static const int FLAG_STATE_TRANSIENT = (1 << 0);
 
     friend class connection;
     friend class client;

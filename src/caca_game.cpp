@@ -218,9 +218,11 @@ void caca_game::set_needs_clear()
 
 void caca_game::clear_alerts()
 {
+    logf("clearing %zu alerts? %s", alert_boxes_.size());
+
     if (alert_boxes_.empty()) return;
 
-    unique_lock<recursive_mutex> lock(alertsMutex_);
+    lock_guard<recursive_mutex> lock(alertsMutex_);
 
     while (!alert_boxes_.empty())
         alert_boxes_.pop();
@@ -293,13 +295,15 @@ void caca_game::put(int x, int y, int value)
 
 void caca_game::display_alert(dimensional *dimensions, const function<void(const alert_box &)> callback)
 {
-    unique_lock<recursive_mutex> lock(alertsMutex_);
+    lock_guard<recursive_mutex> lock(alertsMutex_);
 
     alert_boxes_.push(std::move(alert_box(this, dimensions, callback)));
 
     alert_boxes_.top().display();
 
     caca_refresh_display(display_);
+
+    logf("displayed alert %zu", alert_boxes_.size());
 }
 
 const alert_box &caca_game::displayed_alert() const
@@ -316,7 +320,7 @@ void caca_game::pop_alert()
 {
     if (!alert_boxes_.empty())
     {
-        unique_lock<recursive_mutex> lock(alertsMutex_);
+        lock_guard<recursive_mutex> lock(alertsMutex_);
 
         alert_boxes_.pop();
 
