@@ -1,8 +1,15 @@
+#include "config.h"
+
 #include "matchmaker.h"
 #include <arg3json/json.h>
 #include "game.h"
 #include "player.h"
 #include "log.h"
+
+#ifdef HAVE_LIBMINIUPNPC
+#include <miniupnpc/miniupnpc.h>
+#include <miniupnpc/upnpcommands.h>
+#endif
 
 using namespace arg3;
 
@@ -34,7 +41,6 @@ matchmaker::matchmaker(game *game) : api_(GAME_API_URL), client_(game), client_f
     api_.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
 
     api_.add_header("X-Application-Token", "78ed4bfb42f54c9fa7ac62873d37228e");
-
 #else
     api_.add_header("X-Application-Id", "8846b98d082d440b8d6024d723d7bc24");
 
@@ -136,6 +142,79 @@ bool matchmaker::join_best_game(string *error)
     return rval;
 }
 
+void matchmaker::port_forward(int port) const
+{
+#ifdef HAVE_LIBMINIUPNPC
+    int error = 0;
+    struct UPNPDev *upnp_dev = upnpDiscover(
+                                   2000    , // time to wait (milliseconds)
+                                   nullptr , // multicast interface (or null defaults to 239.255.255.250)
+                                   nullptr , // path to minissdpd socket (or null defaults to /var/run/minissdpd.sock)
+                                   0       , // source port to use (or zero defaults to port 1900)
+                                   0       , // 0==IPv4, 1==IPv6
+                                   &error  ); // error condition
+
+    char lan_address[64];
+    struct UPNPUrls upnp_urls;
+    struct IGDdatas upnp_data;
+
+    UPNP_GetValidIGD(upnp_dev, &upnp_urls, &upnp_data, lan_address, sizeof(lan_address));
+    // look up possible "status" values, the number "1" indicates a valid IGD was found
+
+    // get the external (WAN) IP address
+    char wan_address[64];
+    UPNP_GetExternalIPAddress(upnp_urls.controlURL, upnp_data.first.servicetype, wan_address);
+
+    // add a new TCP port mapping from WAN port 12345 to local host port 24680
+    error = UPNP_AddPortMapping(
+                upnp_urls.controlURL,
+                upnp_data.first.servicetype,
+                std::to_string(port).c_str()     ,  // external (WAN) port requested
+                std::to_string(port).c_str()     ,  // internal (LAN) port to which packets will be redirected
+                lan_address , // internal (LAN) address to which packets will be redirected
+                "Yahtsee Server", // text description to indicate why or who is responsible for the port mapping
+                "TCP"       , // protocol must be either TCP or UDP
+                nullptr     , // remote (peer) host address or nullptr for no restriction
+                "86400"     ); // port map lease duration (in seconds) or zero for "as long as possible"
+
+    // list all port mappings
+    size_t index = 0;
+    while (true)
+    {
+        char map_wan_port           [200] = "";
+        char map_lan_address        [200] = "";
+        char map_lan_port           [200] = "";
+        char map_protocol           [200] = "";
+        char map_description        [200] = "";
+        char map_mapping_enabled    [200] = "";
+        char map_remote_host        [200] = "";
+        char map_lease_duration     [200] = ""; // original time, not remaining time :(
+
+        error = UPNP_GetGenericPortMappingEntry(
+                    upnp_urls.controlURL            ,
+                    upnp_data.first.servicetype     ,
+                    std::to_string(index).c_str()   ,
+                    map_wan_port                    ,
+                    map_lan_address                 ,
+                    map_lan_port                    ,
+                    map_protocol                    ,
+                    map_description                 ,
+                    map_mapping_enabled             ,
+                    map_remote_host                 ,
+                    map_lease_duration              );
+
+        if (error)
+        {
+            break; // no more port mappings available
+        }
+
+        index++;
+
+        logf("wan %s -> lan %s:%s %s", map_wan_port, map_lan_address, map_lan_port, map_protocol);
+    }
+#endif
+}
+
 bool matchmaker::host(string *error, int port)
 {
     if (!is_valid())
@@ -149,6 +228,8 @@ bool matchmaker::host(string *error, int port)
         logf("no port specified, randomizing.");
         port = (rand() % 65535) + 1024;
     }
+
+    port_forward(port);
 
     server_.start_in_background(port);
 
@@ -232,7 +313,6 @@ void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 
 void matchmaker::notify_player_left(const shared_ptr<player> &p)
 {
-
     if (!is_valid()) return;
 
     json::object json;

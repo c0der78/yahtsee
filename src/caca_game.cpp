@@ -218,8 +218,6 @@ void caca_game::set_needs_clear()
 
 void caca_game::clear_alerts()
 {
-    logf("clearing %zu alerts? %s", alert_boxes_.size());
-
     if (alert_boxes_.empty()) return;
 
     lock_guard<recursive_mutex> lock(alertsMutex_);
@@ -304,8 +302,6 @@ void caca_game::display_alert(dimensional *dimensions, const function<void(const
     alert_boxes_.top().display();
 
     caca_refresh_display(display_);
-
-    logf("displayed alert %zu", alert_boxes_.size());
 }
 
 const alert_box &caca_game::displayed_alert() const

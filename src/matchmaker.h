@@ -1,6 +1,8 @@
 #ifndef _MATCHMAKER_H_
 #define _MATCHMAKER_H_
 
+#include "config.h"
+
 #include <arg3net/socket_server.h>
 #include <arg3net/http_client.h>
 #include <string>
@@ -32,6 +34,8 @@ public:
 private:
 
     void unregister();
+
+    void port_forward(int port) const;
 
     void send_network_message(const string &value);
 
