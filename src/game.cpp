@@ -14,10 +14,10 @@ const char *HELP = "Type '?' to show command options.  Use the arrow keys to cyc
 
 const game::game_state game::state_table[] =
 {
-    { NULL, &game::state_playing, &game::display_player_scores, &game::stop_playing, 0},
+    { &game::init_playing, &game::state_playing, &game::display_player_scores, &game::stop_playing, 0},
     { &game::display_game_menu, &game::state_game_menu, NULL, &game::exit_game, 0},
     { &game::display_ask_name, &game::state_ask_name, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_dice_roll, &game::state_rolling_dice, NULL, NULL, 0},
+    { &game::display_dice_roll, &game::state_rolling_dice, &game::display_player_scores, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, 0},
     { &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
@@ -85,6 +85,10 @@ void game::reset()
 void game::pop_state()
 {
     lock_guard<recursive_mutex> lock(mutex_);
+
+    clear_alerts();
+
+    clear_events();
 
     if (!states_.empty())
     {
@@ -188,7 +192,7 @@ void game::on_display()
         put(0, 51, HELP);
         break;
     case HORIZONTAL:
-        put(76, 24, HELP);
+        put(76, 23, HELP);
         break;
     }
 }
@@ -240,8 +244,15 @@ void game::on_key_press(int input)
         return;
 
     case CACA_KEY_ESCAPE:
-        pop_state();
+    {
+        auto state = states_.top();
+
+        if (!(state->flags & FLAG_STATE_FORCE))
+        {
+            pop_state();
+        }
         return;
+    }
     }
 
     if (!states_.empty())
@@ -265,6 +276,16 @@ void game::exit_multiplayer()
     matchmaker_.stop();
 
     players_.clear();
+}
+
+void game::init_playing()
+{
+    if (current_player()->roll_count() > 0)
+    {
+        flags_ |= FLAG_ROLLING;
+
+        logf("still rolling");
+    }
 }
 
 void game::stop_playing()

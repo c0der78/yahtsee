@@ -228,6 +228,8 @@ void caca_game::clear_alerts()
         alert_boxes_.pop();
 
     set_needs_display();
+
+    set_needs_clear();
 }
 
 void caca_game::clear_events()
@@ -325,6 +327,8 @@ void caca_game::pop_alert()
         alert_boxes_.pop();
 
         set_needs_display();
+
+        set_needs_clear();
     }
 
 }

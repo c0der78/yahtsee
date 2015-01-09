@@ -143,6 +143,8 @@ private:
 
     void stop_playing();
 
+    void init_playing();
+
     /* actions */
 
     void action_add_network_player(const shared_ptr<player> &p);
@@ -242,9 +244,11 @@ private:
     static const int FLAG_JOINING = (1 << 1);
     static const int FLAG_WAITING_FOR_TURN = (1 << 2);
     static const int FLAG_CONTINUE = (1 << 3);
+    static const int FLAG_ROLLING = (1 << 4);
 
 
     static const int FLAG_STATE_TRANSIENT = (1 << 0);
+    static const int FLAG_STATE_FORCE = (1 << 1);
 
     friend class connection;
     friend class client;

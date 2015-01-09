@@ -177,7 +177,7 @@ void game::display_player_scores()
     {
         set_color(currentPlayer_ + 2);
 
-        put(minimalLower_ ? 21   : 50, 1, current_player()->name().c_str());
+        put(displayMode_ == MINIMAL && minimalLower_ ? 21 : 50, 1, current_player()->name().c_str());
 
         set_color(CACA_DEFAULT);
     }
@@ -201,13 +201,13 @@ void game::display_player_scores()
         case VERTICAL:
         {
             yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 7 );
-            display_lower_scores(color, player->score(), lower_score_total, x, 28);
+            display_lower_scores(color, player->score(), lower_score_total, x, 26);
             break;
         }
         case HORIZONTAL:
         {
             yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 7 );
-            display_lower_scores(color, player->score(), lower_score_total, x + 76, 2);
+            display_lower_scores(color, player->score(), lower_score_total, x + 76, 1);
             break;
         }
         }

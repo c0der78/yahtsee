@@ -143,15 +143,16 @@ void game::state_client_waiting_to_start(int input)
 
 void game::state_quit_confirm(int input)
 {
-    if (tolower(input) == 'n')
-    {
-        pop_state();
-    }
-    else
+    if (tolower(input) != 'n')
     {
         action_disconnect();
 
         set_state(nullptr);
+    }
+    else
+    {
+        pop_alert();
+        set_needs_display();
     }
 }
 
@@ -230,8 +231,6 @@ void game::state_rolling_dice(int input)
     {
     case 'q':
         set_state(&game::state_playing);
-        set_needs_display();
-        set_needs_clear();
         break;
     case '?':
         set_state(&game::state_help_menu);

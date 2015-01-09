@@ -9,6 +9,8 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE
 
+AM_MAINTAINER_MODE([enable])
+
 LT_INIT
 
 # Checks for programs.

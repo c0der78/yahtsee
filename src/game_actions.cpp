@@ -189,15 +189,17 @@ void game::action_roll_dice()
 
     if (is_online() && player->id() != this_player()->id())
     {
-        display_alert(2000, "Its not your turn.", nullptr, [&]()
-        {
-            set_needs_clear();
-            set_state(&game::state_playing);
-        });
+        display_alert(2000, "Its not your turn.");
         return;
     }
 
-    if (player->roll_count() < 3)
+    if ((flags_ & FLAG_ROLLING))
+    {
+        set_state(&game::state_rolling_dice);
+
+        flags_ &= ~FLAG_ROLLING;
+    }
+    else if (player->roll_count() < 3)
     {
         player->roll();
 
@@ -207,7 +209,7 @@ void game::action_roll_dice()
     }
     else
     {
-        display_alert(2000, "You must choose a score after three rolls.");
+        display_alert(2000, vector<string>({ "You must choose a score after three rolls.", "Press '?' for help on how to score." }));
     }
 }
 
@@ -215,11 +217,11 @@ void game::action_finish_turn()
 {
     matchmaker_.notify_player_turn_finished();
 
-    set_state(&game::state_playing);
+    flags_ &= ~FLAG_ROLLING;
 
     next_player();
 
-    set_needs_clear();
+    pop_state();
 }
 
 void game::action_network_player_finished(const shared_ptr<player> &p)
