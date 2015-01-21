@@ -3,16 +3,17 @@ terminal-yahtsee
 
 a multiplayer game of yahtzee on the terminal
 
-
 #### required libraries
 
-- [libcaca](http://caca.zoy.org/wiki/libcaca) (brew install libcaca)
+- [libcaca](http://caca.zoy.org/wiki/libcaca) (brew install libcaca) For the ascii display driver
 
-- [libarg3dice](http://github.com/c0der78/arg3dice.git) (./configure; make install)
+- [libarg3](http://github.com/c0der78/libarg3.git) (./configure; make install) for networking, json, etc
 
-- [libarg3net](http://github.com/c0der78/arg3net.git) (./configure; make install)
+- [libarchive](http://www.libarchive.org) (brew install libarchive) for reading assets
 
-- [libarg3json](http://github.com/c0der78/arg3json.git) (./configure; make install)
+#### optional libraries
+
+- [libminiupnpc](http://miniupnp.free.fr) (brew install miniupnpc) for opening network ports on routers
 
 #### TODO
 
@@ -25,7 +26,6 @@ Multiplayer?
 - test, test, test
 - make homepage, better screenshots
 - roll yahtsee animation?, win game animation?
-
 
 #### Screenshots
 
