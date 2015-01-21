@@ -215,9 +215,9 @@ yaht::scoresheet::value_type game::display_upper_scores(int color, const yaht::s
 
     set_color(color);
 
-    for (int i = 0; i <= yaht::Constants::NUM_DICE; i++, y += 2)
+    for (int i = 1; i <= die::DEFAULT_SIDES; i++, y += 2)
     {
-        auto value = score.upper_score(i + 1);
+        auto value = score.upper_score(i);
 
         put(x, y, std::to_string(value).c_str());
 
