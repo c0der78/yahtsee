@@ -12,9 +12,13 @@ void alert_box::display()
 {
     lock_guard<recursive_mutex> lock(game_->mutex_);
 
+    caca_set_color_ansi(game_->canvas_, CACA_WHITE, CACA_TRANSPARENT);
+
     caca_fill_box(game_->canvas_, x(), y(), width(), height(), ' ');
 
     caca_draw_thin_box(game_->canvas_, x(), y(), width(), height());
+
+    caca_set_color_ansi(game_->canvas_, CACA_TRANSPARENT, CACA_TRANSPARENT);
 
     if (callback_ != nullptr)
         callback_(*this);

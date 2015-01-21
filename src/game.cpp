@@ -430,6 +430,14 @@ void game::init_canvas(caca_canvas_t *canvas)
         break;
     }
     }
+
+    for (int y = 1; y <= 5; y++)
+    {
+        for (int x = 1; x <= 38; x++)
+        {
+            put_color(x, y, CACA_YELLOW);
+        }
+    }
 }
 
 void game::set_display_mode(display_mode mode)

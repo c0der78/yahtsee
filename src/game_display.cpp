@@ -5,10 +5,8 @@ using namespace arg3;
 
 void game::display_game_menu()
 {
-
     display_alert([&](const alert_box & a)
     {
-
         caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, bufs[BUF_MENU], bufSize[BUF_MENU], "caca");
     });
 }
@@ -177,6 +175,9 @@ void game::display_player_scores()
 
     for (auto &player : players_)
     {
+        put_color(x, 5, color);
+        put_color(x + 1, 5, color);
+
         switch (displayMode_)
         {
         case MINIMAL:
