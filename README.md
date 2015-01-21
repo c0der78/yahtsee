@@ -21,6 +21,7 @@ Multiplayer?
 - ~~implement turn based game play~~
 - ~~implement server mode w/ protocol~~
 - ~~implement client mode w/ protocol~~
+- ~~implement UPnP to open port on routers automatically~~
 - test, test, test
 - make homepage, better screenshots
 - roll yahtsee animation?, win game animation?
