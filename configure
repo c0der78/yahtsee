@@ -16607,6 +16607,56 @@ if test x"$ac_cv_lib_caca_caca_create_display" != x"yes" ; then
 	as_fn_error $? "libcaca is required" "$LINENO" 5
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for archive_read_new in -larchive" >&5
+$as_echo_n "checking for archive_read_new in -larchive... " >&6; }
+if ${ac_cv_lib_archive_archive_read_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-larchive  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char archive_read_new ();
+int
+main ()
+{
+return archive_read_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_archive_archive_read_new=yes
+else
+  ac_cv_lib_archive_archive_read_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_archive_archive_read_new" >&5
+$as_echo "$ac_cv_lib_archive_archive_read_new" >&6; }
+if test "x$ac_cv_lib_archive_archive_read_new" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBARCHIVE 1
+_ACEOF
+
+  LIBS="-larchive $LIBS"
+
+fi
+
+
+if test x"$ac_cv_lib_archive_archive_read_new" != x"yes" ; then
+	as_fn_error $? "libarchive is required" "$LINENO" 5
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for upnpDiscover in -lminiupnpc" >&5
 $as_echo_n "checking for upnpDiscover in -lminiupnpc... " >&6; }
 if ${ac_cv_lib_miniupnpc_upnpDiscover+:} false; then :

@@ -33,6 +33,12 @@ if test x"$ac_cv_lib_caca_caca_create_display" != x"yes" ; then
 	AC_MSG_ERROR([libcaca is required])
 fi
 
+AC_CHECK_LIB([archive], [archive_read_new])
+
+if test x"$ac_cv_lib_archive_archive_read_new" != x"yes" ; then
+	AC_MSG_ERROR([libarchive is required])
+fi
+
 AC_CHECK_LIB([miniupnpc], [upnpDiscover])
 
 # Checks for header files.

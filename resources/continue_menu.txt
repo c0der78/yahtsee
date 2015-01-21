@@ -1,6 +1,0 @@
-
-    'n' : new game
-    'c' : continue game
-    'm' : multiplayer
-    's' : settings
-    'q' : quit

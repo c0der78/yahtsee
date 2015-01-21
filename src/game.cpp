@@ -5,6 +5,8 @@
 #include <fstream>
 #include <arg3/str_util.h>
 #include <libgen.h>
+#include <archive.h>
+#include <archive_entry.h>
 
 using namespace arg3;
 
@@ -351,13 +353,51 @@ char *game::resource_file_name(const char *path, const char *dir)
 
 void game::load_buf(const char *fileName, int index)
 {
-    caca_canvas_t *temp = caca_create_canvas(0, 0);
+    struct archive *a;
+    struct archive_entry *entry;
+    int r;
 
-    caca_import_canvas_from_file(temp, resource_file_name(fileName), "utf8");
+    a = archive_read_new();
 
-    bufs[index] = caca_export_canvas_to_memory(temp, "caca", &bufSize[index]);
+    archive_read_support_compression_gzip(a);
+    archive_read_support_format_tar(a);
 
-    caca_free_canvas(temp);
+    r = archive_read_open_filename(a, resource_file_name("yahtsee.assets"), 10240);
+
+    if (r != ARCHIVE_OK)
+        throw runtime_error("yahtsee assets not found");
+
+    void *temp = NULL;
+    size_t tempSize = 0;
+
+    while (archive_read_next_header(a, &entry) == ARCHIVE_OK)
+    {
+        if (suffix(archive_entry_pathname(entry), fileName))
+        {
+            tempSize = archive_entry_size(entry);
+            temp = malloc(tempSize);
+            r  = archive_read_data(a, temp, tempSize);
+
+            if (r < 0)
+            {
+                throw runtime_error("unable to parse yahtsee assets");
+            }
+            break;
+        }
+
+    }
+    archive_read_finish(a);
+
+    if (temp == NULL)
+        throw runtime_error("unable to read yahtsee assets");
+
+    caca_canvas_t *canvas = caca_create_canvas(0, 0);
+
+    caca_import_canvas_from_memory(canvas, temp, tempSize, "utf8");
+
+    bufs[index] = caca_export_canvas_to_memory(canvas, "caca", &bufSize[index]);
+
+    caca_free_canvas(canvas);
 }
 
 void game::init_canvas(caca_canvas_t *canvas)
@@ -367,6 +407,7 @@ void game::init_canvas(caca_canvas_t *canvas)
     load_buf("help.txt", BUF_HELP);
     load_buf("lower_header_minimal.txt", BUF_LOWER_HEADER_MINIMAL);
     load_buf("lower_header.txt", BUF_LOWER_HEADER);
+    load_buf("menu.txt", BUF_MENU);
 
     switch (displayMode_)
     {
