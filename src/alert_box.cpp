@@ -10,7 +10,7 @@ alert_box::alert_box(caca_game *game, dimensional *dimensions, function<void(con
 
 void alert_box::display()
 {
-    lock_guard<recursive_mutex> lock(game_->mutex_);
+    unique_lock<recursive_mutex> lock(game_->mutex_);
 
     caca_fill_box(game_->canvas_, x(), y(), width(), height(), ' ');
 
@@ -42,7 +42,7 @@ int alert_box::y() const
 
 void alert_box::center(const string &text) const
 {
-    lock_guard<recursive_mutex> lock(game_->mutex_);
+    unique_lock<recursive_mutex> lock(game_->mutex_);
 
     int x = center_x() - (text.length() / 2);
     int y = center_y();
@@ -51,7 +51,7 @@ void alert_box::center(const string &text) const
 }
 void alert_box::center_x(int y, const string &text) const
 {
-    lock_guard<recursive_mutex> lock(game_->mutex_);
+    unique_lock<recursive_mutex> lock(game_->mutex_);
 
     int x = center_x() - (text.length() / 2);
 

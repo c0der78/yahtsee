@@ -177,6 +177,8 @@ private:
 
     void action_network_player_finished(const shared_ptr<player> &p);
 
+    void action_game_over();
+
     /* misc */
 
     void set_state(state_handler value);

@@ -263,7 +263,7 @@ void game::action_select_die(shared_ptr<yaht::player> player, int d)
 
 void game::action_lower_score(shared_ptr<yaht::player> player, yaht::scoresheet::type type)
 {
-    if (!player->score().lower_score(type))
+    if (!player->score().lower_played(type))
     {
         player->score().lower_score(type, player->calculate_lower_score(type));
 
@@ -277,7 +277,7 @@ void game::action_lower_score(shared_ptr<yaht::player> player, yaht::scoresheet:
 
 void game::action_score(shared_ptr<yaht::player> player, int n)
 {
-    if (!player->score().upper_score(n))
+    if (!player->score().upper_played(n))
     {
         player->score().upper_score(n, player->calculate_upper_score(n));
 
@@ -297,7 +297,7 @@ void game::action_score_best(shared_ptr<yaht::player> player)
 
     if (best_upper.second > best_lower.second)
     {
-        if (!player->score().upper_score(best_upper.first))
+        if (!player->score().upper_played(best_upper.first))
         {
             player->score().upper_score(best_upper.first, best_upper.second);
 
@@ -311,7 +311,7 @@ void game::action_score_best(shared_ptr<yaht::player> player)
     }
     else if (best_lower.second > 0)
     {
-        if (!player->score().lower_score(best_lower.first))
+        if (!player->score().lower_played(best_lower.first))
         {
             player->score().lower_score(best_lower.first, best_lower.second);
 
@@ -322,8 +322,82 @@ void game::action_score_best(shared_ptr<yaht::player> player)
             display_already_scored();
         }
     }
+    else if (!player->score().lower_played(best_lower.first))
+    {
+        player->score().lower_score(best_lower.first, best_lower.second);
+
+        action_finish_turn();
+    }
+    else if (!player->score().upper_played(best_upper.first))
+    {
+        player->score().upper_score(best_upper.first, best_upper.second);
+
+        action_finish_turn();
+    }
     else
     {
         display_alert(2000, "No best score found!");
+    }
+}
+
+void game::action_game_over()
+{
+    if (players_.size() == 1)
+    {
+        display_alert(4000, "Game over.", nullptr, [&]()
+        {
+            set_state(&game::state_game_menu);
+        });
+        return;
+    }
+    shared_ptr<player> winner = nullptr;
+
+    bool tieGame = false;
+
+    for (size_t i = 0; i < players_.size(); i++)
+    {
+        auto p = players_[i];
+
+        if (!winner || p->score().total_score() > winner->score().total_score())
+        {
+            winner = p;
+        }
+    }
+
+    for (size_t i = 0; i < players_.size(); i++)
+    {
+        auto p = players_[i];
+
+        if (p != winner && p->score().total_score() == winner->score().total_score())
+        {
+            tieGame = true;
+            break;
+        }
+    }
+
+    if (tieGame)
+    {
+        display_alert(4000, "Tie game!", nullptr, [&]()
+        {
+
+            set_state(&game::state_game_menu);
+        });
+    }
+    else if (winner == this_player())
+    {
+        display_alert(4000, "You win!", nullptr, [&]()
+        {
+
+            set_state(&game::state_game_menu);
+        });
+    }
+    else
+    {
+        char buf[BUFSIZ + 1] = {0};
+        snprintf(buf, BUFSIZ, "%s wins with %u points!", winner->name().c_str(), winner->score().total_score());
+        display_alert(4000, buf, nullptr, [&]()
+        {
+            set_state(&game::state_game_menu);
+        });
     }
 }

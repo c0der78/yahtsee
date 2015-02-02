@@ -61,7 +61,7 @@ caca_game::~caca_game()
 
 void caca_game::reset()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
 
     frame_ = 1;
 
@@ -84,9 +84,9 @@ void caca_game::reset()
 
 void caca_game::start()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
-
     reset();
+
+    unique_lock<recursive_mutex> lock(mutex_);
 
     canvas_ = caca_create_canvas(0, 0);
 
@@ -121,7 +121,7 @@ void caca_game::update()
 
 void caca_game::update_input()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
 
     if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, 0) != 0)
     {
@@ -170,7 +170,7 @@ void caca_game::update_events()
 
 void caca_game::update_display()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
 
     if (flags_ & FLAG_NEEDS_CLEAR)
     {
@@ -195,7 +195,7 @@ void caca_game::update_display()
 
 void caca_game::clear_display()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
 
     caca_clear_canvas(canvas_);
 
@@ -220,7 +220,7 @@ void caca_game::clear_alerts()
 {
     if (alert_boxes_.empty()) return;
 
-    lock_guard<recursive_mutex> lock(alertsMutex_);
+    unique_lock<recursive_mutex> lock(alertsMutex_);
 
     while (!alert_boxes_.empty())
         alert_boxes_.pop();
@@ -244,7 +244,7 @@ void caca_game::clear_events()
 
 void caca_game::set_cursor(int x, int y)
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
 
     caca_gotoxy(canvas_, x, y);
 }
@@ -261,11 +261,14 @@ int caca_game::get_cursor_y() const
 
 void caca_game::set_color(int fg)
 {
+    unique_lock<recursive_mutex> lock(mutex_);
+
     caca_set_color_ansi(canvas_, fg, CACA_TRANSPARENT);
 }
 
 void caca_game::put_color(int x, int y, int fg)
 {
+    unique_lock<recursive_mutex> lock(mutex_);
 
     uint32_t attr = ((uint32_t)(CACA_TRANSPARENT | 0x40) << 18) | ((uint32_t)(fg | 0x40) << 4);
 
@@ -276,7 +279,7 @@ void caca_game::put(int x, int y, const char *value)
 {
     if (value && *value)
     {
-        lock_guard<recursive_mutex> lock(mutex_);
+        unique_lock<recursive_mutex> lock(mutex_);
 
         caca_put_str(canvas_, x, y, value);
 
@@ -286,7 +289,7 @@ void caca_game::put(int x, int y, const char *value)
 
 void caca_game::put(int x, int y, int value)
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
 
     caca_put_char(canvas_, x, y, value);
 
@@ -295,11 +298,13 @@ void caca_game::put(int x, int y, int value)
 
 void caca_game::display_alert(dimensional *dimensions, const function<void(const alert_box &)> callback)
 {
-    lock_guard<recursive_mutex> lock(alertsMutex_);
+    unique_lock<recursive_mutex> alert_lock(alertsMutex_);
 
     alert_boxes_.push(std::move(alert_box(this, dimensions, callback)));
 
     alert_boxes_.top().display();
+
+    unique_lock<recursive_mutex> display_lock(mutex_);
 
     caca_refresh_display(display_);
 }
@@ -318,7 +323,7 @@ void caca_game::pop_alert()
 {
     if (!alert_boxes_.empty())
     {
-        lock_guard<recursive_mutex> lock(alertsMutex_);
+        unique_lock<recursive_mutex> lock(alertsMutex_);
 
         alert_boxes_.pop();
 
@@ -345,7 +350,7 @@ void caca_game::pop_alert(int millis, const std::function<void()> funk)
 
 void caca_game::new_frame()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
     caca_create_frame(canvas_, ++frame_);
 
     set_needs_display();
@@ -353,7 +358,7 @@ void caca_game::new_frame()
 
 void caca_game::pop_frame()
 {
-    lock_guard<recursive_mutex> lock(mutex_);
+    unique_lock<recursive_mutex> lock(mutex_);
     caca_set_frame(canvas_, --frame_);
 
     set_needs_display();

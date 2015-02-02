@@ -517,7 +517,15 @@ void game::next_player()
     }
 
     if (++currentPlayer_ >= players_.size())
+    {
         currentPlayer_ = 0;
+
+        if (players_[currentPlayer_]->is_finished())
+        {
+            action_game_over();
+            return;
+        }
+    }
 
     if (is_online())
     {

@@ -58,7 +58,6 @@ void game::display_ask_number_of_players()
 
 void game::display_waiting_for_connections()
 {
-
     display_alert("Waiting for connections...");
 }
 
@@ -228,7 +227,15 @@ yaht::scoresheet::value_type game::display_upper_scores(int color, const yaht::s
     {
         auto value = score.upper_score(i);
 
+        bool missedScore = value == 0 && score.upper_played(i);
+
+        if (missedScore)
+            set_color(CACA_RED);
+
         put(x, y, std::to_string(value).c_str());
+
+        if (missedScore)
+            set_color(color);
 
         total_score += value;
     }
@@ -262,7 +269,15 @@ void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::
 
         auto value = score.lower_score(type);
 
+        bool missedScore = value == 0 && score.lower_played(type);
+
+        if (missedScore)
+            set_color(CACA_RED);
+
         put(x, y, std::to_string(value).c_str());
+
+        if (missedScore)
+            set_color(color);
 
         total_score += value;
 
@@ -278,9 +293,9 @@ void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::
         }
     }
 
-    put(x, y, std::to_string(total_score).c_str());
+    put(x, y, std::to_string(lower_score_total).c_str());
 
-    put(x, y + 2, std::to_string(lower_score_total).c_str());
+    put(x, y + 2, std::to_string(total_score).c_str());
 
     put(x, y + 4, std::to_string(total_score + lower_score_total).c_str());
 
