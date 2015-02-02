@@ -1,5 +1,0 @@
-
-    'n' : new game
-    'm' : multiplayer
-    's' : settings
-    'q' : quit

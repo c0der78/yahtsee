@@ -20,6 +20,7 @@ enum
     BUF_UPPER,
     BUF_LOWER,
     BUF_HELP,
+    BUF_MENU,
     BUF_MAX
 };
 

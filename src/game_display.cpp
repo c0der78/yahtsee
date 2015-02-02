@@ -5,20 +5,9 @@ using namespace arg3;
 
 void game::display_game_menu()
 {
-
     display_alert([&](const alert_box & a)
     {
-        caca_canvas_t *temp = caca_create_canvas(0, 0);
-
-        caca_import_canvas_from_file(temp, resource_file_name((flags_ & FLAG_CONTINUE) ? "continue_menu.txt" : "menu.txt"), "utf8");
-
-        size_t menubufSize;
-
-        void *menubuf = caca_export_canvas_to_memory(temp, "caca", &menubufSize);
-
-        caca_free_canvas(temp);
-
-        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, menubuf, menubufSize, "caca");
+        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, bufs[BUF_MENU], bufSize[BUF_MENU], "caca");
     });
 }
 
@@ -185,6 +174,9 @@ void game::display_player_scores()
 
     for (auto &player : players_)
     {
+        put_color(x, 5, color);
+        put_color(x + 1, 5, color);
+
         switch (displayMode_)
         {
         case MINIMAL:
