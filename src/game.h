@@ -93,6 +93,8 @@ private:
 
     void state_client_waiting_to_start(int input);
 
+    void state_joining_game(int input);
+
     /* display methods */
 
     void display_alert(int millis, const function<void(const alert_box &)> funk, const function<void()> pop = nullptr);
@@ -135,6 +137,8 @@ private:
 
     void display_waiting_for_connections();
 
+    void display_joining_game();
+
     /* state initializers/destructors */
     void exit_multiplayer();
 
@@ -155,8 +159,6 @@ private:
     void action_joined_game();
 
     void action_host_game();
-
-    void action_join_game();
 
     void action_network_player_joined(const shared_ptr<player> &p);
 

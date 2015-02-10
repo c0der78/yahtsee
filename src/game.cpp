@@ -26,6 +26,7 @@ const game::game_state game::state_table[] =
     { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { &game::display_joining_game, &game::state_joining_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     {NULL, NULL, NULL, NULL}
 };
 

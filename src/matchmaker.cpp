@@ -373,9 +373,16 @@ void matchmaker::notify_player_turn_finished()
 
     for (int i = 0; i <= yaht::Constants::NUM_DICE; i++)
     {
-        auto value = player->score().upper_score(i + 1);
+        if (player->score().upper_played(i + 1))
+        {
+            upper.add_int(-1);
+        }
+        else
+        {
+            auto value = player->score().upper_score(i + 1);
 
-        upper.add_int(value);
+            upper.add_int(value);
+        }
     }
 
     json.set_array("upper", upper);
@@ -384,9 +391,16 @@ void matchmaker::notify_player_turn_finished()
     {
         yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
 
-        auto value = player->score().lower_score(type);
+        if (player->score().lower_played(type))
+        {
+            lower.add_int(-1);
+        }
+        else
+        {
+            auto value = player->score().lower_score(type);
 
-        lower.add_int(value);
+            lower.add_int(value);
+        }
     }
 
     json.set_array("lower", lower);

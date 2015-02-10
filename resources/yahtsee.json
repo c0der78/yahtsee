@@ -1,4 +1,4 @@
 {
-    "port": 12345,
-    "default_view": "minimal"
+    "port": -1,
+    "default_display": "horizontal"
 }
