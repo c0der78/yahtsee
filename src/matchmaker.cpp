@@ -151,54 +151,85 @@ void matchmaker::port_forward(int port) const
 {
 #ifdef HAVE_LIBMINIUPNPC
     int error = 0;
-    struct UPNPDev *upnp_dev = upnpDiscover(
-                                   2000    , // time to wait (milliseconds)
-                                   nullptr , // multicast interface (or null defaults to 239.255.255.250)
-                                   nullptr , // path to minissdpd socket (or null defaults to /var/run/minissdpd.sock)
-                                   0       , // source port to use (or zero defaults to port 1900)
-                                   0       , // 0==IPv4, 1==IPv6
-                                   &error  ); // error condition
+    //get a list of upnp devices (asks on the broadcast address and returns the responses)
+    struct UPNPDev *upnp_dev = upnpDiscover(1000,    //timeout in milliseconds
+                                            NULL,    //multicast address, default = "239.255.255.250"
+                                            NULL,    //minissdpd socket, default = "/var/run/minissdpd.sock"
+                                            0,       //source port, default = 1900
+                                            0,       //0 = IPv4, 1 = IPv6
+                                            &error); //error output
 
-    char lan_address[64];
+    if (upnp_dev == NULL || error != 0)
+    {
+        logf("Could not discover upnp device");
+        freeUPNPDevlist(upnp_dev);
+        return;
+    }
+
+    char lan_address[INET6_ADDRSTRLEN]; //maximum length of an ipv6 address string
     struct UPNPUrls upnp_urls;
     struct IGDdatas upnp_data;
+    int status = UPNP_GetValidIGD(upnp_dev, &upnp_urls, &upnp_data, lan_address, sizeof(lan_address));
 
-    UPNP_GetValidIGD(upnp_dev, &upnp_urls, &upnp_data, lan_address, sizeof(lan_address));
-    // look up possible "status" values, the number "1" indicates a valid IGD was found
+    if (status != 1)  //there are more status codes in minupnpc.c but 1 is success all others are different failures
+    {
+        logf("No valid Internet Gateway Device could be connected to");
+        FreeUPNPUrls(&upnp_urls);
+        freeUPNPDevlist(upnp_dev);
+        return;
+    }
 
     // get the external (WAN) IP address
-    char wan_address[64];
-    UPNP_GetExternalIPAddress(upnp_urls.controlURL, upnp_data.first.servicetype, wan_address);
+    char wan_address[INET6_ADDRSTRLEN];
+    if (UPNP_GetExternalIPAddress(upnp_urls.controlURL, upnp_data.first.servicetype, wan_address) != 0)
+    {
+        logf("Could not get external IP address");
+    }
+    else
+    {
+        logf("External IP: %s", wan_address);
+    }
 
     // add a new TCP port mapping from WAN port 12345 to local host port 24680
     error = UPNP_AddPortMapping(
                 upnp_urls.controlURL,
                 upnp_data.first.servicetype,
-                std::to_string(port).c_str()     ,  // external (WAN) port requested
-                std::to_string(port).c_str()     ,  // internal (LAN) port to which packets will be redirected
+                std::to_string(port).c_str(),  // external (WAN) port requested
+                std::to_string(port).c_str(),  // internal (LAN) port to which packets will be redirected
                 lan_address , // internal (LAN) address to which packets will be redirected
                 "Yahtsee Server", // text description to indicate why or who is responsible for the port mapping
                 "TCP"       , // protocol must be either TCP or UDP
-                nullptr     , // remote (peer) host address or nullptr for no restriction
+                NULL        , // remote (peer) host address or nullptr for no restriction
                 "86400"     ); // port map lease duration (in seconds) or zero for "as long as possible"
 
-    // list all port mappings
-    size_t index = 0;
-    while (true)
+    if (error)
     {
-        char map_wan_port           [200] = "";
-        char map_lan_address        [200] = "";
-        char map_lan_port           [200] = "";
-        char map_protocol           [200] = "";
-        char map_description        [200] = "";
-        char map_mapping_enabled    [200] = "";
-        char map_remote_host        [200] = "";
-        char map_lease_duration     [200] = ""; // original time, not remaining time :(
+        logf("Failed to map ports\n");
+    }
+    else
+    {
+        logf("Successfully mapped ports");
+    }
 
+    logf("Lan Address\tWAN Port -> LAN Port\tProtocol\tDuration\tEnabled?\tRemote Host\tDescription\n");
+    // list all port mappings
+    for (size_t index = 0;; ++index)
+    {
+        char map_wan_port           [6]  = "";
+        char map_lan_address        [16] = "";
+        char map_lan_port           [6]  = "";
+        char map_protocol           [4]  = "";
+        char map_description        [80] = "";
+        char map_mapping_enabled    [4]  = "";
+        char map_remote_host        [64] = "";
+        char map_lease_duration     [16] = ""; // original time, not remaining time :(
+
+        char indexStr[10];
+        sprintf(indexStr, "%zu", index);
         error = UPNP_GetGenericPortMappingEntry(
                     upnp_urls.controlURL            ,
                     upnp_data.first.servicetype     ,
-                    std::to_string(index).c_str()   ,
+                    indexStr                        ,
                     map_wan_port                    ,
                     map_lan_address                 ,
                     map_lan_port                    ,
@@ -213,10 +244,14 @@ void matchmaker::port_forward(int port) const
             break; // no more port mappings available
         }
 
-        index++;
-
-        logf("wan %s -> lan %s:%s %s", map_wan_port, map_lan_address, map_lan_port, map_protocol);
+        logf("%s\t%s -> %s\t%s\t%s\t%s\t%s\t%s",
+             map_lan_address,    map_wan_port,        map_lan_port,    map_protocol,
+             map_lease_duration, map_mapping_enabled, map_remote_host, map_description);
     }
+
+    FreeUPNPUrls(&upnp_urls);
+    freeUPNPDevlist(upnp_dev);
+
 #endif
 }
 

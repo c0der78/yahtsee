@@ -2,7 +2,7 @@
 #ifndef _YAHTSEE_GAME_H_
 #define _YAHTSEE_GAME_H_
 
-#ifndef DEBUG
+#if !defined(DEBUG) && !defined(LOGGING)
 
 #define logf(args...)
 

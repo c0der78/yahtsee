@@ -6,7 +6,7 @@
 #include <cstring>
 #include <unistd.h>
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(LOGGING)
 
 void log_str(const char *const format, ...)
 {
