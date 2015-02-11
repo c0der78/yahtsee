@@ -126,7 +126,16 @@ void connection::handle_player_turn_finished(const json::object &packet)
 
     for (auto i = 0; i < upper.size(); i++)
     {
-        player->score().upper_score(i + 1, upper.get_int(i));
+        int value = upper.get_int(i);
+
+        if (value == -1)
+        {
+            player->score().upper_score(i + 1, 0);
+        }
+        else  if (value > 0)
+        {
+            player->score().upper_score(i + 1, value);
+        }
 
     }
 
@@ -136,7 +145,16 @@ void connection::handle_player_turn_finished(const json::object &packet)
     {
         yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
 
-        player->score().lower_score(type, lower.get_int(i));
+        int value = lower.get_int(i);
+
+        if (value == -1)
+        {
+            player->score().lower_score(type, 0);
+        }
+        else if (value > 0)
+        {
+            player->score().lower_score(type, value);
+        }
     }
 
     game_->action_network_player_finished(player);

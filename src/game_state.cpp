@@ -21,13 +21,11 @@ void game::state_ask_name(int ch)
         }
         else if (flags_ & FLAG_JOINING)
         {
-            action_join_game();
+            set_state(&game::state_joining_game);
         }
         else if (players_.size() >= numPlayers_)
         {
             set_state(&game::state_playing);
-
-            set_needs_display();
 
             set_needs_clear();
         }
@@ -44,6 +42,38 @@ void game::state_ask_name(int ch)
     }
 
     set_needs_display();
+}
+
+void game::state_joining_game(int ch)
+{
+    string error;
+
+    bool result;
+
+    try
+    {
+        result = matchmaker_.join_best_game(&error);
+    }
+    catch (const std::exception &e)
+    {
+        result = false;
+    }
+
+    if (!result)
+    {
+        logf("could not join game %s", error.c_str());
+
+        pop_state();
+
+        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]()
+        {
+            set_state(&game::state_multiplayer_menu);
+        });
+
+        players_.clear();
+
+        flags_ = 0;
+    }
 }
 
 void game::state_help_menu(int ch)

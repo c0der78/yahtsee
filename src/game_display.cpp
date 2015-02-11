@@ -40,6 +40,11 @@ void game::display_ask_name()
     });
 }
 
+void game::display_joining_game()
+{
+    display_alert("Finding game to join...");
+}
+
 void game::display_ask_number_of_players()
 {
     display_alert("How many players are playing?");

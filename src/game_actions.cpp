@@ -18,7 +18,16 @@ void game::action_host_game()
         port = settings_.get_int("port");
     }
 
-    bool response = matchmaker_.host(&error, port);
+    bool response;
+
+    try
+    {
+        response = matchmaker_.host(&error, port);
+    }
+    catch ( const std::exception &e)
+    {
+        response = false;
+    }
 
     pop_alert(); // done registration
 
@@ -46,39 +55,11 @@ void game::action_host_game()
 
 }
 
-void game::action_join_game()
-{
-    display_alert("Finding game to join...");
-
-    string error;
-
-    bool result = matchmaker_.join_best_game(&error);
-
-    pop_alert();
-
-    if (!result)
-    {
-        logf("could not join game %s", error.c_str());
-
-        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]()
-        {
-            set_state(&game::state_multiplayer_menu);
-            display_multiplayer_menu();
-        });
-
-        players_.clear();
-
-        flags_ = 0;
-
-        return;
-    }
-}
-
 void game::action_joined_game()
 {
-    pop_alert();
+    //pop_alert();
 
-    display_client_waiting_to_start();
+    set_state(&game::state_client_waiting_to_start);
 }
 
 void game::action_disconnect()
