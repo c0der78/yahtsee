@@ -387,7 +387,6 @@ void game::action_game_over()
     {
         display_alert(4000, "You win!", nullptr, [&]()
         {
-
             set_state(&game::state_game_menu);
         });
     }
