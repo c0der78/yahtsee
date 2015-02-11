@@ -8,15 +8,25 @@ using namespace std;
 
 class caca_game;
 
+/*!
+ * Specifies dimensions for the alert box or screen
+ */
 class dimensional
 {
 public:
+    /*! the x coordinate */
     virtual int x() const = 0;
+    /*! the y coordinate */
     virtual int y() const = 0;
+    /*! the width */
     virtual int w() const = 0;
+    /*! the height */
     virtual int h() const = 0;
 };
 
+/*!
+ * a simple box overlay with a message
+ */
 class alert_box
 {
 public:

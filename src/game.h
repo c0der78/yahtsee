@@ -127,6 +127,10 @@ private:
 
     void display_multiplayer_menu();
 
+    void display_multiplayer_type_menu();
+
+    void display_multiplayer_local_menu();
+
     void display_player_scores();
 
     arg3::yaht::scoresheet::value_type display_upper_scores(int color, const arg3::yaht::scoresheet &score, int x, int y);
@@ -159,6 +163,8 @@ private:
     void action_joined_game();
 
     void action_host_game();
+
+    void action_join_game();
 
     void action_network_player_joined(const shared_ptr<player> &p);
 

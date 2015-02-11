@@ -46,34 +46,7 @@ void game::state_ask_name(int ch)
 
 void game::state_joining_game(int ch)
 {
-    string error;
 
-    bool result;
-
-    try
-    {
-        result = matchmaker_.join_best_game(&error);
-    }
-    catch (const std::exception &e)
-    {
-        result = false;
-    }
-
-    if (!result)
-    {
-        logf("could not join game %s", error.c_str());
-
-        pop_state();
-
-        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]()
-        {
-            set_state(&game::state_multiplayer_menu);
-        });
-
-        players_.clear();
-
-        flags_ = 0;
-    }
 }
 
 void game::state_help_menu(int ch)

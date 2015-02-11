@@ -55,6 +55,40 @@ void game::action_host_game()
 
 }
 
+void game::action_join_game()
+{
+    display_alert("Finding game to join...");
+
+    string error;
+
+    bool result;
+
+    try
+    {
+        result = matchmaker_.join_best_game(&error);
+    }
+    catch (const std::exception &e)
+    {
+        result = false;
+    }
+
+    if (!result)
+    {
+        logf("could not join game %s", error.c_str());
+
+        pop_state();
+
+        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]()
+        {
+            set_state(&game::state_multiplayer_menu);
+        });
+
+        players_.clear();
+
+        flags_ = 0;
+    }
+}
+
 void game::action_joined_game()
 {
     //pop_alert();
@@ -211,19 +245,10 @@ void game::action_network_player_finished(const shared_ptr<player> &p)
 
     if (current_player()->id() == this_player()->id())
     {
-        display_alert(2000, "It is now your turn.", nullptr, [&]()
-        {
-
-            set_state(&game::state_playing);
-
-            set_needs_display();
-
-            set_needs_clear();
-        });
+        display_alert(2000, "It is now your turn.");
     }
     else
     {
-
         set_needs_display();
 
         set_needs_clear();

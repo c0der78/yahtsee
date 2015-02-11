@@ -130,9 +130,9 @@ void connection::handle_player_turn_finished(const json::object &packet)
 
         if (value == -1)
         {
-            player->score().upper_score(i + 1, 0);
+            player->score().upper_score(i + 1, 0, false);
         }
-        else  if (value > 0)
+        else
         {
             player->score().upper_score(i + 1, value);
         }
@@ -147,11 +147,11 @@ void connection::handle_player_turn_finished(const json::object &packet)
 
         int value = lower.get_int(i);
 
-        if (value == -1)
+        if (value < 0)
         {
-            player->score().lower_score(type, 0);
+            player->score().lower_score(type, 0, false);
         }
-        else if (value > 0)
+        else
         {
             player->score().lower_score(type, value);
         }

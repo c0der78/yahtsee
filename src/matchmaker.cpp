@@ -99,6 +99,7 @@ bool matchmaker::join_best_game(string *error)
         return false;
     }
 
+    /* call the api for the best available game */
     json::object type;
 
     type.set_string("type", GAME_TYPE);
@@ -107,6 +108,7 @@ bool matchmaker::join_best_game(string *error)
 
     int response = api_.response().code();
 
+    /* handle an error */
     if (response != net::http::OK)
     {
         if (error)
@@ -119,6 +121,7 @@ bool matchmaker::join_best_game(string *error)
         return false;
     }
 
+    /* parse the response */
     json::object game;
 
     game.parse(api_.response());
@@ -127,8 +130,10 @@ bool matchmaker::join_best_game(string *error)
 
     int port = game.get_int("port");
 
+    /* start the client */
     bool rval = client_.start_in_background(ip, port);
 
+    /* handle an error */
     if (!rval)
     {
         char buf[BUFSIZ + 1] = {0};
@@ -373,7 +378,7 @@ void matchmaker::notify_player_turn_finished()
 
     for (int i = 0; i <= yaht::Constants::NUM_DICE; i++)
     {
-        if (player->score().upper_played(i + 1))
+        if (!player->score().upper_played(i + 1))
         {
             upper.add_int(-1);
         }
@@ -391,7 +396,7 @@ void matchmaker::notify_player_turn_finished()
     {
         yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
 
-        if (player->score().lower_played(type))
+        if (!player->score().lower_played(type))
         {
             lower.add_int(-1);
         }

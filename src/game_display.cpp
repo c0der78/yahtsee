@@ -40,11 +40,6 @@ void game::display_ask_name()
     });
 }
 
-void game::display_joining_game()
-{
-    display_alert("Finding game to join...");
-}
-
 void game::display_ask_number_of_players()
 {
     display_alert("How many players are playing?");
@@ -66,6 +61,40 @@ void game::display_multiplayer_menu()
 
         put(a.center_x() - xmod, a.center_y() - 1, buf1.c_str());
         put(a.center_x() - xmod, a.center_y(), buf2.c_str());
+    });
+}
+
+void game::display_multiplayer_type_menu()
+{
+    display_alert([&](const alert_box & a)
+    {
+        string buf1, buf2;
+
+        if (flags_ & FLAG_HOSTING)
+        {
+            buf1 = "'o' : host a game online";
+            buf2 = "'l' : host a game locally";
+        }
+        else
+        {
+            buf1 = "'o' : join a game online";
+            buf2 = "'l' : join a game locally";
+        }
+
+        int xmod = min(buf1.length() / 2, buf2.length() / 2);
+
+        put(a.center_x() - xmod, a.center_y() - 1, buf1.c_str());
+        put(a.center_x() - xmod, a.center_y(), buf2.c_str());
+    });
+}
+
+void game::display_multiplayer_local_menu()
+{
+    display_alert([&](const alert_box & a)
+    {
+        string buf1 = "Enter an ip adress or hostname:";
+
+        put(a.center_x() - (buf1.length() / 2), a.center_y() - 1, buf1.c_str());
     });
 }
 
