@@ -15,8 +15,9 @@ game_event::game_event(game_event &&other) : millis_(other.millis_), callback_(s
 
 game_event::~game_event()
 {
-    if (worker_.joinable())
+    if (worker_.joinable()) {
         worker_.join();
+    }
 }
 
 game_event &game_event::operator=(game_event && other)
@@ -34,8 +35,9 @@ bool game_event::ready() const
 }
 void game_event::perform() const
 {
-    if (callback_ != nullptr)
+    if (callback_ != nullptr) {
         callback_();
+    }
 }
 
 void game_event::clear()
@@ -110,7 +112,7 @@ void caca_game::update()
 {
     unique_lock<recursive_mutex> lock(mutex_);
 
-    if (display_ == NULL) return;
+    if (display_ == NULL) { return; }
 
     update_input();
 
@@ -123,7 +125,7 @@ void caca_game::update_input()
 {
     unique_lock<recursive_mutex> lock(mutex_);
 
-    if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, 0) != 0)
+    if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, 50) != 0)
     {
         if (caca_get_event_type(&event_) & CACA_EVENT_QUIT)
         {
@@ -183,8 +185,9 @@ void caca_game::update_display()
     {
         on_display();
 
-        if (!alert_boxes_.empty())
+        if (!alert_boxes_.empty()) {
             alert_boxes_.top().display();
+        }
 
         caca_refresh_display(display_);
 
@@ -218,12 +221,13 @@ void caca_game::set_needs_clear()
 
 void caca_game::clear_alerts()
 {
-    if (alert_boxes_.empty()) return;
+    if (alert_boxes_.empty()) { return; }
 
     unique_lock<recursive_mutex> lock(alertsMutex_);
 
-    while (!alert_boxes_.empty())
+    while (!alert_boxes_.empty()) {
         alert_boxes_.pop();
+    }
 
     set_needs_display();
 
@@ -232,7 +236,7 @@ void caca_game::clear_alerts()
 
 void caca_game::clear_events()
 {
-    if (timed_events_.empty()) return;
+    if (timed_events_.empty()) { return; }
 
     unique_lock<recursive_mutex> lock(eventsMutex_);
 
@@ -379,6 +383,15 @@ size_t caca_game::add_to_buffer(int ch)
 void caca_game::clear_buffer()
 {
     buf_.str("");
+}
+
+void caca_game::pop_from_buffer()
+{
+    string str = buf_.str();
+
+    str.pop_back();
+
+    buf_.str(str);
 }
 
 string caca_game::get_buffer()

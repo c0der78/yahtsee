@@ -5,7 +5,91 @@
 
 using namespace arg3;
 
-void game::action_host_game()
+void game::action_host_online_game()
+{
+    string error;
+
+    display_alert("Starting server...");
+
+    auto port = -1;
+
+    if (settings_.contains("port"))
+    {
+        port = settings_.get_int("port");
+    }
+
+    bool response;
+
+    try
+    {
+        response = matchmaker_.host_online(&error, port);
+    }
+    catch ( const std::exception &e)
+    {
+        response = false;
+    }
+
+    pop_alert(); // done registration
+
+    if (!response)
+    {
+        logf("could not host game %s", error.c_str());
+
+        display_alert(2000, { "Unable to register game at this time.", error }, nullptr, [&]()
+        {
+            set_state(&game::state_multiplayer_menu);
+
+            display_multiplayer_menu();
+        });
+
+        players_.clear();
+
+        flags_ = 0;
+
+        return;
+    }
+
+    logf("waiting for connections");
+
+    set_state(&game::state_waiting_for_connections);
+
+}
+
+void game::action_join_online_game()
+{
+    display_alert("Finding game to join...");
+
+    string error;
+
+    bool result;
+
+    try
+    {
+        result = matchmaker_.join_best_game(&error);
+    }
+    catch (const std::exception &e)
+    {
+        result = false;
+    }
+
+    if (!result)
+    {
+        logf("could not join game %s", error.c_str());
+
+        pop_state();
+
+        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]()
+        {
+            set_state(&game::state_multiplayer_menu);
+        });
+
+        players_.clear();
+
+        flags_ = 0;
+    }
+}
+
+void game::action_host_local_game()
 {
     string error;
 
@@ -54,18 +138,21 @@ void game::action_host_game()
     set_state(&game::state_waiting_for_connections);
 
 }
-
-void game::action_join_game()
+void game::action_join_local_game()
 {
-    display_alert("Finding game to join...");
+    display_alert("Attempting to join game...");
 
     string error;
 
     bool result;
 
+    string host = settings_.get_string("lan_host");
+
+    int port = settings_.get_int("lan_port");
+
     try
     {
-        result = matchmaker_.join_best_game(&error);
+        result = matchmaker_.join_game(host, port, &error);
     }
     catch (const std::exception &e)
     {
@@ -78,7 +165,7 @@ void game::action_join_game()
 
         pop_state();
 
-        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]()
+        display_alert(2000, {"Unable to join game!", error}, nullptr, [&]()
         {
             set_state(&game::state_multiplayer_menu);
         });
@@ -126,7 +213,11 @@ void game::action_add_network_player(const shared_ptr<player> &player)
 
     message.push_back(" ");
 
-    message.push_back("Waiting for more players, press 's' to start the game.");
+    snprintf(buf, BUFSIZ, "Waiting for more players on port %d", matchmaker_.server_port());
+
+    message.push_back(buf);
+
+    message.push_back("Press 's' to start the game.");
 
     display_alert(message);
 }
@@ -193,8 +284,9 @@ void game::action_network_player_left(const shared_ptr<player> &p)
 
     display_alert(2000, p->name() + " has left the game.", nullptr, [&]()
     {
-        if (players_.empty())
+        if (players_.empty()) {
             display_game_menu();
+        }
     });
 }
 
@@ -243,6 +335,8 @@ void game::action_network_player_finished(const shared_ptr<player> &p)
 {
     next_player();
 
+    clear_alerts();
+
     if (current_player()->id() == this_player()->id())
     {
         display_alert(2000, "It is now your turn.");
@@ -257,10 +351,12 @@ void game::action_network_player_finished(const shared_ptr<player> &p)
 
 void game::action_select_die(shared_ptr<yaht::player> player, int d)
 {
-    if (player->is_kept(d))
+    if (player->is_kept(d)) {
         player->keep_die(d, false);
-    else
+    }
+    else {
         player->keep_die(d, true);
+    }
 
     auto box = displayed_alert();
 

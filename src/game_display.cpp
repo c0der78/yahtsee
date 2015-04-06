@@ -29,8 +29,11 @@ void game::display_ask_name()
 
         put(x - mod, y - 1, buf);
 
-        for (int i = x - mod + 8; i < x + mod - 8; i++)
+        for (int i = x - mod + 8; i < x + mod - 8; i++) {
             put_color(i, y - 1, players_.size() + 2);
+        }
+
+        x -= get_buffer().length() / 2;
 
         for (auto &ch : get_buffer())
         {
@@ -47,7 +50,11 @@ void game::display_ask_number_of_players()
 
 void game::display_waiting_for_connections()
 {
-    display_alert("Waiting for connections...");
+    char buf[BUFSIZ + 1] = {0};
+
+    snprintf(buf, BUFSIZ, "Waiting for connections on port %d", matchmaker_.server_port());
+
+    display_alert(buf);
 }
 
 void game::display_multiplayer_menu()
@@ -64,7 +71,7 @@ void game::display_multiplayer_menu()
     });
 }
 
-void game::display_multiplayer_type_menu()
+void game::display_multiplayer_type()
 {
     display_alert([&](const alert_box & a)
     {
@@ -72,29 +79,40 @@ void game::display_multiplayer_type_menu()
 
         if (flags_ & FLAG_HOSTING)
         {
-            buf1 = "'o' : host a game online";
+            buf1 = "'o' : host a game online (connect.arg3.com)";
             buf2 = "'l' : host a game locally";
         }
         else
         {
-            buf1 = "'o' : join a game online";
+            buf1 = "'o' : join a game online (connect.arg3.com)";
             buf2 = "'l' : join a game locally";
         }
 
-        int xmod = min(buf1.length() / 2, buf2.length() / 2);
+        int xmod = max(buf1.length() / 2, buf2.length() / 2);
 
         put(a.center_x() - xmod, a.center_y() - 1, buf1.c_str());
         put(a.center_x() - xmod, a.center_y(), buf2.c_str());
     });
 }
 
-void game::display_multiplayer_local_menu()
+void game::display_multiplayer_local()
 {
     display_alert([&](const alert_box & a)
     {
-        string buf1 = "Enter an ip adress or hostname:";
+        string buf1;
+
+        if (flags_ & FLAG_HOSTING) {
+            buf1 = "Enter a port to connect to:";
+        } else {
+            buf1 = "Enter an address to connect to (<host:port>):";
+        }
 
         put(a.center_x() - (buf1.length() / 2), a.center_y() - 1, buf1.c_str());
+
+        auto buf2 = get_buffer();
+
+        put(a.center_x() - (buf2.length() / 2), a.center_y(), buf2.c_str());
+
     });
 }
 
@@ -129,10 +147,12 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
 {
     char buf[BUFSIZ + 1] = {0};
 
-    if (players_.size() == 1 || player == this_player())
+    if (players_.size() == 1 || player == this_player()) {
         snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
-    else
+    }
+    else {
         snprintf(buf, BUFSIZ, "%s's roll (%d of 3):", player->name().c_str(), player->roll_count());
+    }
 
     x += 13;
     y += 4;
@@ -158,8 +178,9 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
 
     y += 2;
 
-    if (!is_online() || player == this_player())
+    if (!is_online() || player == this_player()) {
         put(xs, y, "Press '?' for help on how to score.");
+    }
     else
     {
         snprintf(buf, BUFSIZ, "Waiting for %s's turn to finish...", player->name().c_str());
@@ -197,17 +218,22 @@ void game::display_player_scores()
 
     if (current_player())
     {
-        set_color(currentPlayer_ + 2);
+        set_color(currentPlayer_ + 2 + 8);
 
         put(displayMode_ == MINIMAL && minimalLower_ ? 21 : 50, 1, current_player()->name().c_str());
 
         set_color(CACA_DEFAULT);
     }
 
-    int color = 2;
+    int baseColor = 2;
 
     for (auto &player : players_)
     {
+        int color = baseColor;
+
+        if (player->id() == current_player()->id()) {
+            color += 8;
+        }
         put_color(x, 5, color);
         put_color(x + 1, 5, color);
 
@@ -239,7 +265,7 @@ void game::display_player_scores()
 
         x += 5;
 
-        color++;
+        baseColor++;
     }
 }
 
@@ -255,13 +281,15 @@ yaht::scoresheet::value_type game::display_upper_scores(int color, const yaht::s
 
         bool missedScore = value == 0 && score.upper_played(i);
 
-        if (missedScore)
+        if (missedScore) {
             set_color(CACA_RED);
+        }
 
         put(x, y, std::to_string(value).c_str());
 
-        if (missedScore)
+        if (missedScore) {
             set_color(color);
+        }
 
         total_score += value;
     }
@@ -272,8 +300,9 @@ yaht::scoresheet::value_type game::display_upper_scores(int color, const yaht::s
 
     auto lower_score_total = total_score;
 
-    if (total_score > 63)
+    if (total_score > 63) {
         lower_score_total += 35;
+    }
 
     put(x, y + 4, std::to_string(lower_score_total).c_str());
 
@@ -297,13 +326,15 @@ void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::
 
         bool missedScore = value == 0 && score.lower_played(type);
 
-        if (missedScore)
+        if (missedScore) {
             set_color(CACA_RED);
+        }
 
         put(x, y, std::to_string(value).c_str());
 
-        if (missedScore)
+        if (missedScore) {
             set_color(color);
+        }
 
         total_score += value;
 

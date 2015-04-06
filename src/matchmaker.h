@@ -25,12 +25,15 @@ public:
     void stop();
     bool is_valid() const;
     bool host(std::string *error = NULL, int port = INVALID);
+    bool host_online(std::string *error = NULL, int port = INVALID);
     bool join_best_game(std::string *error = NULL);
+    bool join_game(const std::string &host, int port, std::string *error = NULL);
     void notify_player_joined(const shared_ptr<player> &p);
     void notify_player_left(const shared_ptr<player> &p);
     void notify_game_start();
     void notify_player_roll();
     void notify_player_turn_finished();
+    int server_port() const;
 private:
 
     void unregister();
@@ -51,7 +54,7 @@ private:
     connection_factory client_factory_;
     arg3::net::socket_server server_;
     game *game_;
-
+    int server_port_;
 };
 
 #endif

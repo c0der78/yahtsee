@@ -100,6 +100,8 @@ public:
 
     void clear_buffer();
 
+    void pop_from_buffer();
+
     string get_buffer();
 
     void add_event(unsigned millis, const function<void()> callback);

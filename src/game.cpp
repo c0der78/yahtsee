@@ -24,9 +24,12 @@ const game::game_state game::state_table[] =
     { &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_multiplayer_type, &game::state_multiplayer_type, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_multiplayer_local, &game::state_multiplayer_local, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    { &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { &game::action_join_local_game, &game::state_joining_local_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { &game::action_join_online_game, &game::state_joining_online_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     {NULL, NULL, NULL, NULL}
 };
 
@@ -56,17 +59,20 @@ void game::load_settings(char *exe)
 
     settings_.parse(strStream.str());
 
-    if (!settings_.contains("basedir"))
+    if (!settings_.contains("basedir")) {
         settings_.set_string("basedir", baseDir);
+    }
 
     if (settings_.contains("default_display"))
     {
         auto mode = settings_.get_string("default_display");
 
-        if (mode == "horizontal")
+        if (mode == "horizontal") {
             displayMode_ = HORIZONTAL;
-        else if (mode == "vertical")
+        }
+        else if (mode == "vertical") {
             displayMode_ = VERTICAL;
+        }
     }
 }
 
@@ -99,15 +105,17 @@ void game::pop_state()
 
         states_.pop();
 
-        if (state && state->on_exit)
+        if (state && state->on_exit) {
             bind(state->on_exit, this)();
+        }
 
         if (!states_.empty())
         {
             state = states_.top();
 
-            if (state && state->on_init)
+            if (state && state->on_init) {
                 bind(state->on_init, this)();
+            }
 
             set_needs_display();
         }
@@ -118,8 +126,9 @@ const game::game_state *game::find_state(state_handler value)
 {
     for (size_t i = 0; state_table[i].on_execute != NULL; i++)
     {
-        if (state_table[i].on_execute == value)
+        if (state_table[i].on_execute == value) {
             return &state_table[i];
+        }
     }
     return nullptr;
 }
@@ -182,8 +191,9 @@ void game::on_display()
     {
         auto state = states_.top();
 
-        if (state && state->on_display)
+        if (state && state->on_display) {
             bind(state->on_display, this)();
+        }
     }
 
     switch (displayMode_)
@@ -217,10 +227,12 @@ void game::on_key_press(int input)
     case CACA_KEY_UP:
     {
         int mode = displayMode_;
-        if (mode == MINIMAL)
+        if (mode == MINIMAL) {
             displayMode_ = HORIZONTAL;
-        else
+        }
+        else {
             displayMode_ = static_cast<display_mode>(++mode);
+        }
         set_needs_display();
         set_needs_clear();
         return;
@@ -228,10 +240,12 @@ void game::on_key_press(int input)
     case CACA_KEY_DOWN:
     {
         int mode = displayMode_;
-        if (mode == HORIZONTAL)
+        if (mode == HORIZONTAL) {
             displayMode_ = MINIMAL;
-        else
+        }
+        else {
             displayMode_ = static_cast<display_mode>(--mode);
+        }
         set_needs_display();
         set_needs_clear();
         return;
@@ -262,8 +276,9 @@ void game::on_key_press(int input)
     {
         auto state = states_.top();
 
-        if (state && state->on_execute)
+        if (state && state->on_execute) {
             bind(state->on_execute, this, _1)(input);
+        }
     }
 }
 
@@ -323,8 +338,9 @@ char *game::resource_file_name(const char *path, const char *dir)
 
     if (!resourceDir[0])
     {
-        if (dir == NULL)
+        if (dir == NULL) {
             dir = settings_.get_string("basedir").c_str();
+        }
 
         snprintf(resourceDir, BUFSIZ, "%s/../etc/yahtsee", dir);
 
@@ -336,18 +352,22 @@ char *game::resource_file_name(const char *path, const char *dir)
             {
                 snprintf(resourceDir, BUFSIZ, "%s/../resources", dir);
 
-                if (!dir_exists(resourceDir))
+                if (!dir_exists(resourceDir)) {
                     resourceDir[0] = 0;
+                }
             }
         }
     }
 
-    if (!resourceDir[0])
+    if (!resourceDir[0]) {
         strncpy(buf, path, BUFSIZ);
-    else if (path && *path == '/')
+    }
+    else if (path && *path == '/') {
         snprintf(buf, BUFSIZ, "%s%s", resourceDir, path);
-    else
+    }
+    else {
         snprintf(buf, BUFSIZ, "%s/%s", resourceDir, path);
+    }
 
     return buf;
 }
@@ -365,8 +385,9 @@ void game::load_buf(const char *fileName, int index)
 
     r = archive_read_open_filename(a, resource_file_name("yahtsee.assets"), 10240);
 
-    if (r != ARCHIVE_OK)
+    if (r != ARCHIVE_OK) {
         throw runtime_error("yahtsee assets not found");
+    }
 
     void *temp = NULL;
     size_t tempSize = 0;
@@ -389,8 +410,9 @@ void game::load_buf(const char *fileName, int index)
     }
     archive_read_finish(a);
 
-    if (temp == NULL)
+    if (temp == NULL) {
         throw runtime_error("unable to read yahtsee assets");
+    }
 
     caca_canvas_t *canvas = caca_create_canvas(0, 0);
 
@@ -425,18 +447,22 @@ void game::init_canvas(caca_canvas_t *canvas)
     case MINIMAL:
     {
         int index = minimalLower_ ? BUF_LOWER : BUF_UPPER;
-        if (minimalLower_)
+        if (minimalLower_) {
             caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_LOWER_HEADER_MINIMAL], bufSize[BUF_LOWER_HEADER_MINIMAL], "caca");
+        }
         caca_import_area_from_memory(canvas, 0, minimalLower_ ? 3 : 0, bufs[index], bufSize[index], "caca");
         break;
     }
     }
 
-    for (int y = 1; y <= 5; y++)
+    if (displayMode_ != MINIMAL || !minimalLower_)
     {
-        for (int x = 1; x <= 38; x++)
+        for (int y = 1; y <= 5; y++)
         {
-            put_color(x, y, CACA_YELLOW);
+            for (int x = 1; x <= 38; x++)
+            {
+                put_color(x, y, CACA_YELLOW);
+            }
         }
     }
 }
@@ -466,8 +492,9 @@ void game::display_alert(const string &message, const function<void(const alert_
     {
         a.center(message);
 
-        if (funk != nullptr)
+        if (funk != nullptr) {
             funk(a);
+        }
     });
 }
 
@@ -488,16 +515,19 @@ void game::display_alert(const vector<string> &messages, const std::function<voi
 
         for (const auto &msg : messages)
         {
-            if ( pos < ymod)
+            if ( pos < ymod) {
                 put(a.center_x() - (msg.length() / 2), a.center_y() - (ymod - pos), msg.c_str());
-            else
+            }
+            else {
                 put(a.center_x() - (msg.length() / 2), a.center_y() + (pos - ymod), msg.c_str());
+            }
 
             pos++;
         }
 
-        if (funk != nullptr)
+        if (funk != nullptr) {
             funk(a);
+        }
     });
 }
 
@@ -529,7 +559,8 @@ int game::alert_dimensions::y() const
         return 20;
     default:
     case MINIMAL:
-    case HORIZONTAL: return 7;
+    case HORIZONTAL:
+        return 7;
     }
 }
 
@@ -579,17 +610,19 @@ void game::next_player()
 
     if (is_online())
     {
-        if ( currentPlayer_ != 0)
+        if ( currentPlayer_ != 0) {
             flags_ |= FLAG_WAITING_FOR_TURN;
-        else
+        }
+        else {
             flags_ &= ~FLAG_WAITING_FOR_TURN;
+        }
     }
     set_needs_display();
 }
 
 shared_ptr<player> game::get_player(size_t index) const
 {
-    if (index >= players_.size()) return nullptr;
+    if (index >= players_.size()) { return nullptr; }
 
     auto it = players_.begin() + index;
 
@@ -600,15 +633,18 @@ void game::set_current_player(const shared_ptr<player> &p)
 {
     auto it = find(players_.begin(), players_.end(), p);
 
-    if (it != players_.end())
+    if (it != players_.end()) {
         currentPlayer_ = distance(players_.begin(), it);
+    }
 
     if (is_online())
     {
-        if ( currentPlayer_ != 0)
+        if ( currentPlayer_ != 0) {
             flags_ |= FLAG_WAITING_FOR_TURN;
-        else
+        }
+        else {
             flags_ &= ~FLAG_WAITING_FOR_TURN;
+        }
     }
     set_needs_display();
 }
@@ -617,14 +653,14 @@ shared_ptr<player> game::current_player() const
 {
     size_t pSize = players_.size();
 
-    if (pSize == 0) return nullptr;
+    if (pSize == 0) { return nullptr; }
 
     return players_[currentPlayer_];
 }
 
 shared_ptr<player> game::this_player() const
 {
-    if (players_.size() == 0) return nullptr;
+    if (players_.size() == 0) { return nullptr; }
 
     return players_[0];
 }
@@ -633,7 +669,7 @@ shared_ptr<player> game::find_player_by_id(const string &id) const
 {
     for (const auto &player : players_)
     {
-        if (player->id() == id) return player;
+        if (player->id() == id) { return player; }
     }
 
     return nullptr;

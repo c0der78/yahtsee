@@ -22,8 +22,6 @@ int main(int argc, char **argv)
     while (game.alive())
     {
         game.update();
-
-        usleep(50);
     }
 
     game.reset();

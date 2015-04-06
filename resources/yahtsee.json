@@ -1,4 +1,9 @@
 {
     "port": -1,
-    "default_display": "horizontal"
+    "default_display": "horizontal",
+    "arg3connect": {
+    	"enabled": true,
+    	"appId": "8846b98d082d440b8d6024d723d7bc24",
+    	"appToken": "ac8afc408f284eedad323e1ddd5c17e4"
+    }
 }

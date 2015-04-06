@@ -131,15 +131,27 @@ bool matchmaker::join_best_game(string *error)
     int port = game.get_int("port");
 
     /* start the client */
-    bool rval = client_.start_in_background(ip, port);
+    return join_game(ip, port, error);
+}
+
+bool matchmaker::join_game(const std::string &host, int port, string *error)
+{
+    if (!is_valid()) {
+        *error = "Not online.";
+        return false;
+    }
+
+    /* start the client */
+    bool rval = client_.start_in_background(host, port);
 
     /* handle an error */
     if (!rval)
     {
         char buf[BUFSIZ + 1] = {0};
-        snprintf(buf, BUFSIZ, "Unable to connect to %s:%d", ip.c_str(), port);
-        if (error)
+        snprintf(buf, BUFSIZ, "Unable to connect to %s:%d", host.c_str(), port);
+        if (error) {
             *error = buf;
+        }
     }
 
     logf("joining game");
@@ -271,11 +283,23 @@ bool matchmaker::host(string *error, int port)
 
     port_forward(port);
 
+    server_port_ = port;
+
     server_.start_in_background(port);
+
+    return true;
+}
+
+bool matchmaker::host_online(string *error, int port)
+{
+    if (!host(error, port)) {
+        return false;
+    }
 
     json::object json;
 
     json.set_string("type", GAME_TYPE);
+
     json.set_int("port", port);
 
     api_.set_payload(json.to_string()).post("api/v1/games/register");
@@ -303,16 +327,22 @@ bool matchmaker::host(string *error, int port)
     return true;
 }
 
+int matchmaker::server_port() const {
+    return server_port_;
+}
+
 void matchmaker::unregister()
 {
     if (!gameId_.empty())
     {
         api_.set_payload(gameId_).post("api/v1/games/unregister");
 
-        if (api_.response().code() != net::http::OK)
+        if (api_.response().code() != net::http::OK) {
             logf("Unable to unregister game");
-        else
+        }
+        else {
             logf("game %s unregistered", gameId_.c_str());
+        }
 
         gameId_.clear();
     }
@@ -320,7 +350,7 @@ void matchmaker::unregister()
 
 void matchmaker::notify_game_start()
 {
-    if (!is_valid()) return;
+    if (!is_valid()) { return; }
 
     json::object json;
 
@@ -338,7 +368,7 @@ void matchmaker::notify_game_start()
 void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 {
 
-    if (!is_valid()) return;
+    if (!is_valid()) { return; }
 
     json::object json;
 
@@ -353,7 +383,7 @@ void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 
 void matchmaker::notify_player_left(const shared_ptr<player> &p)
 {
-    if (!is_valid()) return;
+    if (!is_valid()) { return; }
 
     json::object json;
 
@@ -368,7 +398,7 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
 void matchmaker::notify_player_roll()
 {
-    if (!is_valid()) return;
+    if (!is_valid()) { return; }
 
     json::object json;
 
@@ -401,7 +431,7 @@ void matchmaker::notify_player_roll()
 
 void matchmaker::notify_player_turn_finished()
 {
-    if (!is_valid()) return;
+    if (!is_valid()) { return; }
 
     json::object json;
 

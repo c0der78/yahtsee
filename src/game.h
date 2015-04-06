@@ -89,11 +89,17 @@ private:
 
     void state_multiplayer_menu(int input);
 
+    void state_multiplayer_type(int input);
+
+    void state_multiplayer_local(int input);
+
     void state_waiting_for_connections(int input);
 
     void state_client_waiting_to_start(int input);
 
-    void state_joining_game(int input);
+    void state_joining_local_game(int input);
+
+    void state_joining_online_game(int input);
 
     /* display methods */
 
@@ -127,9 +133,9 @@ private:
 
     void display_multiplayer_menu();
 
-    void display_multiplayer_type_menu();
+    void display_multiplayer_type();
 
-    void display_multiplayer_local_menu();
+    void display_multiplayer_local();
 
     void display_player_scores();
 
@@ -162,9 +168,13 @@ private:
 
     void action_joined_game();
 
-    void action_host_game();
+    void action_host_online_game();
 
-    void action_join_game();
+    void action_host_local_game();
+
+    void action_join_local_game();
+
+    void action_join_online_game();
 
     void action_network_player_joined(const shared_ptr<player> &p);
 
@@ -256,6 +266,7 @@ private:
     static const int FLAG_WAITING_FOR_TURN = (1 << 2);
     static const int FLAG_CONTINUE = (1 << 3);
     static const int FLAG_ROLLING = (1 << 4);
+    static const int FLAG_LAN = (1 << 5);
 
 
     static const int FLAG_STATE_TRANSIENT = (1 << 0);
