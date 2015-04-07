@@ -13,7 +13,7 @@ a multiplayer game of yahtzee on the terminal
 
 #### optional libraries
 
-- [libminiupnpc](http://miniupnp.free.fr) (brew install miniupnpc) for opening network ports on routers
+- [libminiupnpc](http://miniupnp.free.fr) (brew install miniupnpc / apt-get install libminiupnpc-dev) for opening network ports on routers
 
 #### TODO
 

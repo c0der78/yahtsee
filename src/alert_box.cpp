@@ -10,18 +10,23 @@ alert_box::alert_box(caca_game *game, dimensional *dimensions, function<void(con
 
 void alert_box::display()
 {
+    // grab a lock for canvas manipulation
     unique_lock<recursive_mutex> lock(game_->mutex_);
 
+    // clear out an area for the alert box
     caca_set_color_ansi(game_->canvas_, CACA_WHITE, CACA_TRANSPARENT);
 
     caca_fill_box(game_->canvas_, x(), y(), width(), height(), ' ');
 
+    // draw a border
     caca_draw_thin_box(game_->canvas_, x(), y(), width(), height());
 
     caca_set_color_ansi(game_->canvas_, CACA_TRANSPARENT, CACA_TRANSPARENT);
 
-    if (callback_ != nullptr)
+    // call additional drawing
+    if (callback_ != nullptr) {
         callback_(*this);
+    }
 }
 
 int alert_box::width() const
@@ -46,19 +51,26 @@ int alert_box::y() const
 
 void alert_box::center(const string &text) const
 {
+    // grab a game canvas lock
     unique_lock<recursive_mutex> lock(game_->mutex_);
 
+    // find the x y coordinates
     int x = center_x() - (text.length() / 2);
     int y = center_y();
 
+    // draw the text
     caca_put_str(game_->canvas_, x, y, text.c_str());
 }
+
 void alert_box::center_x(int y, const string &text) const
 {
+    // grab a game canvas lock
     unique_lock<recursive_mutex> lock(game_->mutex_);
 
+    // find the x position
     int x = center_x() - (text.length() / 2);
 
+    // draw the text
     caca_put_str(game_->canvas_, x, y, text.c_str());
 }
 

@@ -39,8 +39,11 @@ void connection::on_connect()
 
     game_->for_players([&](const shared_ptr<player> &p)
     {
-        if (p->c0nnection() != this)
+        if (p->c0nnection() != this) {
             players.add(p->to_json());
+        }
+
+        return false;
     });
 
     packet.set_array("players", players);
@@ -69,8 +72,9 @@ void connection::on_did_read()
 
     logf("recieved %s", packet.to_string().c_str());
 
-    if (!packet.contains("action"))
+    if (!packet.contains("action")) {
         throw runtime_error("packet has no action");
+    }
 
     client_action action = (client_action) packet.get_int("action");
 

@@ -14,6 +14,7 @@ using namespace std::placeholders;
 
 const char *HELP = "Type '?' to show command options.  Use the arrow keys to cycle views modes.";
 
+/*! the state table for lookups and transitions */
 const game::game_state game::state_table[] =
 {
     { &game::init_playing, &game::state_playing, &game::display_player_scores, &game::stop_playing, 0},
@@ -80,6 +81,7 @@ void game::reset()
 {
     caca_game::reset();
 
+    // cleanup the buffers
     for (size_t i = 0; i < BUF_MAX; i++)
     {
         if (bufs[i] != NULL)
@@ -95,24 +97,31 @@ void game::pop_state()
 {
     lock_guard<recursive_mutex> lock(mutex_);
 
+    // clear any alerts from the state
     clear_alerts();
 
+    // clear any events from the state
     clear_events();
 
     if (!states_.empty())
     {
+        // get the top state
         auto state = states_.top();
 
+        // before popping it
         states_.pop();
 
+        // perform any on_exit handler
         if (state && state->on_exit) {
             bind(state->on_exit, this)();
         }
 
+        // have a state below?
         if (!states_.empty())
         {
             state = states_.top();
 
+            // call the on_init method again
             if (state && state->on_init) {
                 bind(state->on_init, this)();
             }
@@ -137,8 +146,10 @@ void game::set_state(state_handler value)
 {
     lock_guard<recursive_mutex> lock(mutex_);
 
+    // clear any alerts from the previous state
     clear_alerts();
 
+    // clear any events from the previous state
     clear_events();
 
     auto state = find_state(value);
@@ -149,11 +160,15 @@ void game::set_state(state_handler value)
         {
             auto old = states_.top();
 
+            // if the previous state is flagged transient
             if (old && (old->flags & FLAG_STATE_TRANSIENT))
             {
+                // then pop it
                 states_.pop();
             }
         }
+
+        // initialize the new state
         if (state->on_init)
         {
             bind(state->on_init, this)();
@@ -264,8 +279,10 @@ void game::on_key_press(int input)
     {
         auto state = states_.top();
 
+        // if the state is not forced
         if (!(state->flags & FLAG_STATE_FORCE))
         {
+            // pop it
             pop_state();
         }
         return;
@@ -276,6 +293,7 @@ void game::on_key_press(int input)
     {
         auto state = states_.top();
 
+        // execute the current state
         if (state && state->on_execute) {
             bind(state->on_execute, this, _1)(input);
         }
@@ -336,16 +354,20 @@ char *game::resource_file_name(const char *path, const char *dir)
 
     char *buf = bufs[bufIndex];
 
+    // if we don't have a resource directory yet
     if (!resourceDir[0])
     {
+        // get the base directory
         if (dir == NULL) {
             dir = settings_.get_string("basedir").c_str();
         }
 
+        // try an etc dir first
         snprintf(resourceDir, BUFSIZ, "%s/../etc/yahtsee", dir);
 
         if (!dir_exists(resourceDir))
         {
+            // try some resource directories
             snprintf(resourceDir, BUFSIZ, "%s/resources", dir);
 
             if (!dir_exists(resourceDir))
@@ -359,6 +381,7 @@ char *game::resource_file_name(const char *path, const char *dir)
         }
     }
 
+    // build the path
     if (!resourceDir[0]) {
         strncpy(buf, path, BUFSIZ);
     }
@@ -418,6 +441,8 @@ void game::load_buf(const char *fileName, int index)
 
     caca_import_canvas_from_memory(canvas, temp, tempSize, "utf8");
 
+    free(temp);
+
     bufs[index] = caca_export_canvas_to_memory(canvas, "caca", &bufSize[index]);
 
     caca_free_canvas(canvas);
@@ -425,6 +450,7 @@ void game::load_buf(const char *fileName, int index)
 
 void game::init_canvas(caca_canvas_t *canvas)
 {
+    // load some buffers from resources
     load_buf("upper.txt", BUF_UPPER);
     load_buf("lower.txt", BUF_LOWER);
     load_buf("help.txt", BUF_HELP);
@@ -457,6 +483,7 @@ void game::init_canvas(caca_canvas_t *canvas)
 
     if (displayMode_ != MINIMAL || !minimalLower_)
     {
+        // colorize the title logo
         for (int y = 1; y <= 5; y++)
         {
             for (int x = 1; x <= 38; x++)
@@ -573,11 +600,11 @@ int game::alert_dimensions::h() const
     return 15;
 }
 
-void game::for_players(std::function<void(const shared_ptr<player> &p)> funk)
+void game::for_players(std::function<bool(const shared_ptr<player> &p)> funk)
 {
     for (const auto &p : players_)
     {
-        funk(p);
+        if (funk(p)) { break; }
     }
 }
 
@@ -600,12 +627,6 @@ void game::next_player()
     if (++currentPlayer_ >= players_.size())
     {
         currentPlayer_ = 0;
-
-        if (players_[currentPlayer_]->is_finished())
-        {
-            action_game_over();
-            return;
-        }
     }
 
     if (is_online())

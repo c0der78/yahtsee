@@ -337,6 +337,24 @@ void game::action_network_player_finished(const shared_ptr<player> &p)
 
     clear_alerts();
 
+    bool finished = true;
+
+    for_players([&finished](const shared_ptr<player> &p) {
+        if (!p->is_finished())
+        {
+            finished = false;
+            return true;
+        }
+        return false;
+    });
+
+
+    if (finished)
+    {
+        action_game_over();
+        return;
+    }
+
     if (current_player()->id() == this_player()->id())
     {
         display_alert(2000, "It is now your turn.");

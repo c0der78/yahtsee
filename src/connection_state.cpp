@@ -23,8 +23,9 @@ void connection::handle_game_start(const json::object &packet)
 
     auto player = game_->find_player_by_id(id);
 
-    if (player != nullptr)
+    if (player != nullptr) {
         game_->set_current_player(player);
+    }
 
     logf("starting game");
 
@@ -41,7 +42,7 @@ void connection::handle_player_roll(const json::object &packet)
 
     auto p = game_->find_player_by_id(id);
 
-    if (p == nullptr) return;
+    if (p == nullptr) { return; }
 
     json::array roll = packet.get_array("roll");
 
@@ -53,14 +54,16 @@ void connection::handle_player_roll(const json::object &packet)
 
         auto kept = inner.get_bool("kept");
 
-        if (!kept)
+        if (!kept) {
             values.push(inner.get_int("value"));
+        }
 
         p->keep_die(i, kept);
     }
 
-    if (game_->current_player() != p)
+    if (game_->current_player() != p) {
         game_->set_current_player(p);
+    }
 
     player_engine.set_next_roll(values);
 
@@ -73,9 +76,9 @@ void connection::handle_player_roll(const json::object &packet)
     game_->set_needs_display();
 
 }
+
 void connection::handle_remote_connection_init(const json::object &packet)
 {
-
     game_->action_add_network_player(make_shared<player>(this, packet));
 }
 
@@ -105,8 +108,9 @@ void connection::handle_player_left(const json::object &packet)
     {
         auto p = game_->find_player_by_id(id);
 
-        if (p != nullptr)
+        if (p != nullptr) {
             game_->action_network_player_left(p);
+        }
     }
 }
 

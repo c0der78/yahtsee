@@ -14,6 +14,7 @@ std::shared_ptr<buffered_socket> connection_factory::create_socket(socket_server
 {
     auto socket = make_shared<connection>(game_, sock, addr);
 
+    // add to the list of connections
     connections_.push_back(socket);
 
     return socket;
@@ -77,8 +78,9 @@ void client::on_close()
 
 bool client::start(const std::string &host, int port)
 {
-    if (!connect(host, port))
+    if (!connect(host, port)) {
         return false;
+    }
 
     set_non_blocking(true);
 
@@ -89,8 +91,9 @@ bool client::start(const std::string &host, int port)
 
 bool client::start_in_background(const std::string &host, int port)
 {
-    if (!connect(host, port))
+    if (!connect(host, port)) {
         return false;
+    }
 
     set_non_blocking(true);
 

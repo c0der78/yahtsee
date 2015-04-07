@@ -125,7 +125,7 @@ void caca_game::update_input()
 {
     unique_lock<recursive_mutex> lock(mutex_);
 
-    if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, 50) != 0)
+    if (caca_get_event(display_, CACA_EVENT_QUIT | CACA_EVENT_RESIZE | CACA_EVENT_KEY_RELEASE, &event_, 1) != 0)
     {
         if (caca_get_event_type(&event_) & CACA_EVENT_QUIT)
         {
@@ -158,6 +158,7 @@ void caca_game::update_events()
 {
     unique_lock<recursive_mutex> lock(eventsMutex_);
 
+    /* use remove-erase idiom on events that are finished */
     timed_events_.erase(remove_if(timed_events_.begin(), timed_events_.end(), [&](const game_event & ev)
     {
         if (ev.ready())
@@ -185,6 +186,7 @@ void caca_game::update_display()
     {
         on_display();
 
+        // if there is an alert box, display it as well
         if (!alert_boxes_.empty()) {
             alert_boxes_.top().display();
         }

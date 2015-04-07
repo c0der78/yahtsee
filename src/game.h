@@ -6,6 +6,7 @@
 
 #include <stack>
 
+/*! the mode of display */
 typedef enum
 {
     HORIZONTAL,
@@ -13,6 +14,7 @@ typedef enum
     MINIMAL
 } display_mode;
 
+/*! memory buffers */
 enum
 {
     BUF_LOWER_HEADER,
@@ -26,21 +28,25 @@ enum
 
 class player;
 
+/*! a game of yahtsee */
 class game : public caca_game
 {
 
 public:
 
+    /*! a state handler */
     typedef void (game::*state_handler)(int);
 
     game();
 
     void reset();
 
+    /*! removes the top state */
     void pop_state();
 
     void on_start();
 
+    /*! game is still being played */
     bool alive() const;
 
     void on_display();
@@ -51,12 +57,16 @@ public:
 
     void on_key_press(int input);
 
+    /*! gets the current player */
     shared_ptr<player> current_player() const;
 
-    void for_players(std::function<void(const std::shared_ptr<player> &p)> funk);
+    /*! perform an action for each player */
+    void for_players(std::function<bool(const std::shared_ptr<player> &p)> funk);
 
+    /*! add a player to the game */
     void add_player(const shared_ptr<player> &p);
 
+    /*! sets the current player */
     void set_current_player(const shared_ptr<player> &p);
 
     shared_ptr<player> get_player(size_t index) const;
@@ -149,7 +159,7 @@ private:
 
     void display_joining_game();
 
-    /* state initializers/destructors */
+    /* state initializers/finializers */
     void exit_multiplayer();
 
     void exit_game();
@@ -218,16 +228,22 @@ private:
 
     shared_ptr<player> find_player_by_id(const string &id) const;
 
+    /*! a state representation */
     typedef struct
     {
+        /*! called when the state starts */
         void (game::*on_init)();
+        /*! called when the state has input */
         void (game::*on_execute)(int);
+        /*! called when the state is displayed */
         void (game::*on_display)();
+        /*! called when the state is finished */
         void (game::*on_exit)();
+        /*! flags to determine behaviour */
         int flags;
     } game_state;
 
-
+    /*! gets alert dimensions specific to the game */
     class alert_dimensions : public dimensional
     {
     public:
@@ -241,8 +257,10 @@ private:
         game *game_;
     };
 
+    /*! the table with states */
     static const game_state state_table[];
 
+    /*! lookup a state in the table */
     static const game_state *find_state(state_handler value);
 
     void *bufs[BUF_MAX];
@@ -261,15 +279,22 @@ private:
 
     arg3::json::object settings_;
 
+    /*! hosting a network game */
     static const int FLAG_HOSTING = (1 << 0);
+    /*! joining a network game */
     static const int FLAG_JOINING = (1 << 1);
+    /*! waiting for a network player's turn to finish */
     static const int FLAG_WAITING_FOR_TURN = (1 << 2);
+    /*! menu was displayed, but we're continuing the game */
     static const int FLAG_CONTINUE = (1 << 3);
+    /*! this player is rolling the dice */
     static const int FLAG_ROLLING = (1 << 4);
+    /*! network game is local area network */
     static const int FLAG_LAN = (1 << 5);
 
-
+    /*! the state should not remain on the stack */
     static const int FLAG_STATE_TRANSIENT = (1 << 0);
+    /*! the state is not able to be escaped */
     static const int FLAG_STATE_FORCE = (1 << 1);
 
     friend class connection;
