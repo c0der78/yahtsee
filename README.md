@@ -29,12 +29,9 @@ Multiplayer?
 
 #### Screenshots
 
-![Vertical Mode](vertical_rolling.png?raw=true "Vertical Mode")
+![Yahtsee 1](yahtsee1.png?raw=true "Yahtsee 1")
 
-![Horizontal Mode w/ Selected Dice](horizontal_rolling.png?raw=true "Horizontal Mode")
+![Yahtsee 2](yahtsee2.png?raw=true "Yahtsee 2")
 
-![Minimal Mode w/ Help Screen](minimal_help.png?raw=true "Minimal Mode")
-
-
-
+![Yahtsee 3](yahtsee3.png?raw=true "Yahtsee 3")
 
