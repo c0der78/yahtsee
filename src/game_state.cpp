@@ -17,16 +17,12 @@ void game::state_ask_name(int ch)
 
         if (flags_ & FLAG_HOSTING)
         {
-            if (flags_ & FLAG_LAN) {
-                action_host_local_game();
-            } else {
-                action_host_online_game();
-            }
+            action_host_game();
         }
         else if (flags_ & FLAG_JOINING)
         {
             if (flags_ & FLAG_LAN) {
-                set_state(&game::state_joining_local_game);
+                set_state(&game::state_joining_game);
             } else {
                 set_state(&game::state_joining_online_game);
             }
@@ -55,7 +51,7 @@ void game::state_ask_name(int ch)
     set_needs_display();
 }
 
-void game::state_joining_local_game(int ch)
+void game::state_joining_game(int ch)
 {
 
 }
@@ -108,16 +104,16 @@ void game::state_multiplayer_menu(int input)
         break;
     case 'h':
         flags_ |= FLAG_HOSTING;
-        set_state(&game::state_multiplayer_type);
+        set_state(&game::state_ask_name);
         break;
     case 'j':
         flags_ |= FLAG_JOINING;
-        set_state(&game::state_multiplayer_type);
+        set_state(&game::state_multiplayer_join);
         break;
     }
 }
 
-void game::state_multiplayer_type(int input)
+void game::state_multiplayer_join(int input)
 {
     switch (tolower(input))
     {
@@ -127,16 +123,12 @@ void game::state_multiplayer_type(int input)
     case 'l':
         flags_ |= FLAG_LAN;
 
-        if (flags_ & FLAG_HOSTING) {
-            set_state(&game::state_ask_name);
-        } else {
-            set_state(&game::state_multiplayer_local);
-        }
+        set_state(&game::state_multiplayer_join_game);
         break;
     }
 }
 
-void game::state_multiplayer_local(int input)
+void game::state_multiplayer_join_game(int input)
 {
     if (input == CACA_KEY_RETURN || input == 10)
     {

@@ -5,7 +5,7 @@
 
 using namespace arg3;
 
-void game::action_host_online_game()
+void game::action_host_game()
 {
     string error;
 
@@ -22,10 +22,11 @@ void game::action_host_online_game()
 
     try
     {
-        response = matchmaker_.host_online(&error, port);
+        response = matchmaker_.host(is_online_available(), &error, port);
     }
     catch ( const std::exception &e)
     {
+        error = e.what();
         response = false;
     }
 
@@ -89,56 +90,7 @@ void game::action_join_online_game()
     }
 }
 
-void game::action_host_local_game()
-{
-    string error;
-
-    display_alert("Starting server...");
-
-    auto port = -1;
-
-    if (settings_.contains("port"))
-    {
-        port = settings_.get_int("port");
-    }
-
-    bool response;
-
-    try
-    {
-        response = matchmaker_.host(&error, port);
-    }
-    catch ( const std::exception &e)
-    {
-        response = false;
-    }
-
-    pop_alert(); // done registration
-
-    if (!response)
-    {
-        logf("could not host game %s", error.c_str());
-
-        display_alert(2000, { "Unable to register game at this time.", error }, nullptr, [&]()
-        {
-            set_state(&game::state_multiplayer_menu);
-
-            display_multiplayer_menu();
-        });
-
-        players_.clear();
-
-        flags_ = 0;
-
-        return;
-    }
-
-    logf("waiting for connections");
-
-    set_state(&game::state_waiting_for_connections);
-
-}
-void game::action_join_local_game()
+void game::action_join_game()
 {
     display_alert("Attempting to join game...");
 
@@ -336,24 +288,6 @@ void game::action_network_player_finished(const shared_ptr<player> &p)
     next_player();
 
     clear_alerts();
-
-    bool finished = true;
-
-    for_players([&finished](const shared_ptr<player> &p) {
-        if (!p->is_finished())
-        {
-            finished = false;
-            return true;
-        }
-        return false;
-    });
-
-
-    if (finished)
-    {
-        action_game_over();
-        return;
-    }
 
     if (current_player()->id() == this_player()->id())
     {

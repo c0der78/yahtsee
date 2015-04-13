@@ -1,5 +1,6 @@
 #include "game.h"
 #include "player.h"
+#include <vector>
 
 using namespace arg3;
 
@@ -51,10 +52,19 @@ void game::display_ask_number_of_players()
 void game::display_waiting_for_connections()
 {
     char buf[BUFSIZ + 1] = {0};
+    std::vector<std::string> messages;
 
-    snprintf(buf, BUFSIZ, "Waiting for connections on port %d", matchmaker_.server_port());
+    snprintf(buf, BUFSIZ, "Waiting for connections on port %d...", matchmaker_.server_port());
 
-    display_alert(buf);
+    messages.push_back(buf);
+
+    if (!is_online_available()) {
+        messages.push_back("");
+        messages.push_back("Visit connect.arg3.com/yahtsee to learn how to");
+        messages.push_back("configure yahtsee for online registration.");
+    }
+
+    display_alert(messages);
 }
 
 void game::display_multiplayer_menu()
@@ -71,22 +81,14 @@ void game::display_multiplayer_menu()
     });
 }
 
-void game::display_multiplayer_type()
+void game::display_multiplayer_join()
 {
     display_alert([&](const alert_box & a)
     {
         string buf1, buf2;
 
-        if (flags_ & FLAG_HOSTING)
-        {
-            buf1 = "'o' : host a game online (connect.arg3.com)";
-            buf2 = "'l' : host a game locally";
-        }
-        else
-        {
-            buf1 = "'o' : join a game online (connect.arg3.com)";
-            buf2 = "'l' : join a game locally";
-        }
+        buf1 = "'o' : join a game registered online (connect.arg3.com)";
+        buf2 = "'l' : join a specific game host";
 
         int xmod = max(buf1.length() / 2, buf2.length() / 2);
 
@@ -95,17 +97,13 @@ void game::display_multiplayer_type()
     });
 }
 
-void game::display_multiplayer_local()
+void game::display_multiplayer_join_game()
 {
     display_alert([&](const alert_box & a)
     {
         string buf1;
 
-        if (flags_ & FLAG_HOSTING) {
-            buf1 = "Enter a port to connect to:";
-        } else {
-            buf1 = "Enter an address to connect to (<host:port>):";
-        }
+        buf1 = "Enter an address to connect to (<host:port>):";
 
         put(a.center_x() - (buf1.length() / 2), a.center_y() - 1, buf1.c_str());
 

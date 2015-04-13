@@ -35,19 +35,15 @@ void matchmaker::send_network_message(const string &value)
     }
 }
 
+void matchmaker::set_api_keys(const string &appId, const string &appToken)
+{
+    api_.add_header("X-Application-Id", appId);
+
+    api_.add_header("X-Application-Token", appToken);
+}
+
 matchmaker::matchmaker(game *game) : api_(GAME_API_URL), client_(game), client_factory_(game), server_(&client_factory_), game_(game)
 {
-#ifndef DEBUG
-    api_.add_header("X-Application-Id", "51efcb5839a64a928a86ba8f2827b31d");
-
-    api_.add_header("X-Application-Token", "78ed4bfb42f54c9fa7ac62873d37228e");
-#else
-    api_.add_header("X-Application-Id", "8846b98d082d440b8d6024d723d7bc24");
-
-    api_.add_header("X-Application-Token", "ac8afc408f284eedad323e1ddd5c17e4");
-
-    api_.add_header("X-Jersey-Trace-Accept", "true");
-#endif
     api_.add_header("Content-Type", "application/json; charset=UTF-8");
 
     api_.add_header("Accept", "application/json, */*");
@@ -267,7 +263,7 @@ void matchmaker::port_forward(int port) const
 #endif
 }
 
-bool matchmaker::host(string *error, int port)
+bool matchmaker::host(bool register_online, string *error, int port)
 {
     if (!is_valid())
     {
@@ -281,6 +277,13 @@ bool matchmaker::host(string *error, int port)
         port = (rand() % 65535) + 1024;
     }
 
+    if (register_online) {
+        if (!r3gister(error, port))
+        {
+            return false;
+        }
+    }
+
     port_forward(port);
 
     server_port_ = port;
@@ -290,12 +293,8 @@ bool matchmaker::host(string *error, int port)
     return true;
 }
 
-bool matchmaker::host_online(string *error, int port)
+bool matchmaker::r3gister(string *error, int port)
 {
-    if (!host(error, port)) {
-        return false;
-    }
-
     json::object json;
 
     json.set_string("type", GAME_TYPE);
@@ -314,8 +313,6 @@ bool matchmaker::host_online(string *error, int port)
             json.parse(api_.response());
             *error = json.get_string("error");
         }
-
-        server_.stop();
 
         return false;
     }

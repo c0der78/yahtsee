@@ -5,11 +5,11 @@ a multiplayer game of yahtzee on the terminal
 
 #### required libraries
 
-- [libcaca](http://caca.zoy.org/wiki/libcaca) (brew install libcaca) For the ascii display driver
+- [libcaca](http://caca.zoy.org/wiki/libcaca) (brew install libcaca / apt-get install libcaca-dev) For the ascii display driver
 
 - [libarg3](http://github.com/c0der78/libarg3.git) (./configure; make install) for networking, json, etc
 
-- [libarchive](http://www.libarchive.org) (brew install libarchive) for reading assets
+- [libarchive](http://www.libarchive.org) (brew install libarchive / apt-get install libarchive-dev) for reading assets
 
 #### optional libraries
 

@@ -24,8 +24,7 @@ public:
     virtual ~matchmaker();
     void stop();
     bool is_valid() const;
-    bool host(std::string *error = NULL, int port = INVALID);
-    bool host_online(std::string *error = NULL, int port = INVALID);
+    bool host(bool register_online, std::string *error = NULL, int port = INVALID);
     bool join_best_game(std::string *error = NULL);
     bool join_game(const std::string &host, int port, std::string *error = NULL);
     void notify_player_joined(const shared_ptr<player> &p);
@@ -34,7 +33,11 @@ public:
     void notify_player_roll();
     void notify_player_turn_finished();
     int server_port() const;
+    void set_api_keys(const std::string &appId, const std::string &appToken);
+
 private:
+
+    bool r3gister(std::string *error, int port);
 
     void unregister();
 

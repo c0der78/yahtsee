@@ -25,11 +25,11 @@ const game::game_state game::state_table[] =
     { &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_multiplayer_type, &game::state_multiplayer_type, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_multiplayer_local, &game::state_multiplayer_local, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_multiplayer_join, &game::state_multiplayer_join, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { &game::display_multiplayer_join_game, &game::state_multiplayer_join_game, NULL, NULL, FLAG_STATE_TRANSIENT},
     { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    { &game::action_join_local_game, &game::state_joining_local_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     { &game::action_join_online_game, &game::state_joining_online_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
     {NULL, NULL, NULL, NULL}
 };
@@ -73,6 +73,19 @@ void game::load_settings(char *exe)
         }
         else if (mode == "vertical") {
             displayMode_ = VERTICAL;
+        }
+    }
+
+    if (settings_.contains("arg3connect"))
+    {
+        json::object service = settings_.get("arg3connect");
+
+        if (!service.contains("enabled") || service.get_bool("enabled"))
+        {
+            std::string appId = service.get_string("appId");
+            std::string appToken = service.get_string("appToken");
+
+            matchmaker_.set_api_keys(appId, appToken);
         }
     }
 }
@@ -198,6 +211,17 @@ bool game::alive() const
 bool game::is_online() const
 {
     return flags_ & (FLAG_HOSTING | FLAG_JOINING);
+}
+
+bool game::is_online_available() const
+{
+    if (!settings_.contains("arg3connect")) {
+        return false;
+    }
+
+    json::object service = settings_.get("arg3connect");
+
+    return service.contains("enabled") && service.get_bool("enabled");
 }
 
 void game::on_display()
@@ -617,6 +641,23 @@ void game::add_player(const shared_ptr<player> &p)
 
 void game::next_player()
 {
+    bool finished = true;
+
+    for_players([&finished](const shared_ptr<player> &p) {
+        if (!p->is_finished())
+        {
+            finished = false;
+            return true;
+        }
+        return false;
+    });
+
+    if (finished)
+    {
+        action_game_over();
+        return;
+    }
+
     if (currentPlayer_ < players_.size())
     {
         auto player = players_[currentPlayer_];

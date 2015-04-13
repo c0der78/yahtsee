@@ -75,6 +75,8 @@ public:
 
     bool is_online() const;
 
+    bool is_online_available() const;
+
     const arg3::json::object &settings() const;
 
     void load_settings(char *exe);
@@ -99,15 +101,15 @@ private:
 
     void state_multiplayer_menu(int input);
 
-    void state_multiplayer_type(int input);
+    void state_multiplayer_join(int input);
 
-    void state_multiplayer_local(int input);
+    void state_multiplayer_join_game(int input);
 
     void state_waiting_for_connections(int input);
 
     void state_client_waiting_to_start(int input);
 
-    void state_joining_local_game(int input);
+    void state_joining_game(int input);
 
     void state_joining_online_game(int input);
 
@@ -143,9 +145,9 @@ private:
 
     void display_multiplayer_menu();
 
-    void display_multiplayer_type();
+    void display_multiplayer_join();
 
-    void display_multiplayer_local();
+    void display_multiplayer_join_game();
 
     void display_player_scores();
 
@@ -178,11 +180,9 @@ private:
 
     void action_joined_game();
 
-    void action_host_online_game();
+    void action_host_game();
 
-    void action_host_local_game();
-
-    void action_join_local_game();
+    void action_join_game();
 
     void action_join_online_game();
 
