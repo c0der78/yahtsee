@@ -427,7 +427,7 @@ void game::load_buf(const char *fileName, int index)
 
     a = archive_read_new();
 
-    archive_read_support_compression_gzip(a);
+    archive_read_support_filter_gzip(a);
     archive_read_support_format_tar(a);
 
     r = archive_read_open_filename(a, resource_file_name("yahtsee.assets"), 10240);
@@ -455,7 +455,7 @@ void game::load_buf(const char *fileName, int index)
         }
 
     }
-    archive_read_finish(a);
+    archive_read_free(a);
 
     if (temp == NULL) {
         throw runtime_error("unable to read yahtsee assets");
