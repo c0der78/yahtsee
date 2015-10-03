@@ -243,7 +243,7 @@ private:
         int flags;
     } game_state;
 
-    /*! gets alert dimensions specific to the game */
+    /*! gets alert dimensions specific to the game display */
     class alert_dimensions : public dimensional
     {
     public:

@@ -6,6 +6,7 @@
 using namespace arg3;
 using namespace arg3::net;
 
+/* connection factory */
 connection_factory::connection_factory(game *game) : game_(game)
 {
 }
@@ -28,6 +29,7 @@ void connection_factory::for_connections(std::function<void(const shared_ptr<con
     }
 }
 
+/*  client */
 client::client(game *game, SOCKET sock, const sockaddr_storage &addr) : connection(game, sock, addr), backgroundThread_(nullptr)
 {}
 
@@ -56,6 +58,7 @@ client &client::operator=(client && other)
     return *this;
 }
 
+//! handle when connected
 void client::on_connect()
 {
     json::object packet;
@@ -71,11 +74,13 @@ void client::on_connect()
     logf("client connected, sending %s", packet.to_string().c_str());
 }
 
+//! handle when closed
 void client::on_close()
 {
     logf("client closed");
 }
 
+//! start the client for a give host:port
 bool client::start(const std::string &host, int port)
 {
     if (!connect(host, port)) {
@@ -89,6 +94,7 @@ bool client::start(const std::string &host, int port)
     return true;
 }
 
+//! start the client in the background for a given host:port
 bool client::start_in_background(const std::string &host, int port)
 {
     if (!connect(host, port)) {
@@ -102,6 +108,7 @@ bool client::start_in_background(const std::string &host, int port)
     return true;
 }
 
+//! the magic run method
 void client::run()
 {
     std::chrono::milliseconds dura( 200 );
@@ -110,6 +117,7 @@ void client::run()
 
     while (is_valid())
     {
+        // check for error reading
         if (!read_to_buffer())
         {
             close();
@@ -122,6 +130,7 @@ void client::run()
 
         size_t outSize = output().size();
 
+        // check for error writing
         if (!write_from_buffer())
         {
             close();
@@ -132,6 +141,7 @@ void client::run()
             logf("wrote %zu bytes", outSize);
         }
 
+        // give other threads a chance
         std::this_thread::sleep_for( dura );
     }
 

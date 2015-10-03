@@ -29,10 +29,12 @@ connection &connection::operator=(connection && other)
     return *this;
 }
 
+//! handle when connected
 void connection::on_connect()
 {
     json::object packet;
 
+    // build the init packet
     packet.set_int("action", CONNECTION_INIT);
 
     json::array players;
@@ -53,6 +55,7 @@ void connection::on_connect()
     logf("connection connected, sending %s", packet.to_string().c_str());
 }
 
+//! handle when closed
 void connection::on_close()
 {
     logf("connection closed");
@@ -64,14 +67,18 @@ void connection::on_will_read()
 {
 }
 
+//! handle when data is read
 void connection::on_did_read()
 {
     json::object packet;
 
+    // read a packet
     packet.parse(readln());
 
     logf("recieved %s", packet.to_string().c_str());
 
+    // validate the packet
+    // TODO: verify a game/session id?
     if (!packet.contains("action")) {
         throw runtime_error("packet has no action");
     }

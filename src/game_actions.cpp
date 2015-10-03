@@ -5,14 +5,17 @@
 
 using namespace arg3;
 
+//! start hosting a game
 void game::action_host_game()
 {
     string error;
 
     display_alert("Starting server...");
 
+    // the default (random) port
     auto port = -1;
 
+    // check if the settings specify a port
     if (settings_.contains("port"))
     {
         port = settings_.get_int("port");
@@ -22,6 +25,7 @@ void game::action_host_game()
 
     try
     {
+        // tell the matchmaker to host
         response = matchmaker_.host(is_online_available(), &error, port);
     }
     catch ( const std::exception &e)
@@ -32,6 +36,7 @@ void game::action_host_game()
 
     pop_alert(); // done registration
 
+    // check for error
     if (!response)
     {
         logf("could not host game %s", error.c_str());
@@ -50,12 +55,15 @@ void game::action_host_game()
         return;
     }
 
+    // inform the user we're hosting
+
     logf("waiting for connections");
 
     set_state(&game::state_waiting_for_connections);
 
 }
 
+//! join a game posted in online registry
 void game::action_join_online_game()
 {
     display_alert("Finding game to join...");
@@ -66,6 +74,7 @@ void game::action_join_online_game()
 
     try
     {
+        // tell the matchmaker to join an available game
         result = matchmaker_.join_best_game(&error);
     }
     catch (const std::exception &e)
@@ -73,6 +82,7 @@ void game::action_join_online_game()
         result = false;
     }
 
+    // check for error
     if (!result)
     {
         logf("could not join game %s", error.c_str());
@@ -90,6 +100,7 @@ void game::action_join_online_game()
     }
 }
 
+//! join a specific game
 void game::action_join_game()
 {
     display_alert("Attempting to join game...");
@@ -98,12 +109,14 @@ void game::action_join_game()
 
     bool result;
 
+    // grab the host/port from the settings
     string host = settings_.get_string("lan_host");
 
     int port = settings_.get_int("lan_port");
 
     try
     {
+        // tell the matchmaker to join the game
         result = matchmaker_.join_game(host, port, &error);
     }
     catch (const std::exception &e)
@@ -111,6 +124,7 @@ void game::action_join_game()
         result = false;
     }
 
+    // check for error
     if (!result)
     {
         logf("could not join game %s", error.c_str());
@@ -128,6 +142,7 @@ void game::action_join_game()
     }
 }
 
+//! the user has joined a game
 void game::action_joined_game()
 {
     //pop_alert();
@@ -135,6 +150,7 @@ void game::action_joined_game()
     set_state(&game::state_client_waiting_to_start);
 }
 
+//! the user has been disconnected
 void game::action_disconnect()
 {
     if (flags_ & FLAG_JOINING)
@@ -143,12 +159,15 @@ void game::action_disconnect()
     }
 }
 
+//! a player has been added to the game
 void game::action_add_network_player(const shared_ptr<player> &player)
 {
     char buf[BUFSIZ + 1] = {0};
 
+    // add the player to the list
     players_.push_back(player);
 
+    // inform the matchmaker a player joined
     matchmaker_.notify_player_joined(player);
 
     pop_alert();
@@ -157,6 +176,7 @@ void game::action_add_network_player(const shared_ptr<player> &player)
 
     int count = 1;
 
+    // build a message to display to user
     for (const auto &p : players_)
     {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
@@ -174,8 +194,10 @@ void game::action_add_network_player(const shared_ptr<player> &player)
     display_alert(message);
 }
 
+//! remove a player from the game
 void game::action_remove_network_player(connection *c)
 {
+    // find the player to remove based on the connection
     auto it = find_if(players_.begin(), players_.end(), [&c](const shared_ptr<player> &p)
     {
         return p->c0nnection() == c;
@@ -202,13 +224,17 @@ void game::action_remove_network_player(connection *c)
         {
             display_alert(2000, p->name() + " has left the game.");
         }
+
+        //inform the matchmaker a player left
         matchmaker_.notify_player_left(p);
 
     }
 }
 
+//! a network player has joined the hosted game
 void game::action_network_player_joined(const shared_ptr<player> &p)
 {
+    // add player to the list
     players_.push_back(p);
 
     display_client_waiting_to_start();

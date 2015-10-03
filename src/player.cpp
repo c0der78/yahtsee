@@ -29,8 +29,9 @@ die::value_type player::engine::generate(die::value_type from, die::value_type t
 
 void player::engine::reset()
 {
-    while (!nextRoll_.empty())
+    while (!nextRoll_.empty()) {
         nextRoll_.pop();
+    }
 }
 
 void player::engine::set_next_roll(const queue<die::value_type> &roll)

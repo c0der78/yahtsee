@@ -5,6 +5,7 @@
 
 using namespace arg3;
 
+//! the connection has recieved an init packet
 void connection::handle_connection_init(const json::object &packet)
 {
     json::array players = packet.get_array("players");
@@ -17,6 +18,7 @@ void connection::handle_connection_init(const json::object &packet)
     game_->action_joined_game();
 }
 
+//! the connection has recieved a game start packet
 void connection::handle_game_start(const json::object &packet)
 {
     string id = packet.get_string("start_id");
@@ -29,13 +31,18 @@ void connection::handle_game_start(const json::object &packet)
 
     logf("starting game");
 
+    // set some display flags
+
     game_->set_needs_display();
 
     game_->set_needs_clear();
 
+    // and the state
+
     game_->set_state(&game::state_playing);
 }
 
+//! handle a recieved player roll packet
 void connection::handle_player_roll(const json::object &packet)
 {
     string id = packet.get_string("player_id");
@@ -77,6 +84,7 @@ void connection::handle_player_roll(const json::object &packet)
 
 }
 
+//! handle when another player has joined the game
 void connection::handle_remote_connection_init(const json::object &packet)
 {
     game_->action_add_network_player(make_shared<player>(this, packet));

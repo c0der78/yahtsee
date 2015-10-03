@@ -7,7 +7,10 @@
 
 class connection;
 
-
+/*!
+ * An entity that is playing the game
+ * Has an id, name, score and dice.
+ */
 class player : public arg3::yaht::player
 {
 public:
