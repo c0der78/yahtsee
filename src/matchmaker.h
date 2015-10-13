@@ -24,7 +24,7 @@ public:
     virtual ~matchmaker();
     void stop();
     bool is_valid() const;
-    bool host(bool register_online, std::string *error = NULL, int port = INVALID);
+    bool host(bool register_online, bool port_forwarding, std::string *error = NULL, int port = INVALID);
     bool join_best_game(std::string *error = NULL);
     bool join_game(const std::string &host, int port, std::string *error = NULL);
     void notify_player_joined(const shared_ptr<player> &p);

@@ -61,6 +61,16 @@ void game::state_joining_online_game(int ch)
 
 }
 
+void game::state_hosting_game(int ch)
+{
+    switch(tolower(ch))
+    {
+        case 'q':
+        set_state(&game::state_quit_confirm);
+        break;
+    }
+}
+
 void game::state_help_menu(int ch)
 {
     if (tolower(ch) == 'q')

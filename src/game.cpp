@@ -17,21 +17,22 @@ const char *HELP = "Type '?' to show command options.  Use the arrow keys to cyc
 /*! the state table for lookups and transitions */
 const game::game_state game::state_table[] =
 {
-    { &game::init_playing, &game::state_playing, &game::display_player_scores, &game::stop_playing, 0},
-    { &game::display_game_menu, &game::state_game_menu, NULL, &game::exit_game, 0},
-    { &game::display_ask_name, &game::state_ask_name, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_dice_roll, &game::state_rolling_dice, &game::display_player_scores, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, 0},
-    { &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_multiplayer_join, &game::state_multiplayer_join, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_multiplayer_join_game, &game::state_multiplayer_join_game, NULL, NULL, FLAG_STATE_TRANSIENT},
-    { &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    { &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    { &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    { &game::action_join_online_game, &game::state_joining_online_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    {NULL, NULL, NULL, NULL}
+    { "playing", &game::init_playing, &game::state_playing, &game::display_player_scores, &game::stop_playing, 0},
+    { "game_menu", &game::display_game_menu, &game::state_game_menu, NULL, &game::exit_game, 0},
+    { "ask_name", &game::display_ask_name, &game::state_ask_name, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { "rolling_dice", &game::display_dice_roll, &game::state_rolling_dice, &game::display_player_scores, NULL, FLAG_STATE_TRANSIENT},
+    { "quit_confirm", &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, 0},
+    { "help_menu", &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { "ask_number_of_players", &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { "multiplayer_menu", &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { "hosting_game", &game::action_host_game, &game::state_hosting_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { "multiplayer_join", &game::display_multiplayer_join, &game::state_multiplayer_join, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { "multiplayer_join_game", &game::display_multiplayer_join_game, &game::state_multiplayer_join_game, NULL, NULL, FLAG_STATE_TRANSIENT},
+    { "waiting_for_connections", &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { "waiting_to_start", &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { "joining_game", &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { "joining_online_game", &game::action_join_online_game, &game::state_joining_online_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    { NULL, NULL, NULL, NULL, NULL}
 };
 
 game::game() : displayMode_(MINIMAL), numPlayers_(0),
@@ -169,6 +170,8 @@ void game::set_state(state_handler value)
 
     if (state)
     {
+        logf("setting state %s", state->name);
+        
         if (!states_.empty())
         {
             auto old = states_.top();
@@ -222,6 +225,15 @@ bool game::is_online_available() const
     json::object service = settings_.get("arg3connect");
 
     return service.contains("enabled") && service.get_bool("enabled");
+}
+
+bool game::is_auto_port_forward() const
+{
+    if (!settings_.contains("auto_port_forward")) {
+        return false;
+    }
+
+    return settings_.get_bool("auto_port_forward");
 }
 
 void game::on_display()
@@ -300,6 +312,8 @@ void game::on_key_press(int input)
         return;
 
     case CACA_KEY_ESCAPE:
+    case CACA_KEY_CTRL_Z:
+    case CACA_KEY_CTRL_C:
     {
         auto state = states_.top();
 

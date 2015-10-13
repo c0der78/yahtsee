@@ -77,6 +77,8 @@ public:
 
     bool is_online_available() const;
 
+    bool is_auto_port_forward() const;
+
     const arg3::json::object &settings() const;
 
     void load_settings(char *exe);
@@ -112,6 +114,8 @@ private:
     void state_joining_game(int input);
 
     void state_joining_online_game(int input);
+
+    void state_hosting_game(int input);
 
     /* display methods */
 
@@ -231,6 +235,8 @@ private:
     /*! a state representation */
     typedef struct
     {
+        const char *name;
+        
         /*! called when the state starts */
         void (game::*on_init)();
         /*! called when the state has input */

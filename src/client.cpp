@@ -120,6 +120,7 @@ void client::run()
         // check for error reading
         if (!read_to_buffer())
         {
+            logf("unable to read to client buffer");
             close();
             break;
         }
@@ -133,6 +134,7 @@ void client::run()
         // check for error writing
         if (!write_from_buffer())
         {
+            logf("unable to write to client buffer");
             close();
             break;
         }

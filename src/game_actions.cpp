@@ -8,58 +8,59 @@ using namespace arg3;
 //! start hosting a game
 void game::action_host_game()
 {
-    string error;
-
     display_alert("Starting server...");
 
-    // the default (random) port
-    auto port = -1;
+        string error;
 
-    // check if the settings specify a port
-    if (settings_.contains("port"))
-    {
-        port = settings_.get_int("port");
-    }
+        // the default (random) port
+        auto port = -1;
 
-    bool response;
-
-    try
-    {
-        // tell the matchmaker to host
-        response = matchmaker_.host(is_online_available(), &error, port);
-    }
-    catch ( const std::exception &e)
-    {
-        error = e.what();
-        response = false;
-    }
-
-    pop_alert(); // done registration
-
-    // check for error
-    if (!response)
-    {
-        logf("could not host game %s", error.c_str());
-
-        display_alert(2000, { "Unable to register game at this time.", error }, nullptr, [&]()
+        // check if the settings specify a port
+        if (settings_.contains("port"))
         {
-            set_state(&game::state_multiplayer_menu);
+            port = settings_.get_int("port");
+        }
 
-            display_multiplayer_menu();
-        });
+        bool response;
 
-        players_.clear();
+        try
+        {
+            // tell the matchmaker to host
+            response = matchmaker_.host(is_online_available(), is_auto_port_forward(), &error, port);
+        }
+        catch ( const std::exception &e)
+        {
+            error = e.what();
+            response = false;
+        }
 
-        flags_ = 0;
+        pop_alert(); // done registration
 
-        return;
-    }
+        // check for error
+        if (!response)
+        {
+            logf("could not host game %s", error.c_str());
 
-    // inform the user we're hosting
+            display_alert(2000, { "Unable to register game at this time.", error }, nullptr, [&]()
+            {
+                set_state(&game::state_multiplayer_menu);
 
-    logf("waiting for connections");
+                display_multiplayer_menu();
+            });
 
-    set_state(&game::state_waiting_for_connections);
+            players_.clear();
+
+            flags_ = 0;
+
+            return;
+        }
+
+        // inform the user we're hosting
+
+        logf("waiting for connections");
+
+        set_state(&game::state_waiting_for_connections);
+
 
 }
 
@@ -163,6 +164,12 @@ void game::action_disconnect()
 void game::action_add_network_player(const shared_ptr<player> &player)
 {
     char buf[BUFSIZ + 1] = {0};
+
+    if (find_player_by_id(player->id()) != nullptr) {
+        return;
+    }
+
+    logf("adding network player %s (%s)", player->name().c_str(), player->id().c_str());
 
     // add the player to the list
     players_.push_back(player);

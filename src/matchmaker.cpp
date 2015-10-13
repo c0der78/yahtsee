@@ -263,7 +263,7 @@ void matchmaker::port_forward(int port) const
 #endif
 }
 
-bool matchmaker::host(bool register_online, string *error, int port)
+bool matchmaker::host(bool register_online, bool port_forwarding, string *error, int port)
 {
     if (!is_valid())
     {
@@ -284,7 +284,9 @@ bool matchmaker::host(bool register_online, string *error, int port)
         }
     }
 
-    port_forward(port);
+    if (port_forwarding) {
+        port_forward(port);
+    }
 
     server_port_ = port;
 
