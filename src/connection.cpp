@@ -18,6 +18,7 @@ connection::connection(connection &&other) : buffered_socket(std::move(other)), 
 
 connection::~connection()
 {
+    logf("destrying connection");
 }
 
 connection &connection::operator=(connection && other)

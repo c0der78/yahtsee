@@ -7,33 +7,17 @@
 #include <stack>
 
 /*! the mode of display */
-typedef enum
-{
-    HORIZONTAL,
-    VERTICAL,
-    MINIMAL
-} display_mode;
+typedef enum { HORIZONTAL, VERTICAL, MINIMAL } display_mode;
 
 /*! memory buffers */
-enum
-{
-    BUF_LOWER_HEADER,
-    BUF_LOWER_HEADER_MINIMAL,
-    BUF_UPPER,
-    BUF_LOWER,
-    BUF_HELP,
-    BUF_MENU,
-    BUF_MAX
-};
+enum { BUF_LOWER_HEADER, BUF_LOWER_HEADER_MINIMAL, BUF_UPPER, BUF_LOWER, BUF_HELP, BUF_MENU, BUF_MAX };
 
 class player;
 
 /*! a game of yahtsee */
 class game : public caca_game
 {
-
-public:
-
+   public:
     /*! a state handler */
     typedef void (game::*state_handler)(int);
 
@@ -79,12 +63,11 @@ public:
 
     bool is_auto_port_forward() const;
 
-    const arg3::json::object &settings() const;
+    const arg3::json::object *settings() const;
 
     void load_settings(char *exe);
 
-private:
-
+   private:
     /* states */
 
     void state_ask_name(int input);
@@ -125,11 +108,13 @@ private:
 
     void display_alert(const string &message, const function<void(const alert_box &a)> funk = nullptr);
 
-    void display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk = nullptr, const function<void()> pop = nullptr);
+    void display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk = nullptr,
+                       const function<void()> pop = nullptr);
 
     void display_alert(const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr);
 
-    void display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr, const function<void()> pop = nullptr);
+    void display_alert(int millis, const vector<string> &messages,
+                       const function<void(const alert_box &a)> funk = nullptr, const function<void()> pop = nullptr);
 
     void display_already_scored();
 
@@ -155,9 +140,13 @@ private:
 
     void display_player_scores();
 
-    arg3::yaht::scoresheet::value_type display_upper_scores(int color, const arg3::yaht::scoresheet &score, int x, int y);
+    void display_hosting_game();
 
-    void display_lower_scores(int color, const arg3::yaht::scoresheet &score, arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
+    arg3::yaht::scoresheet::value_type display_upper_scores(int color, const arg3::yaht::scoresheet &score, int x,
+                                                            int y);
+
+    void display_lower_scores(int color, const arg3::yaht::scoresheet &score,
+                              arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
 
     void display_client_waiting_to_start();
 
@@ -233,10 +222,9 @@ private:
     shared_ptr<player> find_player_by_id(const string &id) const;
 
     /*! a state representation */
-    typedef struct
-    {
+    typedef struct {
         const char *name;
-        
+
         /*! called when the state starts */
         void (game::*on_init)();
         /*! called when the state has input */
@@ -252,14 +240,15 @@ private:
     /*! gets alert dimensions specific to the game display */
     class alert_dimensions : public dimensional
     {
-    public:
+       public:
         alert_dimensions(game *game);
 
         int x() const;
         int y() const;
         int w() const;
         int h() const;
-    private:
+
+       private:
         game *game_;
     };
 

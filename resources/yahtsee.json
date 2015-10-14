@@ -3,7 +3,8 @@
     "default_display": "horizontal",
     "auto_port_forward" : false,
     "arg3connect": {
-    	"enabled": false,
+    	"enabled": true,
+    	"timeout" : 30,
     	"appId": "51efcb5839a64a928a86ba8f2827b31d",
     	"appToken": "78ed4bfb42f54c9fa7ac62873d37228e"
     }

@@ -17,7 +17,7 @@ void game::state_ask_name(int ch)
 
         if (flags_ & FLAG_HOSTING)
         {
-            action_host_game();
+            set_state(&game::state_hosting_game);
         }
         else if (flags_ & FLAG_JOINING)
         {
@@ -68,6 +68,9 @@ void game::state_hosting_game(int ch)
         case 'q':
         set_state(&game::state_quit_confirm);
         break;
+    }
+    if (flags_ & FLAG_HOSTING) {
+        action_host_game();
     }
 }
 

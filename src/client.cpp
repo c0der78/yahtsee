@@ -2,6 +2,7 @@
 #include "player.h"
 #include "game.h"
 #include "log.h"
+#include <arg3/str_util.h>
 
 using namespace arg3;
 using namespace arg3::net;
@@ -42,6 +43,7 @@ client::client(client &&other) : connection(std::move(other)), backgroundThread_
 
 client::~client()
 {
+    logf("destroying client");
     if (backgroundThread_ != nullptr)
     {
         backgroundThread_->join();
@@ -126,7 +128,9 @@ void client::run()
         }
         else if (input().size() > 0)
         {
-            logf("read %zu bytes %s", input().size(), string(input().begin(), input().end()).c_str());
+            string tempIn(input().begin(), input().end());
+            trim(tempIn);
+            logf("read %zu bytes %s", input().size(), tempIn.c_str());
         }
 
         size_t outSize = output().size();

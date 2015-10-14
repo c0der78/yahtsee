@@ -114,6 +114,11 @@ void game::display_multiplayer_join_game()
     });
 }
 
+void game::display_hosting_game()
+{
+    display_alert("Starting server...");
+}
+
 void game::display_client_waiting_to_start()
 {
     char buf[BUFSIZ + 1] = {0};
