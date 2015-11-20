@@ -1,5 +1,6 @@
+#ifdef HAVE_CONFIG_H
 #include "config.h"
-
+#endif
 #include "matchmaker.h"
 #include <arg3json/json.h>
 #include "game.h"

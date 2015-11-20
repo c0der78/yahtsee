@@ -1,0 +1,23 @@
+#ifndef YAHTSEE_CONFIG_H
+#define YAHTSEE_CONFIG_H
+
+#define PACKAGE	"@PROJECT_NAME@"
+
+#cmakedefine UUID_LIBRARIES 1
+
+#cmakedefine MINIUPNPC_LIBRARY 1
+
+#ifdef UUID_LIBRARIES
+#define HAVE_LIBUUID
+#endif
+
+#ifdef ARCHIVE_LIBRARIES
+#define HAVE_LIBARCHIVE
+#endif
+
+#ifdef MINIUPNPC_LIBRARY
+#define HAVE_LIBMINIUPNPC
+#endif
+
+#endif
+
