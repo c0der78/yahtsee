@@ -29,7 +29,7 @@ void connection::handle_game_start(const json::object &packet)
         game_->set_current_player(player);
     }
 
-    logf("starting game");
+    logstr("starting game");
 
     // set some display flags
 
@@ -100,6 +100,8 @@ void connection::handle_player_joined(const json::object &packet)
     {
         string name = player.get_string("name");
 
+        logstr("new player found (%s)", name.c_str());
+
         auto p = make_shared<::player>(this, player);
 
         game_->action_network_player_joined(p);
@@ -130,7 +132,7 @@ void connection::handle_player_turn_finished(const json::object &packet)
 
     if (player == nullptr)
     {
-        logf("turn finish: player %s not found", player->id().c_str());
+        logstr("turn finish: player %s not found", player->id().c_str());
         return;
     }
 
@@ -171,6 +173,3 @@ void connection::handle_player_turn_finished(const json::object &packet)
 
     game_->action_network_player_finished(player);
 }
-
-
-

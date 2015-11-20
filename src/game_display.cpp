@@ -1,6 +1,7 @@
 #include "game.h"
 #include "player.h"
 #include <vector>
+#include "log.h"
 
 using namespace arg3;
 
@@ -131,6 +132,8 @@ void game::display_client_waiting_to_start()
     message.push_back(" ");
 
     message.push_back("Waiting for host to start game...");
+
+    logstr("Waiting for host to start game...");
 
     display_alert(message);
 }

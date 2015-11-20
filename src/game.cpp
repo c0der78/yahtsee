@@ -170,8 +170,8 @@ void game::set_state(state_handler value)
 
     if (state)
     {
-        logf("setting state %s", state->name);
-        
+        logstr("setting state %s", state->name);
+
         if (!states_.empty())
         {
             auto old = states_.top();
@@ -358,7 +358,7 @@ void game::init_playing()
     {
         flags_ |= FLAG_ROLLING;
 
-        logf("still rolling");
+        logstr("still rolling");
     }
 }
 
@@ -750,4 +750,3 @@ shared_ptr<player> game::find_player_by_id(const string &id) const
 
     return nullptr;
 }
-

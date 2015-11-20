@@ -444,4 +444,3 @@ void caca_game::add_event(unsigned millis, const function<void()> callback)
 
     timed_events_.emplace_back(millis, callback);
 }
-

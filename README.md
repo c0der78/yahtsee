@@ -16,8 +16,7 @@ a multiplayer game of yahtzee on the terminal
 - [libminiupnpc](http://miniupnp.free.fr) (brew install miniupnpc / apt-get install libminiupnpc-dev) for opening network ports on routers
 
 #### TODO
-
-Multiplayer?
+- Refactor the event system so everything goes through that.
 - ~~build [arg3connect](http://arg3connect.herokuapp.com) to register/list available online games~~
 - ~~implement turn based game play~~
 - ~~implement server mode w/ protocol~~
@@ -34,4 +33,3 @@ Multiplayer?
 ![Yahtsee 2](yahtsee2.png?raw=true "Yahtsee 2")
 
 ![Yahtsee 3](yahtsee3.png?raw=true "Yahtsee 3")
-

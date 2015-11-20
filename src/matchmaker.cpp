@@ -150,8 +150,6 @@ bool matchmaker::join_game(const std::string &host, int port, string *error)
         }
     }
 
-    logf("joining game");
-
     return rval;
 }
 
@@ -169,7 +167,7 @@ void matchmaker::port_forward(int port) const
 
     if (upnp_dev == NULL || error != 0)
     {
-        logf("Could not discover upnp device");
+        logstr("Could not discover upnp device");
         freeUPNPDevlist(upnp_dev);
         return;
     }
@@ -181,7 +179,7 @@ void matchmaker::port_forward(int port) const
 
     if (status != 1)  //there are more status codes in minupnpc.c but 1 is success all others are different failures
     {
-        logf("No valid Internet Gateway Device could be connected to");
+        logstr("No valid Internet Gateway Device could be connected to");
         FreeUPNPUrls(&upnp_urls);
         freeUPNPDevlist(upnp_dev);
         return;
@@ -191,11 +189,11 @@ void matchmaker::port_forward(int port) const
     char wan_address[INET6_ADDRSTRLEN];
     if (UPNP_GetExternalIPAddress(upnp_urls.controlURL, upnp_data.first.servicetype, wan_address) != 0)
     {
-        logf("Could not get external IP address");
+        logstr("Could not get external IP address");
     }
     else
     {
-        logf("External IP: %s", wan_address);
+        logstr("External IP: %s", wan_address);
     }
 
     // add a new TCP port mapping from WAN port 12345 to local host port 24680
@@ -212,14 +210,14 @@ void matchmaker::port_forward(int port) const
 
     if (error)
     {
-        logf("Failed to map ports\n");
+        logstr("Failed to map ports\n");
     }
     else
     {
-        logf("Successfully mapped ports");
+        logstr("Successfully mapped ports");
     }
 
-    logf("Lan Address\tWAN Port -> LAN Port\tProtocol\tDuration\tEnabled?\tRemote Host\tDescription\n");
+    logstr("Lan Address\tWAN Port -> LAN Port\tProtocol\tDuration\tEnabled?\tRemote Host\tDescription\n");
     // list all port mappings
     for (size_t index = 0;; ++index)
     {
@@ -252,7 +250,7 @@ void matchmaker::port_forward(int port) const
             break; // no more port mappings available
         }
 
-        logf("%s\t%s -> %s\t%s\t%s\t%s\t%s\t%s",
+        logstr("%s\t%s -> %s\t%s\t%s\t%s\t%s\t%s",
              map_lan_address,    map_wan_port,        map_lan_port,    map_protocol,
              map_lease_duration, map_mapping_enabled, map_remote_host, map_description);
     }
@@ -273,7 +271,7 @@ bool matchmaker::host(bool register_online, bool port_forwarding, string *error,
 
     if (port == INVALID)
     {
-        logf("no port specified, randomizing.");
+        logstr("no port specified, randomizing.");
         port = (rand() % 65535) + 1024;
     }
 
@@ -321,7 +319,7 @@ bool matchmaker::r3gister(string *error, int port)
 
     gameId_ = api_.response();
 
-    logf("hosting game %s", gameId_.c_str());
+    logstr("hosting game %s", gameId_.c_str());
 
     return true;
 }
@@ -337,10 +335,10 @@ void matchmaker::unregister()
         api_.set_payload(gameId_).post("api/v1/games/unregister");
 
         if (api_.response().code() != net::http::OK) {
-            logf("Unable to unregister game");
+            logstr("Unable to unregister game");
         }
         else {
-            logf("game %s unregistered", gameId_.c_str());
+            logstr("game %s unregistered", gameId_.c_str());
         }
 
         gameId_.clear();
@@ -359,7 +357,7 @@ void matchmaker::notify_game_start()
 
     send_network_message(json.to_string());
 
-    logf("notify game started %s", json.to_string().c_str());
+    logstr("notify game started %s", json.to_string().c_str());
 
     unregister();
 }
@@ -377,7 +375,7 @@ void matchmaker::notify_player_joined(const shared_ptr<player> &p)
 
     send_network_message(json.to_string());
 
-    logf("notify player joined %s", json.to_string().c_str());
+    logstr("notify player joined %s", json.to_string().c_str());
 }
 
 void matchmaker::notify_player_left(const shared_ptr<player> &p)
@@ -392,7 +390,7 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
 
     send_network_message(json.to_string());
 
-    logf("notify player left %s", json.to_string().c_str());
+    logstr("notify player left %s", json.to_string().c_str());
 }
 
 void matchmaker::notify_player_roll()
@@ -425,7 +423,7 @@ void matchmaker::notify_player_roll()
 
     send_network_message(json.to_string());
 
-    logf("notify player roll %s", json.to_string().c_str());
+    logstr("notify player roll %s", json.to_string().c_str());
 }
 
 void matchmaker::notify_player_turn_finished()
@@ -478,8 +476,5 @@ void matchmaker::notify_player_turn_finished()
 
     send_network_message(json.to_string());
 
-    logf("notify player turn finished %s", json.to_string().c_str());
+    logstr("notify player turn finished %s", json.to_string().c_str());
 }
-
-
-

@@ -1,5 +1,5 @@
-#ifndef _client_H_
-#define _client_H_
+#ifndef _CLIENT_H_
+#define _CLIENT_H_
 
 #include <arg3net/socket_factory.h>
 #include <arg3net/buffered_socket.h>
@@ -83,6 +83,10 @@ public:
 
 private:
 
+    void on_will_read();
+    void on_did_read();
+    void on_will_write();
+    void on_did_write();
     void run();
 
     shared_ptr<thread> backgroundThread_;

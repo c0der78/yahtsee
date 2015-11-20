@@ -20,6 +20,15 @@ public:
 
     player(connection *conn, const arg3::json::object &json);
 
+    player(const player &other);
+
+    player(player &&other);
+
+    virtual ~player();
+
+    player &operator=(const player &other);
+    player &operator=(player &&other);
+
     string id() const;
 
     string name() const;

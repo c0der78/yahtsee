@@ -236,7 +236,7 @@ private:
     typedef struct
     {
         const char *name;
-        
+
         /*! called when the state starts */
         void (game::*on_init)();
         /*! called when the state has input */

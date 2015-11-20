@@ -4,7 +4,7 @@
 
 #if !defined(DEBUG) && !defined(LOGGING)
 
-#define logf(args...)
+#define logstr(args...)
 
 #else
 
@@ -14,7 +14,7 @@
 
 void log_str(const char *const format, ...) __attribute__((format(printf, 1, 2)));
 
-#define logf(args...) log_str(args)
+#define logstr(args...) log_str(args)
 
 #endif
 

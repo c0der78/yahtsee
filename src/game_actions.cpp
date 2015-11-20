@@ -10,56 +10,56 @@ void game::action_host_game()
 {
     display_alert("Starting server...");
 
-        string error;
+    string error;
 
-        // the default (random) port
-        auto port = -1;
+    // the default (random) port
+    auto port = -1;
 
-        // check if the settings specify a port
-        if (settings_.contains("port"))
+    // check if the settings specify a port
+    if (settings_.contains("port"))
+    {
+        port = settings_.get_int("port");
+    }
+
+    bool response;
+
+    try
+    {
+        // tell the matchmaker to host
+        response = matchmaker_.host(is_online_available(), is_auto_port_forward(), &error, port);
+    }
+    catch ( const std::exception &e)
+    {
+        error = e.what();
+        response = false;
+    }
+
+    pop_alert(); // done registration
+
+    // check for error
+    if (!response)
+    {
+        logstr("could not host game %s", error.c_str());
+
+        display_alert(2000, { "Unable to register game at this time.", error }, nullptr, [&]()
         {
-            port = settings_.get_int("port");
-        }
+            set_state(&game::state_multiplayer_menu);
 
-        bool response;
+            display_multiplayer_menu();
+        });
 
-        try
-        {
-            // tell the matchmaker to host
-            response = matchmaker_.host(is_online_available(), is_auto_port_forward(), &error, port);
-        }
-        catch ( const std::exception &e)
-        {
-            error = e.what();
-            response = false;
-        }
+        players_.clear();
 
-        pop_alert(); // done registration
+        flags_ = 0;
 
-        // check for error
-        if (!response)
-        {
-            logf("could not host game %s", error.c_str());
+        return;
+    }
 
-            display_alert(2000, { "Unable to register game at this time.", error }, nullptr, [&]()
-            {
-                set_state(&game::state_multiplayer_menu);
+    // inform the user we're hosting
 
-                display_multiplayer_menu();
-            });
+    logstr("waiting for connections");
 
-            players_.clear();
-
-            flags_ = 0;
-
-            return;
-        }
-
-        // inform the user we're hosting
-
-        logf("waiting for connections");
-
-        set_state(&game::state_waiting_for_connections);
+    set_state(&game::state_waiting_for_connections);
 
 
 }
@@ -86,7 +86,7 @@ void game::action_join_online_game()
     // check for error
     if (!result)
     {
-        logf("could not join game %s", error.c_str());
+        logstr("could not join game %s", error.c_str());
 
         pop_state();
 
@@ -128,7 +128,7 @@ void game::action_join_game()
     // check for error
     if (!result)
     {
-        logf("could not join game %s", error.c_str());
+        logstr("could not join game %s", error.c_str());
 
         pop_state();
 
@@ -169,7 +169,7 @@ void game::action_add_network_player(const shared_ptr<player> &player)
         return;
     }
 
-    logf("adding network player %s (%s)", player->name().c_str(), player->id().c_str());
+    logstr("adding network player %s (%s)", player->name().c_str(), player->id().c_str());
 
     // add the player to the list
     players_.push_back(player);
@@ -241,6 +241,8 @@ void game::action_remove_network_player(connection *c)
 //! a network player has joined the hosted game
 void game::action_network_player_joined(const shared_ptr<player> &p)
 {
+    logstr("player %s joined", p->name().c_str());
+
     // add player to the list
     players_.push_back(p);
 
@@ -256,7 +258,7 @@ void game::action_network_player_left(const shared_ptr<player> &p)
 
     if (players_.size() == 1)
     {
-        logf("reseting game");
+        logstr("reseting game");
 
         set_state(&game::state_game_menu);
 
@@ -264,7 +266,7 @@ void game::action_network_player_left(const shared_ptr<player> &p)
     }
     else
     {
-        logf("still have %zu players", players_.size());
+        logstr("still have %zu players", players_.size());
     }
 
     display_alert(2000, p->name() + " has left the game.", nullptr, [&]()

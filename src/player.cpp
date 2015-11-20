@@ -51,6 +51,35 @@ player::player(connection *conn, const json::object &json) : yaht::player(&playe
     from_json(json);
 }
 
+player::player(const player &other) : yaht::player(other), connection_(other.connection_), id_(other.id_), name_(other.name_) {
+
+}
+
+player::player(player &&other) : yaht::player(std::move(other)), connection_(other.connection_), id_(std::move(other.id_)), name_(std::move(other.name_)) {
+
+}
+
+player &player::operator=(const player &other) {
+    yaht::player::operator=(other);
+    connection_ = other.connection_;
+    id_ = other.id_;
+    name_ = other.name_;
+
+    return *this;
+}
+
+player &player::operator=(player &&other) {
+    yaht::player::operator=(std::move(other));
+    connection_ = other.connection_;
+    id_ = std::move(other.id_);
+    name_ = std::move(other.name_);
+    return *this;
+}
+
+player::~player() {
+    connection_ = NULL;
+}
+
 connection *player::c0nnection() const
 {
     return connection_;
@@ -86,4 +115,3 @@ bool player::operator==(const player &other) const
 {
     return id_ == other.id_;
 }
-

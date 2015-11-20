@@ -71,13 +71,32 @@ void client::on_connect()
 
     writeln(packet.to_string());
 
-    logf("client connected, sending %s", packet.to_string().c_str());
+    logstr("client connected, sending %s", packet.to_string().c_str());
 }
 
 //! handle when closed
 void client::on_close()
 {
-    logf("client closed");
+    logstr("client closed (%d: %s)", errno, strerror(errno));
+}
+
+void client::on_will_write() {
+
+  logstr("client will write");
+}
+
+void client::on_did_write() {
+  logstr("client did write");
+}
+
+void client::on_will_read() {
+  //logstr("client will read");
+}
+
+void client::on_did_read() {
+  logstr("client did read");
+
+  connection::on_did_read();
 }
 
 //! start the client for a give host:port
@@ -113,39 +132,29 @@ void client::run()
 {
     std::chrono::milliseconds dura( 200 );
 
-    logf("client starting");
+    logstr("client starting");
 
     while (is_valid())
     {
         // check for error reading
         if (!read_to_buffer())
         {
-            logf("unable to read to client buffer");
+            logstr("unable to read to client buffer (%d: %s)", errno, strerror(errno));
             close();
             break;
         }
-        else if (input().size() > 0)
-        {
-            logf("read %zu bytes %s", input().size(), string(input().begin(), input().end()).c_str());
-        }
-
-        size_t outSize = output().size();
 
         // check for error writing
         if (!write_from_buffer())
         {
-            logf("unable to write to client buffer");
+            logstr("unable to write to client buffer (%d: %s)", errno, strerror(errno));
             close();
             break;
-        }
-        else if (outSize > 0)
-        {
-            logf("wrote %zu bytes", outSize);
         }
 
         // give other threads a chance
         std::this_thread::sleep_for( dura );
     }
 
-    logf("client finished");
+    logstr("client finished");
 }

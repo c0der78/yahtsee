@@ -50,21 +50,23 @@ void connection::on_connect()
 
     packet.set_array("players", players);
 
+    logstr("connection connected, sending %s", packet.to_string().c_str());
+
     writeln(packet.to_string());
 
-    logf("connection connected, sending %s", packet.to_string().c_str());
 }
 
 //! handle when closed
 void connection::on_close()
 {
-    logf("connection closed");
+    logstr("connection closed (%s: %s)", errno, strerror(errno));
 
     game_->action_remove_network_player(this);
 }
 
 void connection::on_will_read()
 {
+  //logstr("connection will read");
 }
 
 //! handle when data is read
@@ -72,76 +74,83 @@ void connection::on_did_read()
 {
     json::object packet;
 
-    // read a packet
-    packet.parse(readln());
+    while(has_input()) {
+      // read a packet
+      if (!packet.parse(readln())) {
+        logstr("unable to parse line from buffer");
+        return;
+      }
 
-    logf("recieved %s", packet.to_string().c_str());
+      logstr("recieved %s", packet.to_string().c_str());
 
-    // validate the packet
-    // TODO: verify a game/session id?
-    if (!packet.contains("action")) {
-        throw runtime_error("packet has no action");
-    }
+      // validate the packet
+      // TODO: verify a game/session id?
+      if (!packet.contains("action")) {
+          throw runtime_error("packet has no action");
+      }
 
-    client_action action = (client_action) packet.get_int("action");
+      client_action action = (client_action) packet.get_int("action");
 
-    switch (action)
-    {
-    case REMOTE_CONNECTION_INIT:
-    {
-        logf("handling remote connect init");
-        handle_remote_connection_init(packet);
-        break;
-    }
-    case PLAYER_JOINED:
-    {
-        logf("handling player joined");
-        handle_player_joined(packet);
-        break;
-    }
-    case PLAYER_LEFT:
-    {
-        logf("handling player left");
-        handle_player_left(packet);
-        break;
-    }
-    case PLAYER_ROLL:
-    {
-        logf("handling player roll");
-        handle_player_roll(packet);
-        break;
-    }
-    /* connection is someone connect to the server */
-    case CONNECTION_INIT:
-    {
-        logf("handling connection init");
-        handle_connection_init(packet);
-        break;
-    }
-    case GAME_START:
-    {
-        logf("handling game start");
-        handle_game_start(packet);
-        break;
-    }
-    case PLAYER_TURN_FINISHED:
-    {
-        logf("handling player turn finished");
-        handle_player_turn_finished(packet);
-        break;
-    }
-    default:
-    {
-        logf("unknown action for packet");
-        break;
-    }
+      switch (action)
+      {
+      case REMOTE_CONNECTION_INIT:
+      {
+          logstr("handling remote connect init");
+          handle_remote_connection_init(packet);
+          break;
+      }
+      case PLAYER_JOINED:
+      {
+          logstr("handling player joined");
+          handle_player_joined(packet);
+          break;
+      }
+      case PLAYER_LEFT:
+      {
+          logstr("handling player left");
+          handle_player_left(packet);
+          break;
+      }
+      case PLAYER_ROLL:
+      {
+          logstr("handling player roll");
+          handle_player_roll(packet);
+          break;
+      }
+      /* connection is someone connect to the server */
+      case CONNECTION_INIT:
+      {
+          logstr("handling connection init");
+          handle_connection_init(packet);
+          break;
+      }
+      case GAME_START:
+      {
+          logstr("handling game start");
+          handle_game_start(packet);
+          break;
+      }
+      case PLAYER_TURN_FINISHED:
+      {
+          logstr("handling player turn finished");
+          handle_player_turn_finished(packet);
+          break;
+      }
+      default:
+      {
+          logstr("unknown action for packet");
+          break;
+      }
+      }
     }
 }
 
 void connection::on_will_write()
 {
+  logstr("connection will write");
 }
 
 void connection::on_did_write()
 {
+  logstr("connection did write");
 }
