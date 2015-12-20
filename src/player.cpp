@@ -1,5 +1,5 @@
 #include "player.h"
-#include <arg3/str_util.h>
+#include <arg3str/util.h>
 #include <random>
 
 using namespace arg3;
@@ -10,14 +10,11 @@ die::value_type player::engine::generate(die::value_type from, die::value_type t
 {
     die::value_type value;
 
-    if (!nextRoll_.empty())
-    {
+    if (!nextRoll_.empty()) {
         value = nextRoll_.front();
 
         nextRoll_.pop();
-    }
-    else
-    {
+    } else {
         static std::default_random_engine random_engine(time(0));
 
         uniform_int_distribution<die::value_type> distribution(from, to);
@@ -40,7 +37,8 @@ void player::engine::set_next_roll(const queue<die::value_type> &roll)
 }
 
 player::player(const string &name) : yaht::player(&player_engine), connection_(NULL), id_(generate_uuid()), name_(name)
-{}
+{
+}
 
 player::player(connection *conn, const string &id, const string &name) : yaht::player(&player_engine), connection_(conn), id_(id), name_(name)
 {
@@ -86,4 +84,3 @@ bool player::operator==(const player &other) const
 {
     return id_ == other.id_;
 }
-

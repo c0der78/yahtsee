@@ -1,9 +1,9 @@
 #include "game.h"
 #include "player.h"
-#include "log.h"
 #include <cstring>
 #include <fstream>
-#include <arg3/str_util.h>
+#include <arg3str/util.h>
+#include "log.h"
 #include <libgen.h>
 #include <archive.h>
 #include <archive_entry.h>
@@ -17,30 +17,37 @@ const char *HELP = "Type '?' to show command options.  Use the arrow keys to cyc
 /*! the state table for lookups and transitions */
 const game::game_state game::state_table[] = {
     {"playing", &game::init_playing, &game::state_playing, &game::display_player_scores, &game::stop_playing, 0},
+
     {"game_menu", &game::display_game_menu, &game::state_game_menu, NULL, &game::exit_game, 0},
+
     {"ask_name", &game::display_ask_name, &game::state_ask_name, NULL, NULL, FLAG_STATE_TRANSIENT},
-    {"rolling_dice", &game::display_dice_roll, &game::state_rolling_dice, &game::display_player_scores, NULL,
-     FLAG_STATE_TRANSIENT},
+
+    {"rolling_dice", &game::display_dice_roll, &game::state_rolling_dice, &game::display_player_scores, NULL, FLAG_STATE_TRANSIENT},
+
     {"quit_confirm", &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, 0},
+
     {"help_menu", &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
-    {"ask_number_of_players", &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL,
+
+    {"ask_number_of_players", &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
+
+    {"multiplayer_menu", &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
+
+    {"hosting_game", &game::action_host_game, &game::state_hosting_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+
+    {"multiplayer_join", &game::display_multiplayer_join, &game::state_multiplayer_join, NULL, NULL, FLAG_STATE_TRANSIENT},
+
+    {"multiplayer_join_game", &game::display_multiplayer_join_game, &game::state_multiplayer_join_game, NULL, NULL, FLAG_STATE_TRANSIENT},
+
+    {"waiting_for_connections", &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer,
      FLAG_STATE_TRANSIENT},
-    {"multiplayer_menu", &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL,
+
+    {"waiting_to_start", &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer,
      FLAG_STATE_TRANSIENT},
-    {"hosting_game", &game::display_hosting_game, &game::state_hosting_game, NULL, &game::exit_multiplayer,
-     FLAG_STATE_TRANSIENT},
-    {"multiplayer_join", &game::display_multiplayer_join, &game::state_multiplayer_join, NULL, NULL,
-     FLAG_STATE_TRANSIENT},
-    {"multiplayer_join_game", &game::display_multiplayer_join_game, &game::state_multiplayer_join_game, NULL, NULL,
-     FLAG_STATE_TRANSIENT},
-    {"waiting_for_connections", &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL,
-     &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    {"waiting_to_start", &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL,
-     &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-    {"joining_game", &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer,
-     FLAG_STATE_TRANSIENT},
-    {"joining_online_game", &game::action_join_online_game, &game::state_joining_online_game, NULL,
-     &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+
+    {"joining_game", &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+
+    {"joining_online_game", &game::action_join_online_game, &game::state_joining_online_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+
     {NULL, NULL, NULL, NULL, NULL}};
 
 game::game() : displayMode_(MINIMAL), numPlayers_(0), matchmaker_(this), flags_(0), currentPlayer_(0)
@@ -57,7 +64,7 @@ void game::load_settings(char *exe)
 
     const char *baseDir = dirname(exe);
 
-    inFile.open(resource_file_name("yahtsee.json", baseDir));
+    inFile.open(resource_file_name("yahtsee.json"));
 
     stringstream strStream;
     strStream << inFile.rdbuf();
@@ -114,7 +121,7 @@ void game::pop_state()
     clear_alerts();
 
     // clear any events from the state
-    clear_events();
+    clear_timed_events();
 
     if (!states_.empty()) {
         // get the top state
@@ -160,12 +167,12 @@ void game::set_state(state_handler value)
     clear_alerts();
 
     // clear any events from the previous state
-    clear_events();
+    clear_timed_events();
 
     auto state = find_state(value);
 
     if (state) {
-        logf("setting state %s", state->name);
+        log_trace("setting state %s", state->name);
 
         if (!states_.empty()) {
             auto old = states_.top();
@@ -188,10 +195,22 @@ void game::set_state(state_handler value)
     }
 }
 
-bool game::is_state(state_handler value) { return !states_.empty() && states_.top()->on_execute == value; }
-void game::on_start() { set_state(&game::state_game_menu); }
-bool game::alive() const { return !states_.empty(); }
-bool game::is_online() const { return flags_ & (FLAG_HOSTING | FLAG_JOINING); }
+bool game::is_state(state_handler value)
+{
+    return !states_.empty() && states_.top()->on_execute == value;
+}
+void game::on_start()
+{
+    set_state(&game::state_game_menu);
+}
+bool game::alive() const
+{
+    return !states_.empty();
+}
+bool game::is_online() const
+{
+    return flags_ & (FLAG_HOSTING | FLAG_JOINING);
+}
 bool game::is_online_available() const
 {
     if (!settings_.contains("arg3connect")) {
@@ -235,8 +254,13 @@ void game::on_display()
     }
 }
 
-void game::on_resize(int width, int height) {}
-void game::on_quit() { clear_states(); }
+void game::on_resize(int width, int height)
+{
+}
+void game::on_quit()
+{
+    clear_states();
+}
 void game::on_key_press(int input)
 {
     // check non ascii commands
@@ -296,7 +320,10 @@ void game::on_key_press(int input)
     }
 }
 
-bool game::is_playing() { return is_state(&game::state_playing); }
+bool game::is_playing()
+{
+    return is_state(&game::state_playing);
+}
 void game::exit_multiplayer()
 {
     flags_ &= ~(FLAG_HOSTING | FLAG_JOINING);
@@ -311,12 +338,18 @@ void game::init_playing()
     if (current_player()->roll_count() > 0) {
         flags_ |= FLAG_ROLLING;
 
-        logf("still rolling");
+        log_trace("still rolling");
     }
 }
 
-void game::stop_playing() { flags_ |= FLAG_CONTINUE; }
-void game::exit_game() { set_state(&game::state_quit_confirm); }
+void game::stop_playing()
+{
+    flags_ |= FLAG_CONTINUE;
+}
+void game::exit_game()
+{
+    set_state(&game::state_quit_confirm);
+}
 void game::clear_states()
 {
     lock_guard<recursive_mutex> lock(mutex_);
@@ -326,50 +359,27 @@ void game::clear_states()
     }
 }
 
-char *game::resource_file_name(const char *path, const char *dir)
+string game::resource_file_name(const string &path)
 {
-    static char resourceDir[BUFSIZ + 1] = {0};
-    static char bufs[3][BUFSIZ + 1];
-    static int bufIndex = 0;
+    static const char *paths[] = {"/etc/yahtsee", "/usr/share/yahtsee", "/usr/local/share/yahtsee", "resources", "../resources", NULL};
 
-    ++bufIndex, bufIndex %= 3;
+    char buf[BUFSIZ + 1] = {0};
+    char file[BUFSIZ + 1] = {0};
 
-    char *buf = bufs[bufIndex];
+    strcpy(file, path.c_str());
 
-    // if we don't have a resource directory yet
-    if (!resourceDir[0]) {
-        // get the base directory
-        if (dir == NULL) {
-            dir = settings_.get_string("basedir").c_str();
-        }
+    for (int i = 0; paths[i] != NULL; i++) {
+        if (dir_exists(paths[i])) {
+            snprintf(buf, BUFSIZ, "%s/%s", paths[i], basename(file));
 
-        // try an etc dir first
-        snprintf(resourceDir, BUFSIZ, "%s/../etc/yahtsee", dir);
-
-        if (!dir_exists(resourceDir)) {
-            // try some resource directories
-            snprintf(resourceDir, BUFSIZ, "%s/resources", dir);
-
-            if (!dir_exists(resourceDir)) {
-                snprintf(resourceDir, BUFSIZ, "%s/../resources", dir);
-
-                if (!dir_exists(resourceDir)) {
-                    resourceDir[0] = 0;
-                }
+            if (file_exists(buf)) {
+                return buf;
             }
         }
     }
 
-    // build the path
-    if (!resourceDir[0]) {
-        strncpy(buf, path, BUFSIZ);
-    } else if (path && *path == '/') {
-        snprintf(buf, BUFSIZ, "%s%s", resourceDir, path);
-    } else {
-        snprintf(buf, BUFSIZ, "%s/%s", resourceDir, path);
-    }
-
-    return buf;
+    log_warn("resource file %s not found", path.c_str());
+    return string();
 }
 
 void game::load_buf(const char *fileName, int index)
@@ -383,7 +393,7 @@ void game::load_buf(const char *fileName, int index)
     archive_read_support_filter_gzip(a);
     archive_read_support_format_tar(a);
 
-    r = archive_read_open_filename(a, resource_file_name("yahtsee.assets"), 10240);
+    r = archive_read_open_filename(a, resource_file_name("yahtsee.assets").c_str(), 10240);
 
     if (r != ARCHIVE_OK) {
         throw runtime_error("yahtsee assets not found");
@@ -445,8 +455,7 @@ void game::init_canvas(caca_canvas_t *canvas)
         case MINIMAL: {
             int index = minimalLower_ ? BUF_LOWER : BUF_UPPER;
             if (minimalLower_) {
-                caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_LOWER_HEADER_MINIMAL],
-                                             bufSize[BUF_LOWER_HEADER_MINIMAL], "caca");
+                caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_LOWER_HEADER_MINIMAL], bufSize[BUF_LOWER_HEADER_MINIMAL], "caca");
             }
             caca_import_area_from_memory(canvas, 0, minimalLower_ ? 3 : 0, bufs[index], bufSize[index], "caca");
             break;
@@ -463,7 +472,10 @@ void game::init_canvas(caca_canvas_t *canvas)
     }
 }
 
-void game::set_display_mode(display_mode mode) { displayMode_ = mode; }
+void game::set_display_mode(display_mode mode)
+{
+    displayMode_ = mode;
+}
 void game::display_alert(const function<void(const alert_box &a)> funk)
 {
     static alert_dimensions dimensions(this);
@@ -489,8 +501,7 @@ void game::display_alert(const string &message, const function<void(const alert_
     });
 }
 
-void game::display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk,
-                         const function<void()> pop)
+void game::display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk, const function<void()> pop)
 {
     display_alert(message, funk);
 
@@ -520,15 +531,16 @@ void game::display_alert(const vector<string> &messages, const std::function<voi
     });
 }
 
-void game::display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk,
-                         const function<void()> pop)
+void game::display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk, const function<void()> pop)
 {
     display_alert(messages, funk);
 
     pop_alert(millis, pop);
 }
 
-game::alert_dimensions::alert_dimensions(game *game) : game_(game) {}
+game::alert_dimensions::alert_dimensions(game *game) : game_(game)
+{
+}
 int game::alert_dimensions::x() const
 {
     switch (game_->displayMode_) {
@@ -551,8 +563,14 @@ int game::alert_dimensions::y() const
     }
 }
 
-int game::alert_dimensions::w() const { return 60; }
-int game::alert_dimensions::h() const { return 15; }
+int game::alert_dimensions::w() const
+{
+    return 60;
+}
+int game::alert_dimensions::h() const
+{
+    return 15;
+}
 void game::for_players(std::function<bool(const shared_ptr<player> &p)> funk)
 {
     for (const auto &p : players_) {
@@ -666,4 +684,7 @@ shared_ptr<player> game::find_player_by_id(const string &id) const
     return nullptr;
 }
 
-const arg3::json::object *game::settings() const { return &settings_; }
+const arg3::json::object *game::settings() const
+{
+    return &settings_;
+}

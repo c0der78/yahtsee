@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 
-#include "caca.h"
+#include <caca.h>
 
 #include "game.h"
 
@@ -19,8 +19,7 @@ int main(int argc, char **argv)
 
     game.start();
 
-    while (game.alive())
-    {
+    while (game.alive()) {
         game.update();
     }
 
@@ -28,4 +27,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-

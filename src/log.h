@@ -1,20 +1,20 @@
 
-#ifndef _YAHTSEE_GAME_H_
-#define _YAHTSEE_GAME_H_
+#ifndef _YAHTSEE_LOG_H_
+#define _YAHTSEE_LOG_H_
 
 #if !defined(DEBUG) && !defined(LOGGING)
 
-#define logf(args...)
+#define log_trace(args...)
+#define log_warn(args...)
 
 #else
 
-#ifndef __attribute__
-#define __attribute__(x)
-#endif
+#include <arg3log/log.h>
 
-void log_str(const char *const format, ...) __attribute__((format(printf, 1, 2)));
+extern ostream log_file();
 
-#define logf(args...) log_str(args)
+#define log_trace(args...) log::trace(log_file(), args)
+#define log_warn(args...) log::warn(log_file(), args)
 
 #endif
 

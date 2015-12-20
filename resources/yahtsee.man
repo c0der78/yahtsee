@@ -19,6 +19,6 @@ yahtsee is a dice rolling game that can be played with up to 6 other players.
 'q' or 'escape' : quit
 ↑ ↓  : cycle views     ← →  : cycle cards
 .SH BUGS
-No known bugs.
+No known bugs at this time.
 .SH AUTHOR
 Ryan Jennings (c0der78@gmail.com)

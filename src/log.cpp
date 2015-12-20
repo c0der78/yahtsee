@@ -8,31 +8,20 @@
 
 #if defined(DEBUG) || defined(LOGGING)
 
-void log_str(const char *const format, ...)
+ostream log_file()
 {
-    va_list args;
     char buf[BUFSIZ + 1] = {0};
-    FILE *out;
 
     snprintf(buf, BUFSIZ, "yahtsee.%d.log", getpid());
 
-    out = fopen(buf, "a");
+    fostream out(buf, "a");
 
-    if (!out)
-    {
+    if (!out.is_open()) {
         perror("opening log file");
         return;
     }
 
-    time_t t = time(0);
-    strftime(buf, BUFSIZ, "%F %T ", localtime(&t));
-    fputs(buf, out);
-    va_start(args, format);
-    vfprintf(out, format, args);
-    va_end(args);
-    fputs("\n", out);
-    fflush(out);
-    fclose(out);
+    return out;
 }
 
 #endif

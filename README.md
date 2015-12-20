@@ -15,6 +15,12 @@ a multiplayer game of yahtzee on the terminal
 
 - [libminiupnpc](http://miniupnp.free.fr) (brew install miniupnpc / apt-get install libminiupnpc-dev) for opening network ports on routers
 
+#### build / install for homebrew
+
+- ./configre $(brew diy --version=0.1.0 yahtsee)
+- make install
+- brew link yahtsee
+
 #### TODO
 
 Multiplayer?

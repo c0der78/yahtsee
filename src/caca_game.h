@@ -14,19 +14,21 @@ using namespace std;
 /*! represents a timed event in the game */
 class game_event
 {
-public:
-    /*! default constructor
+   public:
+    game_event(const function<void()> callback);
+
+    /*!
      * @param   unsigned    the number of milliseconds to wait
      * @param   function    the callback after the wait
      */
     game_event(unsigned millis, const function<void()> callback);
     /*! non-copyable */
     game_event(const game_event &) = delete;
-    game_event(game_event  &&e);
+    game_event(game_event &&e);
     ~game_event();
     /*! non-copyable */
     game_event &operator=(const game_event &) = delete;
-    game_event &operator=(game_event && );
+    game_event &operator=(game_event &&);
 
     /*! test if the event is finished waiting */
     bool ready() const;
@@ -34,7 +36,10 @@ public:
     void perform() const;
     /*! clear this event */
     void clear();
-private:
+
+    unsigned millis() const;
+
+   private:
     void wait();
     unsigned millis_;
     function<void()> callback_;
@@ -45,7 +50,7 @@ private:
 /*! base class for a game using libcaca */
 class caca_game
 {
-public:
+   public:
     caca_game();
 
     virtual ~caca_game();
@@ -117,7 +122,9 @@ public:
     void clear_alerts();
 
     /*! remove all events */
-    void clear_events();
+    void clear_all_events();
+
+    void clear_timed_events();
 
     /* animation frame methods */
 
@@ -145,20 +152,22 @@ public:
     /*! adds an event to the game */
     void add_event(unsigned millis, const function<void()> callback);
 
+    void add_event(const function<void()> callback);
+
     /*! tells the displa it needs an update */
     void set_needs_display();
 
     /*! tells the display it needs to clear itself */
     void set_needs_clear();
-protected:
 
+   protected:
     /*! initializes the canvas. use to perform additional operations */
     virtual void init_canvas(caca_canvas_t *canvas) = 0;
 
     caca_canvas_t *canvas_;
     caca_display_t *display_;
-private:
 
+   private:
     void update_display();
 
     void update_input();
@@ -169,7 +178,7 @@ private:
     caca_event_t event_;
     ostringstream buf_;
     stack<alert_box> alert_boxes_;
-    vector<game_event> timed_events_;
+    vector<game_event> events_;
     int flags_;
 
     static const int FLAG_NEEDS_DISPLAY = (1 << 0);

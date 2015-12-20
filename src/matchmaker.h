@@ -1,26 +1,23 @@
 #ifndef _MATCHMAKER_H_
 #define _MATCHMAKER_H_
 
-#include "config.h"
-
 #include <arg3net/socket_server.h>
 #include <arg3net/http_client.h>
+#include <arg3dice/yaht/player.h>
 #include <string>
 #include "client.h"
-#include <arg3dice/yaht/player.h>
 
 class game;
 class player;
 
 class matchmaker
 {
-public:
-
+   public:
     matchmaker(game *game);
     matchmaker(const matchmaker &) = delete;
-    matchmaker(matchmaker  &&other);
+    matchmaker(matchmaker &&other);
     matchmaker &operator=(const matchmaker &) = delete;
-    matchmaker &operator=(matchmaker && );
+    matchmaker &operator=(matchmaker &&);
     virtual ~matchmaker();
     void stop();
     bool is_valid() const;
@@ -35,8 +32,7 @@ public:
     int server_port() const;
     void set_api_keys(const std::string &appId, const std::string &appToken);
 
-private:
-
+   private:
     bool r3gister(std::string *error, int port);
 
     void unregister();

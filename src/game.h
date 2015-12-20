@@ -113,8 +113,8 @@ class game : public caca_game
 
     void display_alert(const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr);
 
-    void display_alert(int millis, const vector<string> &messages,
-                       const function<void(const alert_box &a)> funk = nullptr, const function<void()> pop = nullptr);
+    void display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr,
+                       const function<void()> pop = nullptr);
 
     void display_already_scored();
 
@@ -142,11 +142,9 @@ class game : public caca_game
 
     void display_hosting_game();
 
-    arg3::yaht::scoresheet::value_type display_upper_scores(int color, const arg3::yaht::scoresheet &score, int x,
-                                                            int y);
+    arg3::yaht::scoresheet::value_type display_upper_scores(int color, const arg3::yaht::scoresheet &score, int x, int y);
 
-    void display_lower_scores(int color, const arg3::yaht::scoresheet &score,
-                              arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
+    void display_lower_scores(int color, const arg3::yaht::scoresheet &score, arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
 
     void display_client_waiting_to_start();
 
@@ -215,7 +213,7 @@ class game : public caca_game
 
     void next_player();
 
-    char *resource_file_name(const char *path, const char *dir = NULL);
+    string resource_file_name(const string &path);
 
     void load_buf(const char *fileName, int index);
 

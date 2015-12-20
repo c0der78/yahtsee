@@ -2,7 +2,7 @@
 #include "player.h"
 #include "game.h"
 #include "log.h"
-#include <arg3/str_util.h>
+#include <arg3str/util.h>
 
 using namespace arg3;
 using namespace arg3::net;
@@ -24,34 +24,34 @@ std::shared_ptr<buffered_socket> connection_factory::create_socket(socket_server
 
 void connection_factory::for_connections(std::function<void(const shared_ptr<connection> &conn)> funk)
 {
-    for (const auto &c : connections_)
-    {
+    for (const auto &c : connections_) {
         funk(c);
     }
 }
 
 /*  client */
 client::client(game *game, SOCKET sock, const sockaddr_storage &addr) : connection(game, sock, addr), backgroundThread_(nullptr)
-{}
+{
+}
 
 client::client(game *game) : connection(game), backgroundThread_(nullptr)
 {
 }
 
 client::client(client &&other) : connection(std::move(other)), backgroundThread_(std::move(other.backgroundThread_))
-{}
+{
+}
 
 client::~client()
 {
-    logf("destroying client");
-    if (backgroundThread_ != nullptr)
-    {
+    log_trace("destroying client");
+    if (backgroundThread_ != nullptr) {
         backgroundThread_->join();
         backgroundThread_ = nullptr;
     }
 }
 
-client &client::operator=(client && other)
+client &client::operator=(client &&other)
 {
     connection::operator=(std::move(other));
 
@@ -73,13 +73,13 @@ void client::on_connect()
 
     writeln(packet.to_string());
 
-    logf("client connected, sending %s", packet.to_string().c_str());
+    log_trace("client connected, sending %s", packet.to_string().c_str());
 }
 
 //! handle when closed
 void client::on_close()
 {
-    logf("client closed");
+    log_trace("client closed");
 }
 
 //! start the client for a give host:port
@@ -113,43 +113,36 @@ bool client::start_in_background(const std::string &host, int port)
 //! the magic run method
 void client::run()
 {
-    std::chrono::milliseconds dura( 200 );
+    std::chrono::milliseconds dura(200);
 
-    logf("client starting");
+    log_trace("client starting");
 
-    while (is_valid())
-    {
+    while (is_valid()) {
         // check for error reading
-        if (!read_to_buffer())
-        {
-            logf("unable to read to client buffer");
+        if (!read_to_buffer()) {
+            log_trace("unable to read to client buffer");
             close();
             break;
-        }
-        else if (input().size() > 0)
-        {
+        } else if (input().size() > 0) {
             string tempIn(input().begin(), input().end());
             trim(tempIn);
-            logf("read %zu bytes %s", input().size(), tempIn.c_str());
+            log_trace("read %zu bytes %s", input().size(), tempIn.c_str());
         }
 
         size_t outSize = output().size();
 
         // check for error writing
-        if (!write_from_buffer())
-        {
-            logf("unable to write to client buffer");
+        if (!write_from_buffer()) {
+            log_trace("unable to write to client buffer");
             close();
             break;
-        }
-        else if (outSize > 0)
-        {
-            logf("wrote %zu bytes", outSize);
+        } else if (outSize > 0) {
+            log_trace("wrote %zu bytes", outSize);
         }
 
         // give other threads a chance
-        std::this_thread::sleep_for( dura );
+        std::this_thread::sleep_for(dura);
     }
 
-    logf("client finished");
+    log_trace("client finished");
 }
