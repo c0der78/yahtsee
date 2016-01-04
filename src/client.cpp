@@ -82,6 +82,28 @@ void client::on_close()
     log_trace("client closed");
 }
 
+void client::on_will_write()
+{
+    log_trace("client will write");
+}
+
+void client::on_did_write()
+{
+    log_trace("client did write");
+}
+
+void client::on_will_read()
+{
+    // logstr("client will read");
+}
+
+void client::on_did_read()
+{
+    log_trace("client did read");
+
+    connection::on_did_read();
+}
+
 //! start the client for a give host:port
 bool client::start(const std::string &host, int port)
 {
@@ -119,25 +141,18 @@ void client::run()
 
     while (is_valid()) {
         // check for error reading
+
         if (!read_to_buffer()) {
-            log_trace("unable to read to client buffer");
+            log_trace("unable to read to client buffer (%d: %s)", errno, strerror(errno));
             close();
             break;
-        } else if (input().size() > 0) {
-            string tempIn(input().begin(), input().end());
-            trim(tempIn);
-            log_trace("read %zu bytes %s", input().size(), tempIn.c_str());
         }
-
-        size_t outSize = output().size();
 
         // check for error writing
         if (!write_from_buffer()) {
-            log_trace("unable to write to client buffer");
+            log_trace("unable to write to client buffer (%d: %s)", errno, strerror(errno));
             close();
             break;
-        } else if (outSize > 0) {
-            log_trace("wrote %zu bytes", outSize);
         }
 
         // give other threads a chance

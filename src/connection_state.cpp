@@ -39,6 +39,8 @@ void connection::handle_game_start(const json::object &packet)
     // and the state
 
     game_->set_state(&game::state_playing);
+
+    game_->display_alert(2000, "It is now " + game_->current_player()->name() + "'s turn.");
 }
 
 //! handle a recieved player roll packet
@@ -97,6 +99,8 @@ void connection::handle_player_joined(const json::object &packet)
 
     if (id != game_->this_player()->id()) {
         string name = player.get_string("name");
+
+        log_trace("new player found (%s)", name.c_str());
 
         auto p = make_shared<::player>(this, player);
 

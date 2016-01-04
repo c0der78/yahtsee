@@ -268,6 +268,8 @@ void game::action_finish_turn()
     next_player();
 
     pop_state();
+
+    display_alert(2000, "It is now " + current_player()->name() + "'s turn.");
 }
 
 void game::action_network_player_finished(const shared_ptr<player> &p)

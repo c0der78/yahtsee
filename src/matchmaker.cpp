@@ -148,7 +148,6 @@ bool matchmaker::join_game(const std::string &host, int port, string *error)
     }
 
     log_trace("joining game");
-
     return rval;
 }
 
@@ -156,6 +155,7 @@ void matchmaker::port_forward(int port) const
 {
 #ifdef HAVE_LIBMINIUPNPC
     int error = 0;
+
     // get a list of upnp devices (asks on the broadcast address and returns the responses)
     struct UPNPDev *upnp_dev = upnpDiscover(1000,     // timeout in milliseconds
                                             NULL,     // multicast address, default = "239.255.255.250"
@@ -185,6 +185,7 @@ void matchmaker::port_forward(int port) const
 
     // get the external (WAN) IP address
     char wan_address[INET6_ADDRSTRLEN];
+
     if (UPNP_GetExternalIPAddress(upnp_urls.controlURL, upnp_data.first.servicetype, wan_address) != 0) {
         log_trace("Could not get external IP address");
     } else {

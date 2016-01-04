@@ -455,7 +455,6 @@ void caca_game::add_event(unsigned millis, const function<void()> callback)
 
     events_.emplace_back(millis, callback);
 }
-
 void caca_game::add_event(const function<void()> callback)
 {
     unique_lock<recursive_mutex> lock(eventsMutex_);

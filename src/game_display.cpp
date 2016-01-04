@@ -1,21 +1,19 @@
 #include "game.h"
 #include "player.h"
 #include <vector>
+#include "log.h"
 
 using namespace arg3;
 
 void game::display_game_menu()
 {
-    display_alert([&](const alert_box & a)
-    {
-        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, bufs[BUF_MENU], bufSize[BUF_MENU], "caca");
-    });
+    display_alert(
+        [&](const alert_box &a) { caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, bufs[BUF_MENU], bufSize[BUF_MENU], "caca"); });
 }
 
 void game::display_ask_name()
 {
-    display_alert([&](const alert_box & a)
-    {
+    display_alert([&](const alert_box &a) {
         char buf[BUFSIZ + 1] = {0};
 
         snprintf(buf, BUFSIZ, "What is Player %zu's name?", players_.size() + 1);
@@ -36,8 +34,7 @@ void game::display_ask_name()
 
         x -= get_buffer().length() / 2;
 
-        for (auto &ch : get_buffer())
-        {
+        for (auto &ch : get_buffer()) {
             put(x++, y, ch);
         }
 
@@ -69,8 +66,7 @@ void game::display_waiting_for_connections()
 
 void game::display_multiplayer_menu()
 {
-    display_alert([&](const alert_box & a)
-    {
+    display_alert([&](const alert_box &a) {
         string buf1 = "'h' : host a game";
         string buf2 = "'j' : join a game";
 
@@ -83,8 +79,7 @@ void game::display_multiplayer_menu()
 
 void game::display_multiplayer_join()
 {
-    display_alert([&](const alert_box & a)
-    {
+    display_alert([&](const alert_box &a) {
         string buf1, buf2;
 
         buf1 = "'o' : join a game registered online (connect.arg3.com)";
@@ -99,8 +94,7 @@ void game::display_multiplayer_join()
 
 void game::display_multiplayer_join_game()
 {
-    display_alert([&](const alert_box & a)
-    {
+    display_alert([&](const alert_box &a) {
         string buf1;
 
         buf1 = "Enter an address to connect to (<host:port>):";
@@ -127,8 +121,7 @@ void game::display_client_waiting_to_start()
 
     int count = 1;
 
-    for (const auto &p : players_)
-    {
+    for (const auto &p : players_) {
         snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
         message.push_back(buf);
     }
@@ -136,6 +129,8 @@ void game::display_client_waiting_to_start()
     message.push_back(" ");
 
     message.push_back("Waiting for host to start game...");
+
+    log_trace("Waiting for host to start game...");
 
     display_alert(message);
 }
@@ -152,8 +147,7 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
 
     if (players_.size() == 1 || player == this_player()) {
         snprintf(buf, BUFSIZ, "Roll %d of 3. (Press '#' to keep):", player->roll_count());
-    }
-    else {
+    } else {
         snprintf(buf, BUFSIZ, "%s's roll (%d of 3):", player->name().c_str(), player->roll_count());
     }
 
@@ -170,8 +164,7 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
     put(x, y++, "#  1 │ 2 │ 3 │ 4 │ 5");
     put(x, y++, "  ───┴───┴───┴───┴───");
     put(x++, y, "  ");
-    for (size_t i = 0; i < player->die_count(); i++)
-    {
+    for (size_t i = 0; i < player->die_count(); i++) {
         put(++x, y, player->is_kept(i) ? '*' : ' ');
 
         put(++x, y, to_string(player->d1e(i).value()).c_str());
@@ -183,9 +176,7 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
 
     if (!is_online() || player == this_player()) {
         put(xs, y, "Press '?' for help on how to score.");
-    }
-    else
-    {
+    } else {
         snprintf(buf, BUFSIZ, "Waiting for %s's turn to finish...", player->name().c_str());
         put(xs, y, buf);
     }
@@ -193,10 +184,7 @@ void game::display_dice(shared_ptr<player> player, int x, int y)
 
 void game::display_dice_roll()
 {
-    display_alert([&](const alert_box & box)
-    {
-        display_dice(current_player(), box.x(), box.y());
-    });
+    display_alert([&](const alert_box &box) { display_dice(current_player(), box.x(), box.y()); });
 }
 
 
@@ -208,10 +196,8 @@ void game::display_confirm_quit()
 
 void game::display_help()
 {
-    display_alert([&](const alert_box & a)
-    {
-        caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, bufs[BUF_HELP], bufSize[BUF_HELP], "caca");
-    });
+    display_alert(
+        [&](const alert_box &a) { caca_import_area_from_memory(canvas_, a.x() + 4, a.y() + 3, bufs[BUF_HELP], bufSize[BUF_HELP], "caca"); });
 }
 
 
@@ -219,8 +205,7 @@ void game::display_player_scores()
 {
     int x = 46;
 
-    if (current_player())
-    {
+    if (current_player()) {
         set_color(currentPlayer_ + 2 + 8);
 
         put(displayMode_ == MINIMAL && minimalLower_ ? 21 : 50, 1, current_player()->name().c_str());
@@ -230,8 +215,7 @@ void game::display_player_scores()
 
     int baseColor = 2;
 
-    for (auto &player : players_)
-    {
+    for (auto &player : players_) {
         int color = baseColor;
 
         if (player->id() == current_player()->id()) {
@@ -240,30 +224,24 @@ void game::display_player_scores()
         put_color(x, 5, color);
         put_color(x + 1, 5, color);
 
-        switch (displayMode_)
-        {
-        case MINIMAL:
-            if (minimalLower_)
-            {
-                display_lower_scores(color, player->score(), player->calculate_total_upper_score(), x, 3);
+        switch (displayMode_) {
+            case MINIMAL:
+                if (minimalLower_) {
+                    display_lower_scores(color, player->score(), player->calculate_total_upper_score(), x, 3);
+                } else {
+                    display_upper_scores(color, player->score(), x, 7);
+                }
+                break;
+            case VERTICAL: {
+                yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x, 7);
+                display_lower_scores(color, player->score(), lower_score_total, x, 26);
+                break;
             }
-            else
-            {
-                display_upper_scores(color, player->score(), x, 7 );
+            case HORIZONTAL: {
+                yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x, 7);
+                display_lower_scores(color, player->score(), lower_score_total, x + 76, 1);
+                break;
             }
-            break;
-        case VERTICAL:
-        {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 7 );
-            display_lower_scores(color, player->score(), lower_score_total, x, 26);
-            break;
-        }
-        case HORIZONTAL:
-        {
-            yaht::scoresheet::value_type lower_score_total = display_upper_scores(color, player->score(), x , 7 );
-            display_lower_scores(color, player->score(), lower_score_total, x + 76, 1);
-            break;
-        }
         }
 
         x += 5;
@@ -278,8 +256,7 @@ yaht::scoresheet::value_type game::display_upper_scores(int color, const yaht::s
 
     set_color(color);
 
-    for (int i = 1; i <= die::DEFAULT_SIDES; i++, y += 2)
-    {
+    for (int i = 1; i <= die::DEFAULT_SIDES; i++, y += 2) {
         auto value = score.upper_score(i);
 
         bool missedScore = value == 0 && score.upper_played(i);
@@ -312,7 +289,6 @@ yaht::scoresheet::value_type game::display_upper_scores(int color, const yaht::s
     set_color(CACA_DEFAULT);
 
     return lower_score_total;
-
 }
 
 void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
@@ -321,8 +297,7 @@ void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::
 
     set_color(color);
 
-    for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++)
-    {
+    for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++) {
         yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
 
         auto value = score.lower_score(type);
@@ -341,15 +316,14 @@ void game::display_lower_scores(int color, const yaht::scoresheet &score, yaht::
 
         total_score += value;
 
-        switch (type)
-        {
-        default:
-            y += 2;
-            break;
-        case yaht::scoresheet::STRAIGHT_SMALL:
-        case yaht::scoresheet::STRAIGHT_BIG:
-            y += 3;
-            break;
+        switch (type) {
+            default:
+                y += 2;
+                break;
+            case yaht::scoresheet::STRAIGHT_SMALL:
+            case yaht::scoresheet::STRAIGHT_BIG:
+                y += 3;
+                break;
         }
     }
 
