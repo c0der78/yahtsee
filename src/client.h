@@ -1,16 +1,15 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
 
-#include <arg3net/socket_factory.h>
-#include <arg3net/buffered_socket.h>
 #include <arg3json/json.h>
+#include <arg3net/buffered_socket.h>
+#include <arg3net/socket_factory.h>
 #include <map>
 #include <thread>
 
 class game;
 
-typedef enum
-{
+typedef enum {
     // this (host) connection initializing
     CONNECTION_INIT,
     // remote (client) connection initializing
@@ -27,7 +26,7 @@ typedef enum
  */
 class connection : public arg3::net::buffered_socket
 {
-public:
+   public:
     connection(game *game, arg3::net::SOCKET sock, const sockaddr_storage &addr);
     connection(game *game);
     /* non copyable */
@@ -37,7 +36,7 @@ public:
 
     /* non copyable */
     connection &operator=(const connection &other) = delete;
-    connection &operator=(connection && other);
+    connection &operator=(connection &&other);
 
     virtual void on_will_read();
     virtual void on_did_read();
@@ -46,8 +45,7 @@ public:
     virtual void on_connect();
     virtual void on_close();
 
-protected:
-
+   protected:
     void handle_player_roll(const arg3::json::object &);
     void handle_game_start(const arg3::json::object &);
     void handle_connection_init(const arg3::json::object &);
@@ -63,7 +61,7 @@ protected:
  */
 class client : public connection
 {
-public:
+   public:
     client(game *game, arg3::net::SOCKET sock, const sockaddr_storage &addr);
     client(game *game);
     client(const client &other) = delete;
@@ -71,7 +69,7 @@ public:
     virtual ~client();
 
     client &operator=(const client &other) = delete;
-    client &operator=(client && other);
+    client &operator=(client &&other);
 
     virtual void on_connect();
     virtual void on_close();
@@ -81,8 +79,7 @@ public:
     /*! starts this client's io loop */
     bool start(const std::string &host, int port);
 
-private:
-
+   private:
     void on_will_read();
     void on_did_read();
     void on_will_write();
@@ -94,14 +91,15 @@ private:
 
 class connection_factory : public arg3::net::socket_factory
 {
-public:
+   public:
     connection_factory(game *game);
 
-    std::shared_ptr<arg3::net::buffered_socket> create_socket(arg3::net::socket_server *server, arg3::net::SOCKET sock, const sockaddr_storage &addr);
+    std::shared_ptr<arg3::net::buffered_socket> create_socket(const server_type &server, arg3::net::SOCKET sock, const sockaddr_storage &addr);
 
     // perform an operation on each connection
     void for_connections(std::function<void(const shared_ptr<connection> &sock)> funk);
-private:
+
+   private:
     game *game_;
     vector<shared_ptr<connection>> connections_;
 };

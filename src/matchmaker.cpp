@@ -2,11 +2,11 @@
 #include "config.h"
 #endif
 
-#include "matchmaker.h"
 #include <arg3json/json.h>
 #include "game.h"
-#include "player.h"
 #include "log.h"
+#include "matchmaker.h"
+#include "player.h"
 
 #ifdef HAVE_LIBMINIUPNPC
 #include <miniupnpc/miniupnpc.h>
@@ -27,7 +27,7 @@ const char *matchmaker::GAME_API_URL = "localhost.arg3.com:1337";
 void matchmaker::send_network_message(const string &value)
 {
     if (server_.is_valid()) {
-        client_factory_.for_connections([&value](const shared_ptr<connection> &conn) { conn->writeln(value); });
+        client_factory_->for_connections([&value](const shared_ptr<connection> &conn) { conn->writeln(value); });
     }
 
     if (client_.is_valid()) {
@@ -42,7 +42,8 @@ void matchmaker::set_api_keys(const string &appId, const string &appToken)
     api_.add_header("X-Application-Token", appToken);
 }
 
-matchmaker::matchmaker(game *game) : api_(GAME_API_URL), client_(game), client_factory_(game), server_(&client_factory_), game_(game)
+matchmaker::matchmaker(game *game)
+    : api_(GAME_API_URL), client_(game), client_factory_(std::make_shared<connection_factory>(game)), server_(client_factory_), game_(game)
 {
     api_.add_header("Content-Type", "application/json; charset=UTF-8");
 

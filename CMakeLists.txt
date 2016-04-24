@@ -23,7 +23,6 @@ pkg_search_module(ARG3DICE REQUIRED arg3dice)
 pkg_search_module(ARG3NET REQUIRED arg3net)
 pkg_search_module(ARG3LOG REQUIRED arg3log)
 pkg_search_module(JSONC REQUIRED json-c json json0)
-pkg_search_module(UUID REQUIRED uuid)
 
 find_path(ARCHIVE_INCLUDE_DIR archive.h HINTS "/usr/local/opt/libarchive/include")
 find_library(ARCHIVE_LIBRARY archive HINTS "/usr/local/opt/libarchive/lib")

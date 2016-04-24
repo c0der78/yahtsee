@@ -1,9 +1,9 @@
 #ifndef _MATCHMAKER_H_
 #define _MATCHMAKER_H_
 
-#include <arg3net/socket_server.h>
-#include <arg3net/http_client.h>
 #include <arg3dice/yaht/player.h>
+#include <arg3net/http_client.h>
+#include <arg3net/socket_server.h>
 #include <string>
 #include "client.h"
 
@@ -50,7 +50,7 @@ class matchmaker
     std::string gameId_;
     arg3::net::http_client api_;
     client client_;
-    connection_factory client_factory_;
+    std::shared_ptr<connection_factory> client_factory_;
     arg3::net::socket_server server_;
     game *game_;
     int server_port_;

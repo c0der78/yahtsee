@@ -1,8 +1,8 @@
 #include "client.h"
-#include "player.h"
+#include <arg3str/util.h>
 #include "game.h"
 #include "log.h"
-#include <arg3str/util.h>
+#include "player.h"
 
 using namespace arg3;
 using namespace arg3::net;
@@ -12,7 +12,7 @@ connection_factory::connection_factory(game *game) : game_(game)
 {
 }
 
-std::shared_ptr<buffered_socket> connection_factory::create_socket(socket_server *server, SOCKET sock, const sockaddr_storage &addr)
+std::shared_ptr<buffered_socket> connection_factory::create_socket(const server_type &server, SOCKET sock, const sockaddr_storage &addr)
 {
     auto socket = make_shared<connection>(game_, sock, addr);
 

@@ -1,6 +1,6 @@
+#include <arg3str/util.h>
 #include "game.h"
 #include "player.h"
-#include <arg3str/util.h>
 
 using namespace arg3;
 
@@ -166,6 +166,11 @@ void game::state_ask_number_of_players(int input)
 
         if (numPlayers_ > 6) {
             display_alert(2000, "A game can have up to 6 players only.");
+            return;
+        }
+
+        if (numPlayers_ <= 1) {
+            display_alert(2000, "A game must have more than one player.");
             return;
         }
 
