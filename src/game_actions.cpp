@@ -1,9 +1,9 @@
-#include "game.h"
-#include "player.h"
-#include "log.h"
 #include <future>
+#include "game.h"
+#include "log.h"
+#include "player.h"
 
-using namespace arg3;
+using namespace rj;
 
 //! start hosting a game
 void game::action_host_game()

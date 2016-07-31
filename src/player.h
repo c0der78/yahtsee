@@ -1,8 +1,8 @@
 #ifndef _PLAYER_H_
 #define _PLAYER_H_
 
-#include <arg3dice/yaht/player.h>
-#include <arg3json/object.h>
+#include <rj/dice/yaht/player.h>
+#include <rj/json/object.h>
 #include <queue>
 
 class connection;
@@ -11,14 +11,14 @@ class connection;
  * An entity that is playing the game
  * Has an id, name, score and dice.
  */
-class player : public arg3::yaht::player
+class player : public rj::yaht::player
 {
-public:
+   public:
     player(const string &name);
 
     player(connection *conn, const string &id, const string &name);
 
-    player(connection *conn, const arg3::json::object &json);
+    player(connection *conn, const rj::json::object &json);
 
     player(const player &other);
 
@@ -33,26 +33,26 @@ public:
 
     string name() const;
 
-    void from_json(const arg3::json::object &json);
-    arg3::json::object to_json() const;
+    void from_json(const rj::json::object &json);
+    rj::json::object to_json() const;
 
     connection *c0nnection() const;
 
     bool operator==(const player &other) const;
 
-    class engine : public arg3::die::engine
+    class engine : public rj::die::engine
     {
-    public:
-        arg3::die::value_type generate(arg3::die::value_type from, arg3::die::value_type to);
+       public:
+        rj::die::value_type generate(rj::die::value_type from, rj::die::value_type to);
         void reset();
-        void set_next_roll(const queue<arg3::die::value_type> &values);
-    private:
-        queue<arg3::die::value_type> nextRoll_;
+        void set_next_roll(const queue<rj::die::value_type> &values);
+
+       private:
+        queue<rj::die::value_type> nextRoll_;
         friend class player;
     };
 
-private:
-
+   private:
     connection *connection_;
     string id_;
     string name_;

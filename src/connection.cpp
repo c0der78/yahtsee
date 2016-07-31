@@ -1,10 +1,10 @@
 #include "client.h"
 #include "game.h"
-#include "player.h"
 #include "log.h"
+#include "player.h"
 
-using namespace arg3;
-using namespace arg3::net;
+using namespace rj;
+using namespace rj::net;
 
 connection::connection(game *game, SOCKET sock, const sockaddr_storage &addr) : buffered_socket(sock, addr), game_(game)
 {

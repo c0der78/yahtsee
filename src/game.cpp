@@ -1,14 +1,14 @@
 #include "game.h"
-#include "player.h"
-#include <cstring>
-#include <fstream>
-#include <arg3str/util.h>
-#include "log.h"
-#include <libgen.h>
 #include <archive.h>
 #include <archive_entry.h>
+#include <libgen.h>
+#include <rj/string/util.h>
+#include <cstring>
+#include <fstream>
+#include "log.h"
+#include "player.h"
 
-using namespace arg3;
+using namespace rj;
 
 using namespace std::placeholders;
 
@@ -87,8 +87,8 @@ void game::load_settings(char *exe)
         }
     }
 
-    if (settings_.contains("arg3connect")) {
-        json::object service = settings_.get("arg3connect");
+    if (settings_.contains("connect_service")) {
+        json::object service = settings_.get("connect_service");
 
         if (!service.contains("enabled") || service.get_bool("enabled")) {
             std::string appId = service.get_string("appId");
@@ -213,11 +213,11 @@ bool game::is_online() const
 }
 bool game::is_online_available() const
 {
-    if (!settings_.contains("arg3connect")) {
+    if (!settings_.contains("connect_service")) {
         return false;
     }
 
-    json::object service = settings_.get("arg3connect");
+    json::object service = settings_.get("connect_service");
 
     return service.contains("enabled") && service.get_bool("enabled");
 }
@@ -684,7 +684,7 @@ shared_ptr<player> game::find_player_by_id(const string &id) const
     return nullptr;
 }
 
-const arg3::json::object *game::settings() const
+const rj::json::object *game::settings() const
 {
     return &settings_;
 }

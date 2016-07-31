@@ -9,7 +9,7 @@
 
 #else
 
-#include <arg3log/log.h>
+#include <rj/log/log.h>
 
 extern ostream log_file();
 

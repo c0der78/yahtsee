@@ -63,7 +63,7 @@ class game : public caca_game
 
     bool is_auto_port_forward() const;
 
-    const arg3::json::object *settings() const;
+    const rj::json::object *settings() const;
 
     void load_settings(char *exe);
 
@@ -142,9 +142,9 @@ class game : public caca_game
 
     void display_hosting_game();
 
-    arg3::yaht::scoresheet::value_type display_upper_scores(int color, const arg3::yaht::scoresheet &score, int x, int y);
+    rj::yaht::scoresheet::value_type display_upper_scores(int color, const rj::yaht::scoresheet &score, int x, int y);
 
-    void display_lower_scores(int color, const arg3::yaht::scoresheet &score, arg3::yaht::scoresheet::value_type lower_score_total, int x, int y);
+    void display_lower_scores(int color, const rj::yaht::scoresheet &score, rj::yaht::scoresheet::value_type lower_score_total, int x, int y);
 
     void display_client_waiting_to_start();
 
@@ -183,13 +183,13 @@ class game : public caca_game
 
     void action_roll_dice();
 
-    void action_select_die(shared_ptr<arg3::yaht::player> player, int d);
+    void action_select_die(shared_ptr<rj::yaht::player> player, int d);
 
-    void action_lower_score(shared_ptr<arg3::yaht::player> player, arg3::yaht::scoresheet::type type);
+    void action_lower_score(shared_ptr<rj::yaht::player> player, rj::yaht::scoresheet::type type);
 
-    void action_score(shared_ptr<arg3::yaht::player> player, int n);
+    void action_score(shared_ptr<rj::yaht::player> player, int n);
 
-    void action_score_best(shared_ptr<arg3::yaht::player> player);
+    void action_score_best(shared_ptr<rj::yaht::player> player);
 
     void action_finish_turn();
 
@@ -270,7 +270,7 @@ class game : public caca_game
     vector<shared_ptr<player>> players_;
     int currentPlayer_;
 
-    arg3::json::object settings_;
+    rj::json::object settings_;
 
     /*! hosting a network game */
     static const int FLAG_HOSTING = (1 << 0);

@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include <arg3json/json.h>
+#include <rj/json/json.h>
 #include "game.h"
 #include "log.h"
 #include "matchmaker.h"
@@ -16,7 +16,7 @@
 #include <upnpcommands.h>
 #endif
 
-using namespace arg3;
+using namespace rj;
 
 #ifndef DEBUG
 const char *matchmaker::GAME_API_URL = "connect.arg3.com";
@@ -280,8 +280,8 @@ bool matchmaker::r3gister(string *error, int port)
 
     json.set_int("port", port);
 
-    if (settings->contains("arg3connect")) {
-        auto obj = settings->get("arg3connect");
+    if (settings->contains("connect_service")) {
+        auto obj = settings->get("connect_service");
 
         if (obj.contains("timeout")) {
             long timeout = obj.get_int("timeout") * 1000;
@@ -294,7 +294,7 @@ bool matchmaker::r3gister(string *error, int port)
 
     int response = api_.response().code();
 
-    if (response != arg3::net::http::OK) {
+    if (response != rj::net::http::OK) {
         if (error) {
             json::object json;
             json.parse(api_.response());

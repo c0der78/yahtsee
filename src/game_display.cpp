@@ -1,9 +1,9 @@
-#include "game.h"
-#include "player.h"
 #include <vector>
+#include "game.h"
 #include "log.h"
+#include "player.h"
 
-using namespace arg3;
+using namespace rj;
 
 void game::display_game_menu()
 {

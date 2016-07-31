@@ -1,9 +1,9 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
 
-#include <arg3json/json.h>
-#include <arg3net/buffered_socket.h>
-#include <arg3net/socket_factory.h>
+#include <rj/json/json.h>
+#include <rj/net/buffered_socket.h>
+#include <rj/net/socket_factory.h>
 #include <map>
 #include <thread>
 
@@ -24,10 +24,10 @@ typedef enum {
 /*!
  * A connection is a remote user connected to this host instance
  */
-class connection : public arg3::net::buffered_socket
+class connection : public rj::net::buffered_socket
 {
    public:
-    connection(game *game, arg3::net::SOCKET sock, const sockaddr_storage &addr);
+    connection(game *game, rj::net::SOCKET sock, const sockaddr_storage &addr);
     connection(game *game);
     /* non copyable */
     connection(const connection &other) = delete;
@@ -46,13 +46,13 @@ class connection : public arg3::net::buffered_socket
     virtual void on_close();
 
    protected:
-    void handle_player_roll(const arg3::json::object &);
-    void handle_game_start(const arg3::json::object &);
-    void handle_connection_init(const arg3::json::object &);
-    void handle_remote_connection_init(const arg3::json::object &);
-    void handle_player_joined(const arg3::json::object &);
-    void handle_player_left(const arg3::json::object &);
-    void handle_player_turn_finished(const arg3::json::object &);
+    void handle_player_roll(const rj::json::object &);
+    void handle_game_start(const rj::json::object &);
+    void handle_connection_init(const rj::json::object &);
+    void handle_remote_connection_init(const rj::json::object &);
+    void handle_player_joined(const rj::json::object &);
+    void handle_player_left(const rj::json::object &);
+    void handle_player_turn_finished(const rj::json::object &);
     game *game_;
 };
 
@@ -62,7 +62,7 @@ class connection : public arg3::net::buffered_socket
 class client : public connection
 {
    public:
-    client(game *game, arg3::net::SOCKET sock, const sockaddr_storage &addr);
+    client(game *game, rj::net::SOCKET sock, const sockaddr_storage &addr);
     client(game *game);
     client(const client &other) = delete;
     client(client &&other);
@@ -89,12 +89,12 @@ class client : public connection
     shared_ptr<thread> backgroundThread_;
 };
 
-class connection_factory : public arg3::net::socket_factory
+class connection_factory : public rj::net::socket_factory
 {
    public:
     connection_factory(game *game);
 
-    std::shared_ptr<arg3::net::buffered_socket> create_socket(const server_type &server, arg3::net::SOCKET sock, const sockaddr_storage &addr);
+    std::shared_ptr<rj::net::buffered_socket> create_socket(const server_type &server, rj::net::SOCKET sock, const sockaddr_storage &addr);
 
     // perform an operation on each connection
     void for_connections(std::function<void(const shared_ptr<connection> &sock)> funk);

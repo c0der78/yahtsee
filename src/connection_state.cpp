@@ -1,9 +1,9 @@
 #include "client.h"
 #include "game.h"
-#include "player.h"
 #include "log.h"
+#include "player.h"
 
-using namespace arg3;
+using namespace rj;
 
 //! the connection has recieved an init packet
 void connection::handle_connection_init(const json::object &packet)
@@ -56,7 +56,7 @@ void connection::handle_player_roll(const json::object &packet)
 
     json::array roll = packet.get_array("roll");
 
-    queue<arg3::die::value_type> values;
+    queue<rj::die::value_type> values;
 
     for (size_t i = 0; i < roll.size(); i++) {
         json::object inner = roll.get(i);

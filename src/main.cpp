@@ -7,7 +7,7 @@
 
 using namespace std;
 
-using namespace arg3;
+using namespace rj;
 
 int main(int argc, char **argv)
 {

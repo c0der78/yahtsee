@@ -1,8 +1,8 @@
-#include <arg3str/util.h>
+#include <rj/string/util.h>
 #include "game.h"
 #include "player.h"
 
-using namespace arg3;
+using namespace rj;
 
 void game::state_ask_name(int ch)
 {

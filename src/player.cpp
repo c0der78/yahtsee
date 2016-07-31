@@ -1,8 +1,8 @@
 #include "player.h"
-#include <arg3str/util.h>
+#include <rj/string/util.h>
 #include <random>
 
-using namespace arg3;
+using namespace rj;
 
 player::engine player_engine;
 
@@ -36,7 +36,7 @@ void player::engine::set_next_roll(const queue<die::value_type> &roll)
     player_engine.nextRoll_ = roll;
 }
 
-player::player(const string &name) : yaht::player(&player_engine), connection_(NULL), id_(arg3::uuid::generate()), name_(name)
+player::player(const string &name) : yaht::player(&player_engine), connection_(NULL), id_(rj::uuid::generate()), name_(name)
 {
 }
 

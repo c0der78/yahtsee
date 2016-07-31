@@ -9,7 +9,7 @@ a multiplayer game of yahtzee on the terminal
 
 - [libcaca](http://caca.zoy.org/wiki/libcaca) (brew install libcaca / apt-get install libcaca-dev) For the ascii display driver
 
-- [libarg3](http://github.com/ryjen/libarg3.git) (./configure; make install) for networking, json, etc
+- [libryjen](http://github.com/ryjen/libryjen.git) (cmake) for networking, json, etc
 
 - [libarchive](http://www.libarchive.org) (brew install libarchive / apt-get install libarchive-dev) for reading assets
 
@@ -27,7 +27,7 @@ a multiplayer game of yahtzee on the terminal
 
 #### TODO
 - Refactor the event system so everything goes through that.
-- ~~build [arg3connect](http://arg3connect.herokuapp.com) to register/list available online games~~
+- ~~build [connection service](http://arg3connect.herokuapp.com) to register/list available online games~~
 - ~~implement turn based game play~~
 - ~~implement server mode w/ protocol~~
 - ~~implement client mode w/ protocol~~

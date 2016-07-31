@@ -1,11 +1,11 @@
 #include "client.h"
-#include <arg3str/util.h>
+#include <rj/string/util.h>
 #include "game.h"
 #include "log.h"
 #include "player.h"
 
-using namespace arg3;
-using namespace arg3::net;
+using namespace rj;
+using namespace rj::net;
 
 /* connection factory */
 connection_factory::connection_factory(game *game) : game_(game)

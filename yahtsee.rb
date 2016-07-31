@@ -1,14 +1,14 @@
 require 'formula'
 
 class Yahtsee < Formula
-  homepage 'http://github.com/c0der78/terminal-yahtsee'
-  url 'https://github.com/c0der78/terminal-yahtsee.git'
+  homepage 'http://github.com/ryjen/yahtsee'
+  url 'https://github.com/ryjen/yahtsee.git'
 
-  head 'http://github.com/c0der78/terminal-yahtsee.git'
+  head 'http://github.com/ryjen/yahtsee.git'
 	
   version '0.1'
 
-  depends_on 'arg3'
+  depends_on 'libryjen'
 
   def install
     ENV.universal_binary
