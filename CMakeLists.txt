@@ -1,27 +1,29 @@
 
 cmake_minimum_required (VERSION 3.1)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # add options for testing
-option(CODE_COVERAGE "Enable code coverage testing." OFF)
-option(MEMORY_CHECK "Enable testing for memory leaks." OFF)
+option(ENABLE_COVERAGE "Enable code coverage testing." OFF)
+option(ENABLE_MEMCHECK "Enable testing for memory leaks." OFF)
 
 # define project name
 project (yahtsee VERSION 0.1.0)
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 
 # set path to custom modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(PkgConfig)
-find_package(CURL)
 
 pkg_search_module(CACA REQUIRED caca)
 pkg_search_module(RJLOG REQUIRED rj_log)
 pkg_search_module(RJSTR REQUIRED rj_string)
-pkg_search_module(RJJSON REQUIRED rj_json)
 pkg_search_module(RJDICE REQUIRED rj_dice)
 pkg_search_module(RJNET REQUIRED rj_net)
-pkg_search_module(JSONC REQUIRED json-c)
+pkg_search_module(RJHTTP REQUIRED rj_net_http)
+pkg_search_module(URIPARSER REQUIRED liburiparser)
 
 find_path(ARCHIVE_INCLUDE_DIR archive.h HINTS "/usr/local/opt/libarchive/include")
 find_library(ARCHIVE_LIBRARY archive HINTS "/usr/local/opt/libarchive/lib")
@@ -37,5 +39,5 @@ add_subdirectory(resources)
 # Setup testing
 enable_testing()
 
-add_test(${PROJECT_NAME}-test ${PROJECT_BINARY_DIR}/tests/${PROJECT_NAME}-test)
+add_test(${PROJECT_NAME}_test ${PROJECT_BINARY_DIR}/tests/${PROJECT_NAME}_test)
 

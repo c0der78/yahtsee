@@ -1,0 +1,6 @@
+[requires]
+nlJson/2.0.9@arnemertz/stable
+libcurl/7.52.1@eliaskousk/stable
+
+[generators]
+cmake

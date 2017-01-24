@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include <rj/json/json.h>
+#include <json.hpp>
 #include "game.h"
 #include "log.h"
 #include "matchmaker.h"
@@ -43,7 +43,11 @@ void matchmaker::set_api_keys(const string &appId, const string &appToken)
 }
 
 matchmaker::matchmaker(game *game)
-    : api_(GAME_API_URL), client_(game), client_factory_(std::make_shared<connection_factory>(game)), server_(client_factory_), game_(game)
+    : api_(GAME_API_URL),
+      client_(game),
+      client_factory_(std::make_shared<connection_factory>(game)),
+      server_(client_factory_),
+      game_(game)
 {
     api_.add_header("Content-Type", "application/json; charset=UTF-8");
 
@@ -97,33 +101,31 @@ bool matchmaker::join_best_game(string *error)
     }
 
     /* call the api for the best available game */
-    json::object type;
+    packet_format packet;
 
-    type.set_string("type", GAME_TYPE);
+    packet["type"] = GAME_TYPE;
 
-    api_.set_payload(type.to_string()).post("api/v1/games/best");
+    api_.set_content(packet).post("api/v1/games/best");
 
     int response = api_.response().code();
 
     /* handle an error */
     if (response != net::http::OK) {
         if (error) {
-            json::object json;
-            json.parse(api_.response());
-            *error = json.get_string("error");
+            packet = packet_format::parse(api_.response().content());
+            *error = packet["error"];
         }
 
         return false;
     }
 
     /* parse the response */
-    json::object game;
 
-    game.parse(api_.response());
+    packet = packet_format::parse(api_.response().content());
 
-    string ip = game.get_string("host");
+    string ip = packet["host"];
 
-    int port = game.get_int("port");
+    int port = packet["port"];
 
     /* start the client */
     return join_game(ip, port, error);
@@ -194,14 +196,15 @@ void matchmaker::port_forward(int port) const
     }
 
     // add a new TCP port mapping from WAN port 12345 to local host port 24680
-    error = UPNP_AddPortMapping(upnp_urls.controlURL, upnp_data.first.servicetype,
-                                std::to_string(port).c_str(),  // external (WAN) port requested
-                                std::to_string(port).c_str(),  // internal (LAN) port to which packets will be redirected
-                                lan_address,                   // internal (LAN) address to which packets will be redirected
-                                "Yahtsee Server",              // text description to indicate why or who is responsible for the port mapping
-                                "TCP",                         // protocol must be either TCP or UDP
-                                NULL,                          // remote (peer) host address or nullptr for no restriction
-                                "86400");                      // port map lease duration (in seconds) or zero for "as long as possible"
+    error = UPNP_AddPortMapping(
+        upnp_urls.controlURL, upnp_data.first.servicetype,
+        std::to_string(port).c_str(),  // external (WAN) port requested
+        std::to_string(port).c_str(),  // internal (LAN) port to which packets will be redirected
+        lan_address,                   // internal (LAN) address to which packets will be redirected
+        "Yahtsee Server",              // text description to indicate why or who is responsible for the port mapping
+        "TCP",                         // protocol must be either TCP or UDP
+        NULL,                          // remote (peer) host address or nullptr for no restriction
+        "86400");                      // port map lease duration (in seconds) or zero for "as long as possible"
 
     if (error) {
         log_trace("Failed to map ports\n");
@@ -223,16 +226,16 @@ void matchmaker::port_forward(int port) const
 
         char indexStr[10];
         sprintf(indexStr, "%zu", index);
-        error =
-            UPNP_GetGenericPortMappingEntry(upnp_urls.controlURL, upnp_data.first.servicetype, indexStr, map_wan_port, map_lan_address, map_lan_port,
-                                            map_protocol, map_description, map_mapping_enabled, map_remote_host, map_lease_duration);
+        error = UPNP_GetGenericPortMappingEntry(
+            upnp_urls.controlURL, upnp_data.first.servicetype, indexStr, map_wan_port, map_lan_address, map_lan_port,
+            map_protocol, map_description, map_mapping_enabled, map_remote_host, map_lease_duration);
 
         if (error) {
             break;  // no more port mappings available
         }
 
-        log_trace("%s\t%s -> %s\t%s\t%s\t%s\t%s\t%s", map_lan_address, map_wan_port, map_lan_port, map_protocol, map_lease_duration,
-                  map_mapping_enabled, map_remote_host, map_description);
+        log_trace("%s\t%s -> %s\t%s\t%s\t%s\t%s\t%s", map_lan_address, map_wan_port, map_lan_port, map_protocol,
+                  map_lease_duration, map_mapping_enabled, map_remote_host, map_description);
     }
 
     FreeUPNPUrls(&upnp_urls);
@@ -272,33 +275,32 @@ bool matchmaker::host(bool register_online, bool port_forwarding, string *error,
 
 bool matchmaker::r3gister(string *error, int port)
 {
-    json::object json;
+    packet_format packet;
 
     auto settings = game_->settings();
 
-    json.set_string("type", GAME_TYPE);
+    packet["type"] = GAME_TYPE;
 
-    json.set_int("port", port);
+    packet["port"] = port;
 
-    if (settings->contains("connect_service")) {
-        auto obj = settings->get("connect_service");
+    if (settings->count("connect_service")) {
+        auto obj = settings->at("connect_service");
 
-        if (obj.contains("timeout")) {
-            long timeout = obj.get_int("timeout") * 1000;
+        if (obj.count("timeout")) {
+            long timeout = obj["timeout"].get<long>() * 1000;
             log_trace("setting timeout to %ld", timeout);
             api_.set_timeout(timeout);
         }
     }
 
-    api_.set_payload(json.to_string()).post("api/v1/games/register");
+    api_.set_content(packet).post("api/v1/games/register");
 
     int response = api_.response().code();
 
     if (response != rj::net::http::OK) {
         if (error) {
-            json::object json;
-            json.parse(api_.response());
-            *error = json.get_string("error");
+            packet = packet_format::parse(api_.response().content());
+            *error = packet["error"];
         }
 
         return false;
@@ -318,7 +320,7 @@ int matchmaker::server_port() const
 void matchmaker::unregister()
 {
     if (!gameId_.empty()) {
-        api_.set_payload(gameId_).post("api/v1/games/unregister");
+        api_.set_content(gameId_).post("api/v1/games/unregister");
 
         if (api_.response().code() != net::http::OK) {
             log_trace("Unable to unregister game");
@@ -336,15 +338,15 @@ void matchmaker::notify_game_start()
         return;
     }
 
-    json::object json;
+    packet_format packet;
 
-    json.set_int("action", GAME_START);
+    packet["action"] = GAME_START;
 
-    json.set_string("start_id", game_->current_player()->id());
+    packet["start_id"] = game_->current_player()->id();
 
-    send_network_message(json.to_string());
+    send_network_message(packet);
 
-    log_trace("notify game started %s", json.to_string().c_str());
+    log_trace("notify game started %s", packet.dump().c_str());
 
     unregister();
 }
@@ -355,15 +357,15 @@ void matchmaker::notify_player_joined(const shared_ptr<player> &p)
         return;
     }
 
-    json::object json;
+    packet_format packet;
 
-    json.set_int("action", PLAYER_JOINED);
+    packet["action"] = PLAYER_JOINED;
 
-    json.set("player", p->to_json());
+    packet["player"] = p->to_packet();
 
-    send_network_message(json.to_string());
+    send_network_message(packet);
 
-    log_trace("notify player joined %s", json.to_string().c_str());
+    log_trace("notify player joined %s", packet.dump().c_str());
 }
 
 void matchmaker::notify_player_left(const shared_ptr<player> &p)
@@ -372,15 +374,15 @@ void matchmaker::notify_player_left(const shared_ptr<player> &p)
         return;
     }
 
-    json::object json;
+    packet_format packet;
 
-    json.set_int("action", PLAYER_LEFT);
+    packet["action"] = PLAYER_LEFT;
 
-    json.set("player", p->to_json());
+    packet["player"] = p->to_packet();
 
-    send_network_message(json.to_string());
+    send_network_message(packet);
 
-    log_trace("notify player left %s", json.to_string().c_str());
+    log_trace("notify player left %s", packet.dump().c_str());
 }
 
 void matchmaker::notify_player_roll()
@@ -389,32 +391,32 @@ void matchmaker::notify_player_roll()
         return;
     }
 
-    json::object json;
+    packet_format packet;
 
-    json.set_int("action", PLAYER_ROLL);
+    packet["action"] = PLAYER_ROLL;
 
     auto dice = game_->current_player()->d1ce();
 
     auto player = game_->current_player();
 
-    json::array values;
+    vector<packet_format> values;
 
     for (size_t i = 0; i < player->die_count(); i++) {
-        json::object inner;
+        packet_format inner;
 
-        inner.set_bool("kept", player->is_kept(i));
-        inner.set_int("value", player->d1e(i).value());
+        inner["kept"] = player->is_kept(i);
+        inner["value"] = player->d1e(i).value();
 
-        values.add(inner);
+        values.push_back(inner);
     }
 
-    json.set_string("player_id", player->id());
+    packet["player_id"] = player->id();
 
-    json.set_array("roll", values);
+    packet["roll"] = values;
 
-    send_network_message(json.to_string());
+    send_network_message(packet);
 
-    log_trace("notify player roll %s", json.to_string().c_str());
+    log_trace("notify player roll %s", packet.dump().c_str());
 }
 
 void matchmaker::notify_player_turn_finished()
@@ -423,43 +425,43 @@ void matchmaker::notify_player_turn_finished()
         return;
     }
 
-    json::object json;
+    packet_format packet;
 
-    json::array upper, lower;
+    vector<packet_format> upper, lower;
 
-    json.set_int("action", PLAYER_TURN_FINISHED);
+    packet["action"] = PLAYER_TURN_FINISHED;
 
     auto player = game_->current_player();
 
     for (int i = 0; i <= yaht::Constants::NUM_DICE; i++) {
         if (!player->score().upper_played(i + 1)) {
-            upper.add_int(-1);
+            upper.push_back(-1);
         } else {
             auto value = player->score().upper_score(i + 1);
 
-            upper.add_int(value);
+            upper.push_back(value);
         }
     }
 
-    json.set_array("upper", upper);
+    packet["upper"] = upper;
 
     for (int i = yaht::scoresheet::FIRST_TYPE; i < yaht::scoresheet::MAX_TYPE; i++) {
         yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
 
         if (!player->score().lower_played(type)) {
-            lower.add_int(-1);
+            lower.push_back(-1);
         } else {
             auto value = player->score().lower_score(type);
 
-            lower.add_int(value);
+            lower.push_back(value);
         }
     }
 
-    json.set_array("lower", lower);
+    packet["lower"] = lower;
 
-    json.set_string("player_id", player->id());
+    packet["player_id"] = player->id();
 
-    send_network_message(json.to_string());
+    send_network_message(packet);
 
-    log_trace("notify player turn finished %s", json.to_string().c_str());
+    log_trace("notify player turn finished %s", packet.dump().c_str());
 }

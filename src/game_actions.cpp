@@ -16,8 +16,8 @@ void game::action_host_game()
     display_hosting_game();
 
     // check if the settings specify a port
-    if (settings_.contains("port")) {
-        port = settings_.get_int("port");
+    if (settings_.count("port")) {
+        port = settings_["port"];
     }
 
     bool response;
@@ -75,7 +75,8 @@ void game::action_join_online_game()
 
         pop_state();
 
-        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr, [&]() { set_state(&game::state_multiplayer_menu); });
+        display_alert(2000, {"Unable to find game to join at this time.", error}, nullptr,
+                      [&]() { set_state(&game::state_multiplayer_menu); });
 
         players_.clear();
 
@@ -94,9 +95,9 @@ void game::action_join_game()
 
     // grab the host/port from the settings
     // this are piggy backed into the settings from user input
-    string host = settings_.get_string("lan_host");
+    string host = settings_["lan_host"];
 
-    int port = settings_.get_int("lan_port");
+    int port = settings_["lan_port"];
 
     try {
         // tell the matchmaker to join the game
@@ -111,7 +112,8 @@ void game::action_join_game()
 
         pop_state();
 
-        display_alert(2000, {"Unable to join game!", error}, nullptr, [&]() { set_state(&game::state_multiplayer_menu); });
+        display_alert(2000, {"Unable to join game!", error}, nullptr,
+                      [&]() { set_state(&game::state_multiplayer_menu); });
 
         players_.clear();
 
@@ -179,7 +181,8 @@ void game::action_add_network_player(const shared_ptr<player> &player)
 void game::action_remove_network_player(connection *c)
 {
     // find the player to remove based on the connection
-    auto it = find_if(players_.begin(), players_.end(), [&c](const shared_ptr<player> &p) { return p->c0nnection() == c; });
+    auto it = find_if(players_.begin(), players_.end(),
+                      [&c](const shared_ptr<player> &p) { return p->get_connection() == c; });
 
     if (it != players_.end()) {
         auto p = *it;
@@ -216,7 +219,9 @@ void game::action_network_player_joined(const shared_ptr<player> &p)
 
 void game::action_network_player_left(const shared_ptr<player> &p)
 {
-    players_.erase(remove_if(players_.begin(), players_.end(), [&p](const shared_ptr<player> &o) { return p->id() == o->id(); }), players_.end());
+    players_.erase(
+        remove_if(players_.begin(), players_.end(), [&p](const shared_ptr<player> &o) { return p->id() == o->id(); }),
+        players_.end());
 
     if (players_.size() == 1) {
         log_trace("reseting game");
@@ -255,7 +260,8 @@ void game::action_roll_dice()
 
         matchmaker_.notify_player_roll();
     } else {
-        display_alert(2000, vector<string>({"You must choose a score after three rolls.", "Press '?' for help on how to score."}));
+        display_alert(2000, vector<string>(
+                                {"You must choose a score after three rolls.", "Press '?' for help on how to score."}));
     }
 }
 

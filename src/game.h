@@ -18,6 +18,8 @@ class player;
 class game : public caca_game
 {
    public:
+    typedef nlohmann::json config_format;
+
     /*! a state handler */
     typedef void (game::*state_handler)(int);
 
@@ -63,7 +65,7 @@ class game : public caca_game
 
     bool is_auto_port_forward() const;
 
-    const rj::json::object *settings() const;
+    const config_format *settings() const;
 
     void load_settings(char *exe);
 
@@ -113,8 +115,8 @@ class game : public caca_game
 
     void display_alert(const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr);
 
-    void display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk = nullptr,
-                       const function<void()> pop = nullptr);
+    void display_alert(int millis, const vector<string> &messages,
+                       const function<void(const alert_box &a)> funk = nullptr, const function<void()> pop = nullptr);
 
     void display_already_scored();
 
@@ -144,7 +146,8 @@ class game : public caca_game
 
     rj::yaht::scoresheet::value_type display_upper_scores(int color, const rj::yaht::scoresheet &score, int x, int y);
 
-    void display_lower_scores(int color, const rj::yaht::scoresheet &score, rj::yaht::scoresheet::value_type lower_score_total, int x, int y);
+    void display_lower_scores(int color, const rj::yaht::scoresheet &score,
+                              rj::yaht::scoresheet::value_type lower_score_total, int x, int y);
 
     void display_client_waiting_to_start();
 
@@ -270,7 +273,7 @@ class game : public caca_game
     vector<shared_ptr<player>> players_;
     int currentPlayer_;
 
-    rj::json::object settings_;
+    config_format settings_;
 
     /*! hosting a network game */
     static const int FLAG_HOSTING = (1 << 0);

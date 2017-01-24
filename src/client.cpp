@@ -12,7 +12,8 @@ connection_factory::connection_factory(game *game) : game_(game)
 {
 }
 
-std::shared_ptr<buffered_socket> connection_factory::create_socket(const server_type &server, SOCKET sock, const sockaddr_storage &addr)
+std::shared_ptr<buffered_socket> connection_factory::create_socket(const server_type &server, SOCKET sock,
+                                                                   const sockaddr_storage &addr)
 {
     auto socket = make_shared<connection>(game_, sock, addr);
 
@@ -30,7 +31,8 @@ void connection_factory::for_connections(std::function<void(const shared_ptr<con
 }
 
 /*  client */
-client::client(game *game, SOCKET sock, const sockaddr_storage &addr) : connection(game, sock, addr), backgroundThread_(nullptr)
+client::client(game *game, SOCKET sock, const sockaddr_storage &addr)
+    : connection(game, sock, addr), backgroundThread_(nullptr)
 {
 }
 
@@ -63,15 +65,15 @@ client &client::operator=(client &&other)
 //! handle when connected
 void client::on_connect()
 {
-    json::object packet;
+    json packet;
 
-    packet.set_int("action", REMOTE_CONNECTION_INIT);
+    packet["action"] = REMOTE_CONNECTION_INIT;
 
-    packet.set_string("name", game_->this_player()->name());
+    packet["name"] = game_->this_player()->name();
 
-    packet.set_string("id", game_->this_player()->id());
+    packet["id"] = game_->this_player()->id();
 
-    writeln(packet.to_string());
+    writeln(packet);
 
     log_trace("client connected, sending %s", packet.to_string().c_str());
 }

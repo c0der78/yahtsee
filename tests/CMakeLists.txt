@@ -1,2 +1,2 @@
 
-add_executable(${PROJECT_NAME}-test main.test.cpp)
+add_executable(${PROJECT_NAME}_test main.test.cpp)

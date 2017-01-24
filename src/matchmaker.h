@@ -2,7 +2,7 @@
 #define _MATCHMAKER_H_
 
 #include <rj/dice/yaht/player.h>
-#include <rj/net/http_client.h>
+#include <rj/net/http/client.h>
 #include <rj/net/socket_server.h>
 #include <string>
 #include "client.h"
@@ -13,6 +13,7 @@ class player;
 class matchmaker
 {
    public:
+    typedef nlohmann::json packet_format;
     matchmaker(game *game);
     matchmaker(const matchmaker &) = delete;
     matchmaker(matchmaker &&other);
@@ -48,7 +49,7 @@ class matchmaker
     static const int INVALID = -1;
 
     std::string gameId_;
-    rj::net::http_client api_;
+    rj::net::http::client api_;
     client client_;
     std::shared_ptr<connection_factory> client_factory_;
     rj::net::socket_server server_;

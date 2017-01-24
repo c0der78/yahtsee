@@ -36,25 +36,31 @@ void player::engine::set_next_roll(const queue<die::value_type> &roll)
     player_engine.nextRoll_ = roll;
 }
 
-player::player(const string &name) : yaht::player(&player_engine), connection_(NULL), id_(rj::uuid::generate()), name_(name)
+player::player(const string &name)
+    : yaht::player(&player_engine), connection_(NULL), id_(rj::uuid::generate()), name_(name)
 {
 }
 
-player::player(connection *conn, const string &id, const string &name) : yaht::player(&player_engine), connection_(conn), id_(id), name_(name)
+player::player(connection *conn, const string &id, const string &name)
+    : yaht::player(&player_engine), connection_(conn), id_(id), name_(name)
 {
 }
 
-player::player(connection *conn, const json::object &json) : yaht::player(&player_engine)
+player::player(connection *conn, const packet_format &packet) : yaht::player(&player_engine)
 {
-    from_json(json);
+    from_packet(packet);
 }
 
-player::player(const player &other) : yaht::player(other), connection_(other.connection_), id_(other.id_), name_(other.name_)
+player::player(const player &other)
+    : yaht::player(other), connection_(other.connection_), id_(other.id_), name_(other.name_)
 {
 }
 
 player::player(player &&other)
-    : yaht::player(std::move(other)), connection_(other.connection_), id_(std::move(other.id_)), name_(std::move(other.name_))
+    : yaht::player(std::move(other)),
+      connection_(other.connection_),
+      id_(std::move(other.id_)),
+      name_(std::move(other.name_))
 {
 }
 
@@ -82,7 +88,7 @@ player::~player()
     connection_ = NULL;
 }
 
-connection *player::c0nnection() const
+connection *player::get_connection() const
 {
     return connection_;
 }
@@ -97,20 +103,20 @@ string player::name() const
     return name_;
 }
 
-void player::from_json(const json::object &json)
+void player::from_packet(const packet_format &packet)
 {
-    id_ = json.get_string("id");
-    name_ = json.get_string("name");
+    id_ = packet["id"];
+    name_ = packet["name"];
 }
 
-json::object player::to_json() const
+player::packet_format player::to_packet() const
 {
-    json::object json;
+    packet_format packet;
 
-    json.set_string("id", id_);
-    json.set_string("name", name_);
+    packet["id"] = id_;
+    packet["name"] = name_;
 
-    return json;
+    return packet;
 }
 
 bool player::operator==(const player &other) const

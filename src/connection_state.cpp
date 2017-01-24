@@ -6,11 +6,11 @@
 using namespace rj;
 
 //! the connection has recieved an init packet
-void connection::handle_connection_init(const json::object &packet)
+void connection::handle_connection_init(const json &packet)
 {
-    json::array players = packet.get_array("players");
+    vector<json> players = packet["players"];
 
-    for (const json::object &player : players) {
+    for (const json &player : players) {
         game_->add_player(make_shared<::player>(this, player));
     }
 
@@ -18,9 +18,9 @@ void connection::handle_connection_init(const json::object &packet)
 }
 
 //! the connection has recieved a game start packet
-void connection::handle_game_start(const json::object &packet)
+void connection::handle_game_start(const json &packet)
 {
-    string id = packet.get_string("start_id");
+    string id = packet["start_id"];
 
     auto player = game_->find_player_by_id(id);
 
@@ -44,9 +44,9 @@ void connection::handle_game_start(const json::object &packet)
 }
 
 //! handle a recieved player roll packet
-void connection::handle_player_roll(const json::object &packet)
+void connection::handle_player_roll(const packet_format &packet)
 {
-    string id = packet.get_string("player_id");
+    string id = packet["player_id"];
 
     auto p = game_->find_player_by_id(id);
 
@@ -54,17 +54,17 @@ void connection::handle_player_roll(const json::object &packet)
         return;
     }
 
-    json::array roll = packet.get_array("roll");
+    vector<packet_format> roll = packet["roll"];
 
     queue<rj::die::value_type> values;
 
     for (size_t i = 0; i < roll.size(); i++) {
-        json::object inner = roll.get(i);
+        auto inner = roll[i];
 
-        auto kept = inner.get_bool("kept");
+        auto kept = inner["kept"];
 
         if (!kept) {
-            values.push(inner.get_int("value"));
+            values.push(inner["value"]);
         }
 
         p->keep_die(i, kept);
@@ -86,19 +86,19 @@ void connection::handle_player_roll(const json::object &packet)
 }
 
 //! handle when another player has joined the game
-void connection::handle_remote_connection_init(const json::object &packet)
+void connection::handle_remote_connection_init(const json &packet)
 {
     game_->action_add_network_player(make_shared<player>(this, packet));
 }
 
-void connection::handle_player_joined(const json::object &packet)
+void connection::handle_player_joined(const packet_format &packet)
 {
-    json::object player = packet.get("player");
+    packet_format player = packet["player"];
 
-    string id = player.get_string("id");
+    string id = player["id"];
 
     if (id != game_->this_player()->id()) {
-        string name = player.get_string("name");
+        string name = player["name"];
 
         log_trace("new player found (%s)", name.c_str());
 
@@ -108,11 +108,11 @@ void connection::handle_player_joined(const json::object &packet)
     }
 }
 
-void connection::handle_player_left(const json::object &packet)
+void connection::handle_player_left(const packet_format &packet)
 {
-    json::object player = packet.get("player");
+    packet_format player = packet["player"];
 
-    string id = player.get_string("id");
+    string id = player["id"];
 
     if (id != game_->this_player()->id()) {
         auto p = game_->find_player_by_id(id);
@@ -123,9 +123,9 @@ void connection::handle_player_left(const json::object &packet)
     }
 }
 
-void connection::handle_player_turn_finished(const json::object &packet)
+void connection::handle_player_turn_finished(const packet_format &packet)
 {
-    string id = packet.get_string("player_id");
+    string id = packet["player_id"];
 
     auto player = game_->find_player_by_id(id);
 
@@ -134,10 +134,10 @@ void connection::handle_player_turn_finished(const json::object &packet)
         return;
     }
 
-    json::array upper = packet.get_array("upper");
+    vector<packet_format> upper = packet["upper"];
 
     for (auto i = 0; i < upper.size(); i++) {
-        int value = upper.get_int(i);
+        int value = upper[i];
 
         if (value == -1) {
             player->score().upper_score(i + 1, 0, false);
@@ -146,12 +146,12 @@ void connection::handle_player_turn_finished(const json::object &packet)
         }
     }
 
-    json::array lower = packet.get_array("lower");
+    vector<packet_format> lower = packet["lower"];
 
     for (auto i = 0; i < lower.size(); i++) {
         yaht::scoresheet::type type = static_cast<yaht::scoresheet::type>(i);
 
-        int value = lower.get_int(i);
+        int value = lower[i];
 
         if (value < 0) {
             player->score().lower_score(type, 0, false);

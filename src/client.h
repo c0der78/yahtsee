@@ -1,9 +1,9 @@
 #ifndef _CLIENT_H_
 #define _CLIENT_H_
 
-#include <rj/json/json.h>
 #include <rj/net/buffered_socket.h>
 #include <rj/net/socket_factory.h>
+#include <json.hpp>
 #include <map>
 #include <thread>
 
@@ -21,12 +21,14 @@ typedef enum {
     PLAYER_TURN_FINISHED
 } client_action;
 
+
 /*!
  * A connection is a remote user connected to this host instance
  */
 class connection : public rj::net::buffered_socket
 {
    public:
+    typedef nlohmann::json packet_format;
     connection(game *game, rj::net::SOCKET sock, const sockaddr_storage &addr);
     connection(game *game);
     /* non copyable */
@@ -46,13 +48,13 @@ class connection : public rj::net::buffered_socket
     virtual void on_close();
 
    protected:
-    void handle_player_roll(const rj::json::object &);
-    void handle_game_start(const rj::json::object &);
-    void handle_connection_init(const rj::json::object &);
-    void handle_remote_connection_init(const rj::json::object &);
-    void handle_player_joined(const rj::json::object &);
-    void handle_player_left(const rj::json::object &);
-    void handle_player_turn_finished(const rj::json::object &);
+    void handle_player_roll(const packet_format &);
+    void handle_game_start(const packet_format &);
+    void handle_connection_init(const packet_format &);
+    void handle_remote_connection_init(const packet_format &);
+    void handle_player_joined(const packet_format &);
+    void handle_player_left(const packet_format &);
+    void handle_player_turn_finished(const packet_format &);
     game *game_;
 };
 
@@ -86,7 +88,7 @@ class client : public connection
     void on_did_write();
     void run();
 
-    shared_ptr<thread> backgroundThread_;
+    std::shared_ptr<std::thread> backgroundThread_;
 };
 
 class connection_factory : public rj::net::socket_factory
@@ -94,14 +96,15 @@ class connection_factory : public rj::net::socket_factory
    public:
     connection_factory(game *game);
 
-    std::shared_ptr<rj::net::buffered_socket> create_socket(const server_type &server, rj::net::SOCKET sock, const sockaddr_storage &addr);
+    std::shared_ptr<rj::net::buffered_socket> create_socket(const server_type &server, rj::net::SOCKET sock,
+                                                            const sockaddr_storage &addr);
 
     // perform an operation on each connection
-    void for_connections(std::function<void(const shared_ptr<connection> &sock)> funk);
+    void for_connections(std::function<void(const std::shared_ptr<connection> &sock)> funk);
 
    private:
     game *game_;
-    vector<shared_ptr<connection>> connections_;
+    std::vector<std::shared_ptr<connection>> connections_;
 };
 
 #endif

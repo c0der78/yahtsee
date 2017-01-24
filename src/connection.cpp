@@ -35,26 +35,25 @@ connection &connection::operator=(connection &&other)
 //! handle when connected
 void connection::on_connect()
 {
-    json::object packet;
+    json packet;
 
     // build the init packet
-    packet.set_int("action", CONNECTION_INIT);
+    packet["action"] = CONNECTION_INIT;
 
-    json::array players;
+    std::vector<json> players;
 
     game_->for_players([&](const shared_ptr<player> &p) {
-        if (p->c0nnection() != this) {
-            players.add(p->to_json());
+        if (p->get_connection() != this) {
+            players.push_back(p->to_packet());
         }
-
         return false;
     });
 
-    packet.set_array("players", players);
+    packet["players"] = players;
 
     log_trace("connection connected, sending %s", packet.to_string().c_str());
 
-    writeln(packet.to_string());
+    writeln(packet);
 
     log_trace("connection connected, sending %s", packet.to_string().c_str());
 }
@@ -75,7 +74,7 @@ void connection::on_will_read()
 //! handle when data is read
 void connection::on_did_read()
 {
-    json::object packet;
+    json packet;
 
     while (has_input()) {
         // read a packet
@@ -88,11 +87,11 @@ void connection::on_did_read()
 
         // validate the packet
         // TODO: verify a game/session id?
-        if (!packet.contains("action")) {
+        if (packet.find("action") == packet.end()) {
             throw runtime_error("packet has no action");
         }
 
-        client_action action = (client_action)packet.get_int("action");
+        client_action action = static_cast<client_action>(packet["action"].get<int>());
 
         switch (action) {
             case REMOTE_CONNECTION_INIT: {

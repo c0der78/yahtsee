@@ -2,10 +2,12 @@
 #define _PLAYER_H_
 
 #include <rj/dice/yaht/player.h>
-#include <rj/json/object.h>
+#include <json.hpp>
 #include <queue>
 
 class connection;
+
+using nlohmann::json;
 
 /*!
  * An entity that is playing the game
@@ -14,11 +16,13 @@ class connection;
 class player : public rj::yaht::player
 {
    public:
+    typedef nlohmann::json packet_format;
+
     player(const string &name);
 
     player(connection *conn, const string &id, const string &name);
 
-    player(connection *conn, const rj::json::object &json);
+    player(connection *conn, const json &json);
 
     player(const player &other);
 
@@ -33,10 +37,10 @@ class player : public rj::yaht::player
 
     string name() const;
 
-    void from_json(const rj::json::object &json);
-    rj::json::object to_json() const;
+    void from_packet(const packet_format &packet);
+    packet_format to_packet() const;
 
-    connection *c0nnection() const;
+    connection *get_connection() const;
 
     bool operator==(const player &other) const;
 

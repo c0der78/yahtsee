@@ -144,8 +144,8 @@ void game::state_multiplayer_join_game(int input)
 
         host = host.substr(0, pos);
 
-        settings_.set_string("lan_host", host);
-        settings_.set_string("lan_port", port);
+        settings_["lan_host"] = host;
+        settings_["lan_port"] = port;
 
         clear_buffer();
 

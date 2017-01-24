@@ -22,31 +22,39 @@ const game::game_state game::state_table[] = {
 
     {"ask_name", &game::display_ask_name, &game::state_ask_name, NULL, NULL, FLAG_STATE_TRANSIENT},
 
-    {"rolling_dice", &game::display_dice_roll, &game::state_rolling_dice, &game::display_player_scores, NULL, FLAG_STATE_TRANSIENT},
+    {"rolling_dice", &game::display_dice_roll, &game::state_rolling_dice, &game::display_player_scores, NULL,
+     FLAG_STATE_TRANSIENT},
 
     {"quit_confirm", &game::display_confirm_quit, &game::state_quit_confirm, NULL, NULL, 0},
 
     {"help_menu", &game::display_help, &game::state_help_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
 
-    {"ask_number_of_players", &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL, FLAG_STATE_TRANSIENT},
-
-    {"multiplayer_menu", &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL, FLAG_STATE_TRANSIENT},
-
-    {"hosting_game", &game::action_host_game, &game::state_hosting_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
-
-    {"multiplayer_join", &game::display_multiplayer_join, &game::state_multiplayer_join, NULL, NULL, FLAG_STATE_TRANSIENT},
-
-    {"multiplayer_join_game", &game::display_multiplayer_join_game, &game::state_multiplayer_join_game, NULL, NULL, FLAG_STATE_TRANSIENT},
-
-    {"waiting_for_connections", &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL, &game::exit_multiplayer,
+    {"ask_number_of_players", &game::display_ask_number_of_players, &game::state_ask_number_of_players, NULL, NULL,
      FLAG_STATE_TRANSIENT},
 
-    {"waiting_to_start", &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL, &game::exit_multiplayer,
+    {"multiplayer_menu", &game::display_multiplayer_menu, &game::state_multiplayer_menu, NULL, NULL,
      FLAG_STATE_TRANSIENT},
 
-    {"joining_game", &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    {"hosting_game", &game::action_host_game, &game::state_hosting_game, NULL, &game::exit_multiplayer,
+     FLAG_STATE_TRANSIENT},
 
-    {"joining_online_game", &game::action_join_online_game, &game::state_joining_online_game, NULL, &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+    {"multiplayer_join", &game::display_multiplayer_join, &game::state_multiplayer_join, NULL, NULL,
+     FLAG_STATE_TRANSIENT},
+
+    {"multiplayer_join_game", &game::display_multiplayer_join_game, &game::state_multiplayer_join_game, NULL, NULL,
+     FLAG_STATE_TRANSIENT},
+
+    {"waiting_for_connections", &game::display_waiting_for_connections, &game::state_waiting_for_connections, NULL,
+     &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+
+    {"waiting_to_start", &game::display_client_waiting_to_start, &game::state_client_waiting_to_start, NULL,
+     &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
+
+    {"joining_game", &game::action_join_game, &game::state_joining_game, NULL, &game::exit_multiplayer,
+     FLAG_STATE_TRANSIENT},
+
+    {"joining_online_game", &game::action_join_online_game, &game::state_joining_online_game, NULL,
+     &game::exit_multiplayer, FLAG_STATE_TRANSIENT},
 
     {NULL, NULL, NULL, NULL, NULL}};
 
@@ -73,12 +81,12 @@ void game::load_settings(char *exe)
 
     settings_.parse(strStream.str());
 
-    if (!settings_.contains("basedir")) {
-        settings_.set_string("basedir", baseDir);
+    if (!settings_.count("basedir")) {
+        settings_["basedir"] = baseDir;
     }
 
-    if (settings_.contains("default_display")) {
-        auto mode = settings_.get_string("default_display");
+    if (settings_.count("default_display")) {
+        std::string mode = settings_["default_display"];
 
         if (mode == "horizontal") {
             displayMode_ = HORIZONTAL;
@@ -87,12 +95,12 @@ void game::load_settings(char *exe)
         }
     }
 
-    if (settings_.contains("connect_service")) {
-        json::object service = settings_.get("connect_service");
+    if (settings_.count("connect_service")) {
+        config_format service = settings_["connect_service"];
 
-        if (!service.contains("enabled") || service.get_bool("enabled")) {
-            std::string appId = service.get_string("appId");
-            std::string appToken = service.get_string("appToken");
+        if (!service.count("enabled") || service["enabled"].get<bool>()) {
+            std::string appId = service["appId"];
+            std::string appToken = service["appToken"];
 
             matchmaker_.set_api_keys(appId, appToken);
         }
@@ -213,22 +221,22 @@ bool game::is_online() const
 }
 bool game::is_online_available() const
 {
-    if (!settings_.contains("connect_service")) {
+    if (!settings_.count("connect_service")) {
         return false;
     }
 
-    json::object service = settings_.get("connect_service");
+    config_format service = settings_["connect_service"];
 
-    return service.contains("enabled") && service.get_bool("enabled");
+    return service.count("enabled") && service["enabled"].get<bool>();
 }
 
 bool game::is_auto_port_forward() const
 {
-    if (!settings_.contains("auto_port_forward")) {
+    if (!settings_.count("auto_port_forward")) {
         return false;
     }
 
-    return settings_.get_bool("auto_port_forward");
+    return settings_["auto_port_forward"];
 }
 
 void game::on_display()
@@ -361,7 +369,8 @@ void game::clear_states()
 
 string game::resource_file_name(const string &path)
 {
-    static const char *paths[] = {"/etc/yahtsee", "/usr/share/yahtsee", "/usr/local/share/yahtsee", "resources", "../resources", NULL};
+    static const char *paths[] = {"/etc/yahtsee", "/usr/share/yahtsee", "/usr/local/share/yahtsee",
+                                  "resources",    "../resources",       NULL};
 
     char buf[BUFSIZ + 1] = {0};
     char file[BUFSIZ + 1] = {0};
@@ -455,7 +464,8 @@ void game::init_canvas(caca_canvas_t *canvas)
         case MINIMAL: {
             int index = minimalLower_ ? BUF_LOWER : BUF_UPPER;
             if (minimalLower_) {
-                caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_LOWER_HEADER_MINIMAL], bufSize[BUF_LOWER_HEADER_MINIMAL], "caca");
+                caca_import_area_from_memory(canvas, 0, 0, bufs[BUF_LOWER_HEADER_MINIMAL],
+                                             bufSize[BUF_LOWER_HEADER_MINIMAL], "caca");
             }
             caca_import_area_from_memory(canvas, 0, minimalLower_ ? 3 : 0, bufs[index], bufSize[index], "caca");
             break;
@@ -501,7 +511,8 @@ void game::display_alert(const string &message, const function<void(const alert_
     });
 }
 
-void game::display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk, const function<void()> pop)
+void game::display_alert(int millis, const string &message, const function<void(const alert_box &a)> funk,
+                         const function<void()> pop)
 {
     display_alert(message, funk);
 
@@ -531,7 +542,8 @@ void game::display_alert(const vector<string> &messages, const std::function<voi
     });
 }
 
-void game::display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk, const function<void()> pop)
+void game::display_alert(int millis, const vector<string> &messages, const function<void(const alert_box &a)> funk,
+                         const function<void()> pop)
 {
     display_alert(messages, funk);
 
@@ -684,7 +696,7 @@ shared_ptr<player> game::find_player_by_id(const string &id) const
     return nullptr;
 }
 
-const rj::json::object *game::settings() const
+const game::config_format *game::settings() const
 {
     return &settings_;
 }
