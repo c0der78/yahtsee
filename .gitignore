@@ -44,3 +44,5 @@ rest
 build
 debug
 release
+conanbuildinfo.cmake
+conaninfo.txt

@@ -3,7 +3,7 @@
 
 #include <rj/dice/yaht/player.h>
 #include <rj/net/http/client.h>
-#include <rj/net/socket_server.h>
+#include <rj/net/async/server.h>
 #include <string>
 #include "client.h"
 
@@ -52,7 +52,7 @@ class matchmaker
     rj::net::http::client api_;
     client client_;
     std::shared_ptr<connection_factory> client_factory_;
-    rj::net::socket_server server_;
+    rj::net::async::server server_;
     game *game_;
     int server_port_;
 };
