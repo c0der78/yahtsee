@@ -9,7 +9,7 @@ a multiplayer game of yahtzee on the terminal
 
 - [libcaca](http://caca.zoy.org/wiki/libcaca) (brew install libcaca / apt-get install libcaca-dev) For the ascii display driver
 
-- [libryjen](http://github.com/ryjen/libryjen.git) (cmake) for networking, json, etc
+- [libryjen](http://github.com/ryjen/libryjen.git) (cmake) for networking, etc
 
 - [libarchive](http://www.libarchive.org) (brew install libarchive / apt-get install libarchive-dev) for reading assets
 
@@ -25,9 +25,9 @@ a multiplayer game of yahtzee on the terminal
 - make install
 - brew link yahtsee
 
-#### TODO
+#### TODO/IDEAS
 - Refactor the event system so everything goes through that.
-- ~~build [connection service](http://arg3connect.herokuapp.com) to register/list available online games~~
+- build connection service to register/list available online games
 - ~~implement turn based game play~~
 - ~~implement server mode w/ protocol~~
 - ~~implement client mode w/ protocol~~

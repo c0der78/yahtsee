@@ -2,7 +2,7 @@
 #include "config.h"
 #endif
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include "game.h"
 #include "log.h"
 #include "matchmaker.h"
@@ -23,6 +23,9 @@ const char *matchmaker::GAME_API_URL = "connect.arg3.com";
 #else
 const char *matchmaker::GAME_API_URL = "localhost.arg3.com:1337";
 #endif
+
+
+const char *matchmaker::GAME_TYPE = "yahtsee";
 
 void matchmaker::send_network_message(const string &value)
 {

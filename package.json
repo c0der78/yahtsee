@@ -1,0 +1,62 @@
+{
+  "name": "yahtsee",
+  "version": "1.0",
+  "author": {
+    "name": "Ryan Jennings",
+    "email": "ryan@micrantha.com"
+  },
+  "build_system": ["cmake", "make"],
+  "executable": "yahtsee",
+  "dependencies": [
+    {
+      "name": "libcaca",
+      "version": "0.99b19",
+      "archive": {
+        "location": "http://caca.zoy.org/files/libcaca/libcaca-0.99.beta19.tar.gz"
+      },
+      "build_system": [
+        "autotools",
+        "make"
+      ]
+    },
+    {
+      "name": "nljson",
+      "version": "HEAD",
+      "git": {
+        "location": "https://github.com/nlohmann/json.git"
+      },
+      "build_system": [ "cmake", "make"]
+    },
+    {
+      "name": "uriparser",
+      "version": "HEAD",
+      "git": {
+        "location": "git://git.code.sf.net/p/uriparser/git"
+      },
+      "build_system": [
+        "autotools", "make"
+      ]
+    },
+    {
+      "name": "libryjen",
+      "version": "HEAD",
+      "git": {
+        "location": "https://github.com/ryjen/libryjen.git"
+      },
+      "build_system": [
+        "cmake", "make"
+      ]
+    },
+    {
+      "name": "imgui",
+      "version": "1.52",
+      "git": {
+        "location": "git@github.com:ryjen/imgui-cmake.git"
+      },
+      "build_system": [
+        "cmake", "make"
+      ]
+    }
+  ]
+
+}

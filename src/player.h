@@ -2,7 +2,7 @@
 #define _PLAYER_H_
 
 #include <rj/dice/yaht/player.h>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include <queue>
 
 class connection;

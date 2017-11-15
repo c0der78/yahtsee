@@ -11,6 +11,8 @@ using namespace rj;
 
 int main(int argc, char **argv)
 {
+    puts("Starting yahtsee");
+
     ::game game;
 
     srand(time(0));

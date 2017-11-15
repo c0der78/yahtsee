@@ -20,7 +20,7 @@ connection::connection(connection &&other) : buffered_socket(std::move(other)), 
 
 connection::~connection()
 {
-    log_trace("destrying connection");
+    log_trace("destroying connection");
 }
 
 connection &connection::operator=(connection &&other)

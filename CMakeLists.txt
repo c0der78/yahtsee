@@ -9,9 +9,6 @@ option(ENABLE_MEMCHECK "Enable testing for memory leaks." OFF)
 # define project name
 project (yahtsee VERSION 0.1.0)
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
-
 # set path to custom modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
