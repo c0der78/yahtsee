@@ -19,6 +19,8 @@ a multiplayer game of yahtzee on the terminal
 
 #### build / install for homebrew
 
+This project now builds with [prep](https://github.com/ryjen/prep).  Just run `prep`.
+
 - mkdir build; cd build
 - cmake $(cd ..;brew diy --version=0.1.0) ..
 - make

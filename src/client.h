@@ -4,6 +4,8 @@
 #include <rj/net/buffered_socket.h>
 #include <rj/net/socket_factory.h>
 #include <nlohmann/json.hpp>
+#include <rj/net/uri.h>
+#include <rj/net/socket_server.h>
 #include <map>
 #include <thread>
 

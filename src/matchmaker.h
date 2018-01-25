@@ -2,6 +2,8 @@
 #define _MATCHMAKER_H_
 
 #include <rj/dice/yaht/player.h>
+#include <rj/net/socket_server.h>
+#include <rj/net/uri.h>
 #include <rj/net/http/client.h>
 #include <rj/net/async/server.h>
 #include <string>

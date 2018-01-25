@@ -46,3 +46,6 @@ debug
 release
 conanbuildinfo.cmake
 conaninfo.txt
+.idea
+.prep
+cmake-build-debug
