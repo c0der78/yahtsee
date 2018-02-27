@@ -1,68 +1,75 @@
-#ifndef _PLAYER_H_
-#define _PLAYER_H_
+#ifndef YAHTSEE_PLAYER_H
+#define YAHTSEE_PLAYER_H
 
 #include <rj/dice/yaht/player.h>
 #include <nlohmann/json.hpp>
 #include <queue>
 
-class connection;
-
 using nlohmann::json;
 
-/*!
- * An entity that is playing the game
- * Has an id, name, score and dice.
- */
-class player : public rj::yaht::player
-{
-   public:
-    typedef nlohmann::json packet_format;
+namespace yahtsee {
 
-    player(const string &name);
+    class connection;
 
-    player(connection *conn, const string &id, const string &name);
+    /*!
+     * An entity that is playing the game
+     * Has an id, name, score and dice.
+     */
+    class Player : public rj::yaht::player {
+    public:
+        typedef nlohmann::json Packet;
+        typedef nlohmann::json Config;
 
-    player(connection *conn, const json &json);
+        Player(const std::string &name);
 
-    player(const player &other);
+        Player(connection *conn, const std::string &id, const std::string &name);
 
-    player(player &&other);
+        Player(connection *conn, const Config &config);
 
-    virtual ~player();
+        Player(const Player &other);
 
-    player &operator=(const player &other);
-    player &operator=(player &&other);
+        Player(Player &&other);
 
-    string id() const;
+        virtual ~Player();
 
-    string name() const;
+        Player &operator=(const Player &other);
 
-    void from_packet(const packet_format &packet);
-    packet_format to_packet() const;
+        Player &operator=(Player &&other);
 
-    connection *get_connection() const;
+        std::string id() const;
 
-    bool operator==(const player &other) const;
+        std::string name() const;
 
-    class engine : public rj::die::engine
-    {
-       public:
-        rj::die::value_type generate(rj::die::value_type from, rj::die::value_type to);
-        void reset();
-        void set_next_roll(const queue<rj::die::value_type> &values);
+        void from_packet(const Packet &packet);
 
-       private:
-        queue<rj::die::value_type> nextRoll_;
-        friend class player;
+        Packet to_packet() const;
+
+        Connection *get_connection() const;
+
+        bool operator==(const Player &other) const;
+
+        class Engine : public rj::die::engine {
+        public:
+            rj::die::value_type generate(rj::die::value_type from, rj::die::value_type to);
+
+            void reset();
+
+            void set_next_roll(const std::queue<rj::die::value_type> &values);
+
+        private:
+            std::queue<rj::die::value_type> nextRoll_;
+
+            friend class Player;
+        };
+
+    private:
+        Connection *connection_;
+        std::string id_;
+        std::string name_;
     };
 
-   private:
-    connection *connection_;
-    string id_;
-    string name_;
-};
-
-extern player::engine player_engine;
+    extern Player::Engine playerEngine;
 
 
+}
 #endif

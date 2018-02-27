@@ -1,31 +1,27 @@
 
-#include <stdlib.h>
-
-#include <caca.h>
-
 #include "game.h"
-
-using namespace std;
-
-using namespace rj;
 
 int main(int argc, char **argv)
 {
-    puts("Starting yahtsee");
+    int seed = 0;
 
-    ::game game;
+    if (argc > 1) {
+        seed = atoi(argv[1]);
+    } else {
+        seed = time(NULL);
+    }
 
-    srand(time(0));
+    yahtsee::game game(seed);
 
-    game.load_settings(argv[0]);
+    game.load();
 
-    game.start();
+    game.begin();
 
-    while (game.alive()) {
+    while (game.on()) {
         game.update();
     }
 
-    game.reset();
+    game.end();
 
     return 0;
 }
