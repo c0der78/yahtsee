@@ -5,9 +5,13 @@
 #ifndef YAHTSEE_CONNECTION_H
 #define YAHTSEE_CONNECTION_H
 
+#include <nlohmann/json.hpp>
+#include <rj/net/buffered_socket.h>
+
 namespace yahtsee {
 
     class Player;
+    class ConnectionState;
 
     /*!
      * A connection is a remote user connected to this host instance
@@ -16,7 +20,7 @@ namespace yahtsee {
     public:
         typedef nlohmann::json Packet;
 
-        Connection(rj::net::SOCKET sock, const sockaddr_storage &addr);
+        Connection(rj::net::SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state );
 
         Connection();
 
@@ -44,20 +48,8 @@ namespace yahtsee {
 
         virtual void on_close();
 
-    protected:
-        void handle_player_roll(const Packet &);
-
-        void handle_game_start(const Packet &);
-
-        void handle_connection_init(const Packet &);
-
-        void handle_remote_connection_init(const Packet &);
-
-        void handle_player_joined(const Packet &);
-
-        void handle_player_left(const Packet &);
-
-        void handle_player_turn_finished(const Packet &);
+    private:
+        std::shared_ptr<ConnectionState> state_;
     };
 
 }

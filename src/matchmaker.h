@@ -12,7 +12,7 @@
 namespace yahtsee {
 
     class Game;
-
+    class ConnectionFactory;
     class Player;
 
     class Matchmaker {
@@ -22,7 +22,7 @@ namespace yahtsee {
         typedef nlohmann::json Config;
 
         // default constructor
-        Matchmaker();
+        Matchmaker(const std::shared_ptr<ConnectionFactory> &connectionFactory);
 
         // non-copy
         Matchmaker(const Matchmaker &) = delete;
@@ -40,9 +40,7 @@ namespace yahtsee {
 
         void stop();
 
-        bool is_valid() const;
-
-        bool host(bool registerOnline, bool portForwarding, std::string *error = NULL, int port = INVALID);
+        bool host(const Config &settings, bool registerOnline, bool portForwarding, std::string *error = NULL, int port = INVALID);
 
         bool join_best_game(std::string *error = NULL);
 
@@ -58,7 +56,7 @@ namespace yahtsee {
 
         void notify_player_turn_finished(const shared_ptr<Player> &p);
 
-        int server_port() const;
+        int port() const;
 
         void set_api_keys(const std::string &appId, const std::string &appToken);
 

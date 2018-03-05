@@ -40,7 +40,7 @@ namespace yahtsee {
             : yaht::player(&playerEngine), connection_(NULL), id_(rj::uuid::generate()), name_(name) {
     }
 
-    Player::Player(connection *conn, const string &id, const string &name)
+    Player::Player(Connection *conn, const string &id, const string &name)
             : yaht::player(&playerEngine), connection_(conn), id_(id), name_(name) {
     }
 
@@ -84,21 +84,21 @@ namespace yahtsee {
         return connection_;
     }
 
-    string player::id() const {
+    string Player::id() const {
         return id_;
     }
 
-    string player::name() const {
+    string Player::name() const {
         return name_;
     }
 
-    void player::from_packet(const packet_format &packet) {
+    void Player::from_packet(const Packet &packet) {
         id_ = packet["id"];
         name_ = packet["name"];
     }
 
-    player::packet_format player::to_packet() const {
-        packet_format packet;
+    Player::Packet Player::to_packet() const {
+        Packet packet;
 
         packet["id"] = id_;
         packet["name"] = name_;
@@ -106,7 +106,7 @@ namespace yahtsee {
         return packet;
     }
 
-    bool player::operator==(const player &other) const {
+    bool Player::operator==(const Player &other) const {
         return id_ == other.id_;
     }
 

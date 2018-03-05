@@ -9,25 +9,9 @@ using namespace rj::net;
 
 namespace yahtsee {
 
-    std::shared_ptr<buffered_socket> ConnectionFactory::create_socket(const server_type &server, SOCKET sock,
-                                                                       const sockaddr_storage &addr) {
-        auto socket = make_shared<Connection>(sock, addr);
-
-        // add to the list of connections
-        connections_.push_back(socket);
-
-        return socket;
-    }
-
-    void ConnectionFactory::for_connections(std::function<void(const shared_ptr<Connection> &conn)> funk) {
-        for (const auto &c : connections_) {
-            funk(c);
-        }
-    }
-
     /*  client */
-    Client::Client(SOCKET sock, const sockaddr_storage &addr)
-            : Connection(sock, addr), backgroundThread_(nullptr) {
+    Client::Client(SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state)
+            : Connection(sock, addr, state), backgroundThread_(nullptr) {
     }
 
     Client::Client() : Connection(), backgroundThread_(nullptr) {
@@ -57,7 +41,7 @@ namespace yahtsee {
     void Client::on_connect(const std::shared_ptr<Player> &player) {
         Packet packet;
 
-        packet["action"] = CONNECTION_INIT;
+        packet["action"] = static_cast<int>(ClientAction::INIT);
 
         packet["name"] = player->name();
 
@@ -65,7 +49,7 @@ namespace yahtsee {
 
         writeln(packet);
 
-        log::trace("client connected, sending ", packet.get<std::string>());
+        log::trace("client connected, sending ", packet.dump().c_str());
     }
 
     //! handle when closed

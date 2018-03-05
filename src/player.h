@@ -9,7 +9,7 @@ using nlohmann::json;
 
 namespace yahtsee {
 
-    class connection;
+    class Connection;
 
     /*!
      * An entity that is playing the game
@@ -19,12 +19,13 @@ namespace yahtsee {
     public:
         typedef nlohmann::json Packet;
         typedef nlohmann::json Config;
+        typedef std::shared_ptr<Player> Ref;
 
         Player(const std::string &name);
 
-        Player(connection *conn, const std::string &id, const std::string &name);
+        Player(Connection *conn, const std::string &id, const std::string &name);
 
-        Player(connection *conn, const Config &config);
+        Player(Connection *conn, const Config &config);
 
         Player(const Player &other);
 
@@ -44,7 +45,7 @@ namespace yahtsee {
 
         Packet to_packet() const;
 
-        Connection *get_connection() const;
+        Connection *connection() const;
 
         bool operator==(const Player &other) const;
 

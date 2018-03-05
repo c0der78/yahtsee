@@ -1,15 +1,17 @@
-
+#include "connection.h"
 #include "client.h"
 #include "game.h"
 #include <rj/log/log.h>
 #include "player.h"
+#include "connection_state.h"
 
 using namespace rj;
 using namespace rj::net;
 
 namespace yahtsee {
 
-Connection::Connection(SOCKET sock, const sockaddr_storage &addr) : buffered_socket(sock, addr)
+Connection::Connection(SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state)
+        : buffered_socket(sock, addr), state_(state)
 {
 }
 
@@ -39,7 +41,7 @@ void Connection::on_connect(const std::vector<Player> &players)
     Packet packet;
 
     // build the init packet
-    packet["action"] = CONNECTION_INIT;
+    packet["action"] = static_cast<int>(ClientAction::INIT);
 
     std::vector<Packet> playerPackets;
 
@@ -49,7 +51,7 @@ void Connection::on_connect(const std::vector<Player> &players)
 
     packet["players"] = playerPackets;
 
-    log::trace("connection connected, sending ", packet.dump());
+    log::trace("connection connected, sending ", packet.dump().c_str());
 
     writeln(packet);
 }
@@ -77,7 +79,7 @@ void Connection::on_did_read()
             return;
         }
 
-        log::trace("recieved ", packet.dump());
+        log::trace("recieved ", packet.dump().c_str());
 
         // validate the packet
         // TODO: verify a game/session id?
@@ -85,49 +87,7 @@ void Connection::on_did_read()
             throw runtime_error("packet has no action");
         }
 
-        ClientAction action = static_cast<ClientAction>(packet["action"].get<int>());
-
-        switch (action) {
-            case CONNECTION_INIT: {
-                if (static_cast<Client*>(this)) {
-                    log::trace("handling remote connect init");
-                    handle_remote_connection_init(packet);
-                } else {
-                    log::trace("handling connection init");
-                    handle_connection_init(packet);
-                }
-                break;
-            }
-            case PLAYER_JOINED: {
-                log::trace("handling player joined");
-                handle_player_joined(packet);
-                break;
-            }
-            case PLAYER_LEFT: {
-                log::trace("handling player left");
-                handle_player_left(packet);
-                break;
-            }
-            case PLAYER_ROLL: {
-                log::trace("handling player roll");
-                handle_player_roll(packet);
-                break;
-            }
-            case GAME_START: {
-                log::trace("handling game start");
-                handle_game_start(packet);
-                break;
-            }
-            case PLAYER_TURN_FINISHED: {
-                log::trace("handling player turn finished");
-                handle_player_turn_finished(packet);
-                break;
-            }
-            default: {
-                log::trace("unknown action for packet");
-                break;
-            }
-        }
+        state_->handle(this, packet);
     }
 }
 

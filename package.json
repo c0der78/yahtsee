@@ -9,17 +9,6 @@
 	],
 	"dependencies": [
 		{
-			"archive": {
-				"location": "http://caca.zoy.org/files/libcaca/libcaca-0.99.beta19.tar.gz"
-			},
-			"build_system": [
-				"autotools",
-				"make"
-			],
-			"name": "libcaca",
-			"version": "0.99b19"
-		},
-		{
 			"build_system": [
 				"cmake",
 				"make"
@@ -30,6 +19,17 @@
 			"name": "nljson",
 			"version": "2.1.1"
 		},
+        {
+            "build_system": [
+                "cmake",
+                "make"
+            ],
+            "git": {
+                "location": "https://github.com/google/fruit.git#v3.1.1"
+            },
+            "name": "fruit",
+            "version": "3.1.1"
+        },
 		{
 			"build_system": [
 				"cmake",
@@ -58,10 +58,10 @@
 				"make"
 			],
 			"git": {
-				"location": "https://github.com/tamaskenez/imgui-cmake#v1.43"
+				"location": "https://github.com/ryjen/imgui-cmake#v1.53"
 			},
 			"name": "imgui",
-			"version": "1.43"
+			"version": "1.53"
 		}
 	],
 	"executable": "yahtsee",

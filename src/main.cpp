@@ -11,7 +11,7 @@ int main(int argc, char **argv)
         seed = time(NULL);
     }
 
-    yahtsee::game game(seed);
+    yahtsee::Game game(seed);
 
     game.load();
 

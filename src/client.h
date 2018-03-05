@@ -1,9 +1,7 @@
-#ifndef _CLIENT_H_
-#define _CLIENT_H_
+#ifndef YAHTSEE_CLIENT_H
+#define YAHTSEE_CLIENT_H
 
 #include <rj/net/buffered_socket.h>
-#include <rj/net/socket_factory.h>
-#include <nlohmann/json.hpp>
 #include <rj/net/uri.h>
 #include <rj/net/socket_server.h>
 #include <map>
@@ -16,22 +14,21 @@ namespace yahtsee {
 
     class Player;
 
-    typedef enum {
-        CONNECTION_INIT,
-        GAME_START,
+    enum class ClientAction : int {
+        INIT,
+        START,
         PLAYER_JOINED,
         PLAYER_LEFT,
         PLAYER_ROLL,
         PLAYER_TURN_FINISHED
-    } ClientAction;
+    };
 
-
-/*!
- * A client is the instance of the connection connecting to the host.
- */
+    /**
+     * A client is the instance of the connection connecting to the host.
+     */
     class Client : public Connection {
     public:
-        Client(rj::net::SOCKET sock, const sockaddr_storage &addr);
+        Client(rj::net::SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state);
 
         Client();
 
@@ -68,21 +65,6 @@ namespace yahtsee {
 
         std::shared_ptr<std::thread> backgroundThread_;
     };
-
-    class ConnectionFactory : public rj::net::socket_factory {
-    public:
-        ConnectionFactory() = default;
-
-        std::shared_ptr<rj::net::buffered_socket> create_socket(const server_type &server, rj::net::SOCKET sock,
-                                                                const sockaddr_storage &addr);
-
-        // perform an operation on each connection
-        void for_connections(std::function<void(const std::shared_ptr<Connection> &sock)> funk);
-
-    private:
-        std::vector<std::shared_ptr<Connection>> connections_;
-    };
-
 }
 
 #endif

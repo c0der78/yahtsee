@@ -2,10 +2,14 @@
 #include "game.h"
 #include "matchmaker.h"
 #include "player.h"
+#include "connection.h"
+#include "connection_factory.h"
 #include <rj/log/log.h>
 
+#ifdef UPNPC
 #include <miniupnpc.h>
 #include <upnpcommands.h>
+#endif
 
 using namespace rj;
 
@@ -21,7 +25,7 @@ namespace yahtsee {
 
     void Matchmaker::send_network_message(const string &value) {
         if (server_.is_valid()) {
-            clientFactory_->for_connections([&value](const shared_ptr<connection> &conn) {
+            clientFactory_->for_connections([&value](const shared_ptr<Connection> &conn) {
                 conn->writeln(value);
             });
         }
@@ -37,10 +41,10 @@ namespace yahtsee {
         api_.add_header("X-Application-Token", appToken);
     }
 
-    Matchmaker::Matchmaker()
+    Matchmaker::Matchmaker(const std::shared_ptr<ConnectionFactory> &connectionFactory)
             : api_(GAME_API_URL),
               client_(),
-              clientFactory_(std::make_shared<ConnectionFactory>()),
+              clientFactory_(connectionFactory),
               server_(clientFactory_) {
 
         api_.add_header("Content-Type", "application/json; charset=UTF-8");
@@ -48,7 +52,7 @@ namespace yahtsee {
         api_.add_header("Accept", "application/json, */*");
     }
 
-    Matchmaker::matchmaker(matchmaker &&other)
+    Matchmaker::Matchmaker(Matchmaker &&other)
             : gameId_(std::move(other.gameId_)),
               api_(std::move(other.api_)),
               client_(std::move(other.client_)),
@@ -56,7 +60,7 @@ namespace yahtsee {
               server_(std::move(other.server_)) {
     }
 
-    matchmaker &Matchmaker::operator=(Matchmaker &&other) {
+    Matchmaker &Matchmaker::operator=(Matchmaker &&other) {
         server_ = std::move(other.server_);
         client_ = std::move(other.client_);
         gameId_ = std::move(other.gameId_);
@@ -92,7 +96,7 @@ namespace yahtsee {
         /* handle an error */
         if (response != net::http::OK) {
             if (error) {
-                packet = packet_format::parse(api_.response().content());
+                packet = Packet::parse(api_.response().content());
                 *error = packet["error"];
             }
             return false;
@@ -128,6 +132,7 @@ namespace yahtsee {
     }
 
     void Matchmaker::port_forward(int port) const {
+#ifdef UPNPC
         int error = 0;
 
         // get a list of upnp devices (asks on the broadcast address and returns the responses)
@@ -211,16 +216,17 @@ namespace yahtsee {
 
         FreeUPNPUrls(&upnp_urls);
         freeUPNPDevlist(upnp_dev);
+#endif
     }
 
-    bool Matchmaker::host(bool registerOnline, bool portForwarding, string *error, int port) {
+    bool Matchmaker::host(const Config &settings, bool registerOnline, bool portForwarding, string *error, int port) {
         if (port == INVALID) {
             log::trace("no port specified, randomizing.");
             port = (rand() % 65535) + 1024;
         }
 
         if (registerOnline) {
-            if (!register_with_service(error, port)) {
+            if (!register_with_service(settings, error, port)) {
                 return false;
             }
         }
@@ -229,7 +235,7 @@ namespace yahtsee {
             port_forward(port);
         }
 
-        server_port_ = port;
+        serverPort_ = port;
 
         server_.start_in_background(port);
 
@@ -273,8 +279,8 @@ namespace yahtsee {
         return true;
     }
 
-    int Matchmaker::server_port() const {
-        return server_port_;
+    int Matchmaker::port() const {
+        return serverPort_;
     }
 
     void Matchmaker::unregister_with_service() {
@@ -294,7 +300,7 @@ namespace yahtsee {
     void Matchmaker::notify_game_start(const std::shared_ptr<Player> &player) {
         Packet packet;
 
-        packet["action"] = GAME_START;
+        packet["action"] = static_cast<int>(ClientAction::START);
 
         packet["start_id"] = player->id();
 
@@ -302,17 +308,13 @@ namespace yahtsee {
 
         log::trace("notify game started %s", packet.dump().c_str());
 
-        unregister();
+        unregister_with_service();
     }
 
     void Matchmaker::notify_player_joined(const shared_ptr<Player> &player) {
-        if (!is_valid()) {
-            return;
-        }
-
         Packet packet;
 
-        packet["action"] = PLAYER_JOINED;
+        packet["action"] = static_cast<int>(ClientAction::PLAYER_JOINED);
 
         packet["player"] = player->to_packet();
 
@@ -322,9 +324,9 @@ namespace yahtsee {
     }
 
     void Matchmaker::notify_player_left(const shared_ptr<Player> &player) {
-        packet_format packet;
+        Packet packet;
 
-        packet["action"] = PLAYER_LEFT;
+        packet["action"] = static_cast<int>(ClientAction::PLAYER_LEFT);
 
         packet["player"] = player->to_packet();
 
@@ -336,9 +338,9 @@ namespace yahtsee {
     void Matchmaker::notify_player_roll(const std::shared_ptr<Player> &player) {
         Packet packet;
 
-        packet["action"] = PLAYER_ROLL;
+        packet["action"] = static_cast<int>(ClientAction::PLAYER_ROLL);
 
-        auto dice = player->dice();
+        auto dice = player->d1ce();
 
         vector<Packet> values;
 
@@ -365,7 +367,7 @@ namespace yahtsee {
 
         vector<Packet> upper, lower;
 
-        packet["action"] = PLAYER_TURN_FINISHED;
+        packet["action"] = static_cast<int>(ClientAction::PLAYER_TURN_FINISHED);
 
         for (int i = 0; i <= yaht::Constants::NUM_DICE; i++) {
             if (!player->score().upper_played(i + 1)) {
