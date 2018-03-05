@@ -23,6 +23,12 @@ pkg_search_module(RJHTTP REQUIRED rj_net_http)
 pkg_search_module(RJASYNC REQUIRED rj_net_async)
 pkg_search_module(URIPARSER REQUIRED liburiparser)
 
+find_package(Prep  MODULE)
+
+if (PREP_FOUND)
+    prep_prefix(DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+endif()
+
 find_path(ARCHIVE_INCLUDE_DIR archive.h HINTS "/usr/local/opt/libarchive/include")
 find_library(ARCHIVE_LIBRARY archive HINTS "/usr/local/opt/libarchive/lib")
 
