@@ -23,7 +23,9 @@ pkg_search_module(RJHTTP REQUIRED rj_net_http)
 pkg_search_module(RJASYNC REQUIRED rj_net_async)
 pkg_search_module(URIPARSER REQUIRED liburiparser)
 
-find_package(Prep  MODULE)
+find_package(Curses REQUIRED)
+
+find_package(Prep)
 
 if (PREP_FOUND)
     prep_prefix(DIRECTORY ${CMAKE_CURRENT_LIST_DIR})

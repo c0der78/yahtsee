@@ -8,10 +8,11 @@
 #include <rj/net/async/server.h>
 #include <string>
 #include "client.h"
+#include "connection_factory.h"
 
 namespace yahtsee {
 
-    class Game;
+    class StateManager;
     class ConnectionFactory;
     class Player;
 
@@ -22,7 +23,7 @@ namespace yahtsee {
         typedef nlohmann::json Config;
 
         // default constructor
-        Matchmaker(const std::shared_ptr<ConnectionFactory> &connectionFactory);
+        Matchmaker(StateManager *state);
 
         // non-copy
         Matchmaker(const Matchmaker &) = delete;

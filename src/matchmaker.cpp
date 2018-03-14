@@ -41,10 +41,10 @@ namespace yahtsee {
         api_.add_header("X-Application-Token", appToken);
     }
 
-    Matchmaker::Matchmaker(const std::shared_ptr<ConnectionFactory> &connectionFactory)
+    Matchmaker::Matchmaker(StateManager *state)
             : api_(GAME_API_URL),
               client_(),
-              clientFactory_(connectionFactory),
+              clientFactory_(std::make_shared<ConnectionFactory>(state)),
               server_(clientFactory_) {
 
         api_.add_header("Content-Type", "application/json; charset=UTF-8");

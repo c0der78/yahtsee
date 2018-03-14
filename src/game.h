@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "game_logic.h"
+#include "state_manager.h"
 
 namespace yahtsee {
 
@@ -23,14 +23,13 @@ namespace yahtsee {
 
         Game &update();
 
+        Game &render();
+
         Game &end();
 
-        std::unique_ptr<GameLogic> &logic();
-
     private:
-        std::unique_ptr<GameLogic> logic_;
+        StateManager state_;
     };
-
 
 }
 

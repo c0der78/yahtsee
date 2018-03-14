@@ -15,77 +15,77 @@ namespace yahtsee
 
     using namespace ui;
 
-    GameUi::GameUi(GameLogic *game) : game_(game) {}
+    CursesUi::CursesUi(StateManager *state) : state_(state) {}
 
+    void CursesUi::alert(const AlertInput &input) {}
 
-    void GameUi::alert(const AlertInput &input) {}
+    void CursesUi::flash_alert(const AlertInput &input, const std::function<void()> &pop) {}
 
-    void GameUi::flash_alert(const AlertInput &input, const std::function<void()> &pop) {}
+    void CursesUi::modal_alert(const AlertInput &input) {}
 
-    void GameUi::modal_alert(const AlertInput &input) {}
-
-
-    void GameUi::pop_alert() {
-
+    void CursesUi::pop_alert() {
     }
 
-    void GameUi::refresh() {
+    void CursesUi::joining_game() {
+
+    }
+    void CursesUi::set_needs_refresh() {
         // TODO: refresh display
     }
-    void GameUi::menu()
+    void CursesUi::menu()
     {
         // TODO: display or create menu
     }
 
-    void GameUi::ask_name()
+    void CursesUi::ask_name()
     {
         // TODO: input players name
     }
 
-    void GameUi::ask_number_of_players()
+    void CursesUi::ask_number_of_players()
     {
         // TODO: input number of players
     }
 
-    void GameUi::waiting_for_connections() {
+    void CursesUi::waiting_for_connections() {
         std::vector<std::string> messages;
 
         char buf[BUFSIZ + 1] = {0};
-        snprintf(buf, BUFSIZ, "Waiting for connections on port %d...", game_->online()->port());
+        snprintf(buf, BUFSIZ, "Waiting for connections on port %d...", state_->online()->port());
 
         messages.push_back(buf);
 
-        if (!game_->online()->has_registry()) {
+        if (!state_->online()->has_registry()) {
             messages.push_back("");
-            messages.push_back("Visit " + game_->online()->registry_url() + " to learn how to");
+            messages.push_back("Visit " + state_->online()->registry_url() + " to learn how to");
             messages.push_back("configure yahtsee for automatic online registration.");
         }
 
         alert(messages);
     }
 
-    void GameUi::multiplayer_menu()
+    void CursesUi::multiplayer_menu()
     {
         // TODO: display options to host or join a game
     }
 
-    void GameUi::multiplayer_join()
+    void CursesUi::multiplayer_join()
     {
         // TODO: display options to join online or lan
     }
 
-    void GameUi::multiplayer_join_game()
+    void CursesUi::multiplayer_join_game()
     {
         // TODO: input lan address:port
 
     }
 
-    void GameUi::hosting_game()
+    void CursesUi::hosting_game()
     {
         // TODO: display hosting/waiting message
     }
 
-    void GameUi::client_waiting_to_start()
+    void CursesUi::client_waiting_to_start()
     {
         char buf[BUFSIZ + 1] = {0};
 
@@ -93,7 +93,7 @@ namespace yahtsee
 
         int count = 1;
 
-        for (const auto &p : game_->players()) {
+        for (const auto &p : state_->players()->all()) {
             snprintf(buf, BUFSIZ, "%2d: %s", count++, p->name().c_str());
             message.push_back(buf);
         }
@@ -108,56 +108,63 @@ namespace yahtsee
     }
 
 
-    void GameUi::already_scored()
+    void CursesUi::already_scored()
     {
         flash_alert("You've already scored that.");
     }
 
-    void GameUi::dice(shared_ptr<Player> player, int x, int y)
+    void CursesUi::dice(const std::shared_ptr<Player>& player, int x, int y)
     {
         // TODO: display dice rolling ui
         //     : allow to roll 3 times
         //     : options to keep specific die
     }
 
-    void GameUi::dice_roll()
+    void CursesUi::dice_roll()
     {
         // TODO: roll dice and display
     }
 
 
-    void GameUi::confirm_quit()
+    void CursesUi::confirm_quit()
     {
         // TODO: confirm quit
     }
 
 
-    void GameUi::help()
+    void CursesUi::help()
     {
         // TODO: display help text
     }
 
 
-    void GameUi::player_scores()
+    void CursesUi::player_scores()
     {
         // TODO: display player score on card
     }
 
-    yaht::scoresheet::value_type GameUi::upper_scores(int color, const yaht::scoresheet &score, int x, int y)
+    yaht::scoresheet::value_type CursesUi::upper_scores(int color, const yaht::scoresheet &score, int x, int y)
     {
         // TODO: display upper score on card and return total
         return 0;
     }
 
-    void GameUi::lower_scores(int color, const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
+    void CursesUi::lower_scores(int color, const yaht::scoresheet &score, yaht::scoresheet::value_type lower_score_total, int x, int y)
     {
         // TODO display lower score on card
 
     }
 
 
-    void GameUi::waiting_for_players() {
+    void CursesUi::waiting_for_players() {
         // TODO: display model with current players and option to start game
     }
 
+    void CursesUi::render() {
+
+    }
+
+    void CursesUi::update() {
+
+    }
 }

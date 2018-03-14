@@ -19,7 +19,6 @@ namespace yahtsee {
     public:
         typedef nlohmann::json Packet;
         typedef nlohmann::json Config;
-        typedef std::shared_ptr<Player> Ref;
 
         Player(const std::string &name);
 

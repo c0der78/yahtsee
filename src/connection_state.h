@@ -2,38 +2,41 @@
 #define YAHTSEE_CONNECTION_STATE_H
 
 #include <nlohmann/json.hpp>
+#include <fruit/fruit.h>
 
-namespace yahtsee
-{
-    class GameLogic;
+namespace yahtsee {
     class Connection;
 
-    class ConnectionState
-    {
-        public:
-            typedef nlohmann::json Packet;
+    class StateManager;
 
-            ConnectionState(GameLogic *game);
+    class ConnectionState {
+    public:
+        using Packet = nlohmann::json;
+        using Inject =
 
-            void handle(Connection *conn, const Packet &packet);
+        ConnectionState(StateManager *state);
 
-        private:
+        ConnectionState(StateManager *state);
 
-            void handle_player_roll(Connection *conn, const Packet &);
+        void handle(Connection *conn, const Packet &packet);
 
-            void handle_game_start(Connection *conn, const Packet &);
+    private:
 
-            void handle_connection_init(Connection *conn, const Packet &);
+        void handle_player_roll(Connection *conn, const Packet &);
 
-            void handle_remote_connection_init(Connection *conn, const Packet &);
+        void handle_game_start(Connection *conn, const Packet &);
 
-            void handle_player_joined(Connection *conn, const Packet &);
+        void handle_connection_init(Connection *conn, const Packet &);
 
-            void handle_player_left(Connection *conn, const Packet &);
+        void handle_remote_connection_init(Connection *conn, const Packet &);
 
-            void handle_player_turn_finished(Connection *conn, const Packet &);
+        void handle_player_joined(Connection *conn, const Packet &);
 
-            GameLogic *game_;
+        void handle_player_left(Connection *conn, const Packet &);
+
+        void handle_player_turn_finished(Connection *conn, const Packet &);
+
+        StateManager *state_;
     };
 
 }

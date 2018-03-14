@@ -2,18 +2,20 @@
 // Created by Ryan Jennings on 2018-03-04.
 //
 
-#include "game_action.h"
+#include "event_manager.h"
 #include "game.h"
+#include "player.h"
+#include "state_manager.h"
 #include <rj/log/log.h>
 
 using namespace rj;
 
 namespace yahtsee {
 
-
+    EventManager::EventManager(StateManager *state) : state_(state) {}
 
     //! start hosting a game
-    void GameAction::host_game()
+    void EventManager::host_game()
     {
         string error;
 
@@ -21,9 +23,9 @@ namespace yahtsee {
         auto port = -1;
 
         // display the hosting game modal
-        game_->ui()->hosting_game();
+        state_->ui()->hosting_game();
 
-        auto settings = game_->settings();
+        auto settings = state_->logic()->settings();
 
         // check if the settings specify a port
         if (settings.count("port")) {
@@ -34,7 +36,7 @@ namespace yahtsee {
 
         try {
             // tell the matchmaker to host on a port
-            response = game_->online()->host(settings, false, false, &error, port);
+            response = state_->online()->host(settings, false, false, &error, port);
         } catch (const std::exception &e) {
             error = e.what();
             response = false;
@@ -44,9 +46,9 @@ namespace yahtsee {
         if (!response) {
             log::trace("could not host game ", error.c_str());
 
-            game_->ui()->flash_alert({"Unable to register game at this time.", error});
+            state_->ui()->flash_alert({"Unable to register game at this time.", error});
 
-            game_->reset();
+            state_->reset();
 
             return;
         }
@@ -58,9 +60,9 @@ namespace yahtsee {
     }
 
     //! join a game posted in online registry
-    void GameAction::join_online_game()
+    void EventManager::join_online_game()
     {
-        game_->ui()->modal_alert("Finding game to join...");
+        state_->ui()->modal_alert("Finding game to join...");
 
         string error;
 
@@ -68,7 +70,7 @@ namespace yahtsee {
 
         try {
             // tell the matchmaker to join an available game
-            result = game_->online()->join_best_game(&error);
+            result = state_->online()->join_best_game(&error);
         } catch (const std::exception &e) {
             result = false;
         }
@@ -77,22 +79,22 @@ namespace yahtsee {
         if (!result) {
             log::trace("could not join game ", error.c_str());
 
-            game_->ui()->flash_alert({"Unable to find game to join at this time.", error});
+            state_->ui()->flash_alert({"Unable to find game to join at this time.", error});
 
-            game_->reset();
+            state_->reset();
         }
     }
 
     //! join a specific game
-    void GameAction::join_game()
+    void EventManager::join_game()
     {
-        game_->ui()->modal_alert("Attempting to join game...");
+        state_->ui()->modal_alert("Attempting to join game...");
 
         string error;
 
         bool result;
 
-        auto settings = game_->settings();
+        auto settings = state_->logic()->settings();
 
         // grab the host/port from the settings
         // this are piggy backed into the settings from user input
@@ -102,7 +104,7 @@ namespace yahtsee {
 
         try {
             // tell the matchmaker to join the game
-            result = game_->online()->join_game(host, port, &error);
+            result = state_->online()->join_game(host, port, &error);
         } catch (const std::exception &e) {
             result = false;
         }
@@ -111,126 +113,126 @@ namespace yahtsee {
         if (!result) {
             log::trace("could not join game ", error.c_str());
 
-            game_->ui()->flash_alert({"Unable to join game!", error});
+            state_->ui()->flash_alert({"Unable to join game!", error});
 
-            game_->reset();
+            state_->reset();
         }
     }
 
     //! the user has joined a game
-    void GameAction::joined_game()
+    void EventManager::joined_game()
     {
         // TODO: set state to waiting to start
     }
 
     //! the user has been disconnected
-    void GameAction::disconnect()
+    void EventManager::disconnect()
     {
-        if (game_->online()->is_matchmaking()) {
-            game_->online()->notify_player_left(game_->player());
+        if (state_->online()->is_matchmaking()) {
+            state_->online()->notify_player_left(state_->players()->self());
         }
     }
 
     //! a player has been added to the game
-    void GameAction::add_network_player(const Player::Ref &player)
+    void EventManager::add_network_player(const std::shared_ptr<Player> &player)
     {
         char buf[BUFSIZ + 1] = {0};
 
-        if (!game_->online()->is_matchmaking() || game_->find_player_by_id(player->id())) {
+        if (!state_->online()->is_matchmaking() || state_->players()->find_by_id(player->id())) {
             return;
         }
 
         log::trace("adding network player ", player->name().c_str(), " (", player->id().c_str(), ")");
 
         // add the player to the list
-        game_->add_player(player);
+        state_->players()->add(player);
 
         // inform the matchmaker a player joined
-        game_->online()->notify_player_joined(player);
+        state_->online()->notify_player_joined(player);
 
-        game_->ui()->waiting_for_players();
+        state_->ui()->waiting_for_players();
     }
 
     //! remove a player from the game
-    void GameAction::remove_network_player(Connection *c) {
+    void EventManager::remove_network_player(Connection *c) {
         // find the player to remove based on the connection
-        auto player = game_->find_player([&c](const Player::Ref &p) { return p->connection() == c; });
+        auto player = state_->players()->find([&c](const std::shared_ptr<Player> &p) { return p->connection() == c; });
 
-        game_->remove_player(player);
+        state_->players()->remove(player);
 
-        if (game_->is_single_player()) {
-            game_->reset();
+        if (state_->players()->is_single_player()) {
+            state_->reset();
         }
 
-        game_->ui()->flash_alert(player->name() + " has left the game.");
+        state_->ui()->flash_alert(player->name() + " has left the game.");
 
         // inform the matchmaker a player left
-        game_->online()->notify_player_left(player);
+        state_->online()->notify_player_left(player);
     }
 
     //! a network player has joined the hosted game
-    void GameAction::network_player_joined(const Player::Ref &p)
+    void EventManager::network_player_joined(const std::shared_ptr<Player> &p)
     {
         log::trace("action network player joined");
 
         // add player to the list
-        game_->add_player(p);
+        state_->players()->add(p);
 
-        game_->ui()->client_waiting_to_start();
+        state_->ui()->client_waiting_to_start();
     }
 
-    void GameAction::network_player_left(const Player::Ref &p)
+    void EventManager::network_player_left(const std::shared_ptr<Player> &p)
     {
-        game_->remove_player(p);
+        state_->players()->remove(p);
 
-        if (game_->is_single_player()) {
+        if (state_->players()->is_single_player()) {
             log::trace("reseting game");
 
-            game_->reset();
+            state_->reset();
         }
 
-        game_->ui()->flash_alert(p->name() + " has left the game.");
+        state_->ui()->flash_alert(p->name() + " has left the game.");
     }
 
-    void GameAction::roll_dice()
+    void EventManager::roll_dice()
     {
-        auto player = game_->turn();
+        auto player = state_->players()->turn();
 
-        if (!game_->is_single_player() && player->id() != game_->player()->id()) {
-            game_->ui()->flash_alert("Its not your turn.");
+        if (!state_->players()->is_single_player() && player->id() != state_->players()->self()->id()) {
+            state_->ui()->flash_alert("Its not your turn.");
             return;
         }
 
         if (player->roll_count() < 3) {
             player->roll();
 
-            game_->online()->notify_player_roll(player);
+            state_->online()->notify_player_roll(player);
         } else {
-            game_->ui()->flash_alert({"You must choose a score after three rolls.", "Press '?' for help on how to score."});
+            state_->ui()->flash_alert({"You must choose a score after three rolls.", "Press '?' for help on how to score."});
         }
     }
 
-    void GameAction::finish_turn()
+    void EventManager::finish_turn()
     {
-        game_->online()->notify_player_turn_finished(game_->turn());
+        state_->online()->notify_player_turn_finished(state_->players()->turn());
 
-        game_->next_turn();
+        state_->players()->next_turn();
 
-        game_->ui()->flash_alert("It is now " + game_->turn()->name() + "'s turn.");
+        state_->ui()->flash_alert("It is now " + state_->players()->turn()->name() + "'s turn.");
     }
 
-    void GameAction::network_player_finished(const Player::Ref &p)
+    void EventManager::network_player_finished(const std::shared_ptr<Player> &p)
     {
-        game_->next_turn();
+        state_->players()->next_turn();
 
-        if (game_->turn()->id() == game_->player()->id()) {
-            game_->ui()->flash_alert("It is now your turn.");
+        if (state_->players()->turn()->id() == state_->players()->self()->id()) {
+            state_->ui()->flash_alert("It is now your turn.");
         } else {
-            game_->ui()->refresh();
+            state_->ui()->set_needs_refresh();
         }
     }
 
-    void GameAction::select_die(const Player::Ref &player, int d)
+    void EventManager::select_die(const std::shared_ptr<Player> &player, int d)
     {
         if (player->is_kept(d)) {
             player->keep_die(d, false);
@@ -239,29 +241,29 @@ namespace yahtsee {
         }
     }
 
-    void GameAction::lower_score(const Player::Ref &player, yaht::scoresheet::type type)
+    void EventManager::lower_score(const std::shared_ptr<Player> &player, yaht::scoresheet::type type)
     {
         if (!player->score().lower_played(type)) {
             player->score().lower_score(type, player->calculate_lower_score(type));
 
             finish_turn();
         } else {
-            game_->ui()->already_scored();
+            state_->ui()->already_scored();
         }
     }
 
-    void GameAction::score(const Player::Ref &player, int n)
+    void EventManager::score(const std::shared_ptr<Player> &player, int n)
     {
         if (!player->score().upper_played(n)) {
             player->score().upper_score(n, player->calculate_upper_score(n));
 
             finish_turn();
         } else {
-            game_->ui()->already_scored();
+            state_->ui()->already_scored();
         }
     }
 
-    void GameAction::score_best(const Player::Ref &player)
+    void EventManager::score_best(const std::shared_ptr<Player> &player)
     {
         auto best_upper = player->calculate_best_upper_score();
 
@@ -273,7 +275,7 @@ namespace yahtsee {
 
                 finish_turn();
             } else {
-                game_->ui()->already_scored();
+                state_->ui()->already_scored();
             }
 
         } else if (best_lower.second > 0) {
@@ -282,7 +284,7 @@ namespace yahtsee {
 
                 finish_turn();
             } else {
-                game_->ui()->already_scored();
+                state_->ui()->already_scored();
             }
         } else if (!player->score().lower_played(best_lower.first)) {
             player->score().lower_score(best_lower.first, best_lower.second);
@@ -293,28 +295,28 @@ namespace yahtsee {
 
             finish_turn();
         } else {
-            game_->ui()->flash_alert("No best score found!");
+            state_->ui()->flash_alert("No best score found!");
         }
     }
 
-    void GameAction::game_over()
+    void EventManager::game_over()
     {
-        if (game_->is_single_player()) {
-            game_->ui()->flash_alert("Game over.");
+        if (state_->players()->is_single_player()) {
+            state_->ui()->flash_alert("Game over.");
             return;
         }
-        Player::Ref winner = nullptr;
+        std::shared_ptr<Player> winner = nullptr;
 
         bool tieGame = false;
 
-        for (const auto &p : game_->players()) {
+        for (const auto &p : state_->players()->all()) {
 
             if (!winner || p->score().total_score() > winner->score().total_score()) {
                 winner = p;
             }
         }
 
-        for (const auto &p : game_->players()) {
+        for (const auto &p : state_->players()->all()) {
 
             if (p != winner && p->score().total_score() == winner->score().total_score()) {
                 tieGame = true;
@@ -323,13 +325,13 @@ namespace yahtsee {
         }
 
         if (tieGame) {
-            game_->ui()->flash_alert("Tie game!");
-        } else if (winner == game_->player()) {
-            game_->ui()->flash_alert("You win!");
+            state_->ui()->flash_alert("Tie game!");
+        } else if (winner == state_->players()->self()) {
+            state_->ui()->flash_alert("You win!");
         } else {
             char buf[BUFSIZ + 1] = {0};
             snprintf(buf, BUFSIZ, "%s wins with %u points!", winner->name().c_str(), winner->score().total_score());
-            game_->ui()->flash_alert(buf);
+            state_->ui()->flash_alert(buf);
         }
     }
 

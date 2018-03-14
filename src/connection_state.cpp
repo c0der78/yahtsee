@@ -11,8 +11,8 @@ using namespace rj;
 
 namespace yahtsee {
 
-    ConnectionState::ConnectionState(GameLogic *game) :
-            game_(game) {}
+    ConnectionState::ConnectionState(StateManager *state) :
+            state_(state) {}
 
     void ConnectionState::handle(Connection *conn, const Packet &packet) {
 
@@ -66,34 +66,34 @@ namespace yahtsee {
         std::vector <Packet> players = packet["players"];
 
         for (const Packet &player : players) {
-            game_->add_player(std::make_shared<Player>(conn, player));
+            state_->players()->add(std::make_shared<Player>(conn, player));
         }
 
-        game_->actions()->joined_game();
+        state_->events()->joined_game();
     }
 
     //! the connection has recieved a game start packet
     void ConnectionState::handle_game_start(Connection *conn, const Packet &packet) {
         std::string id = packet["start_id"];
 
-        auto player = game_->find_player_by_id(id);
+        auto player = state_->players()->find_by_id(id);
 
         if (player != nullptr) {
-            game_->set_turn(player);
+            state_->players()->set_turn(player);
         }
 
         log::trace("starting game");
 
-        game_->ui()->refresh();
+        state_->ui()->set_needs_refresh();
 
-        game_->ui()->flash_alert("It is now " + game_->turn()->name() + "'s turn.");
+        state_->ui()->flash_alert("It is now " + state_->players()->turn()->name() + "'s turn.");
     }
 
     //! handle a recieved player roll packet
     void ConnectionState::handle_player_roll(Connection *conn, const Packet &packet) {
         std::string id = packet["player_id"];
 
-        auto p = game_->find_player_by_id(id);
+        auto p = state_->players()->find_by_id(id);
 
         if (p == nullptr) {
             return;
@@ -115,24 +115,24 @@ namespace yahtsee {
             p->keep_die(i, kept);
         }
 
-        if (game_->turn() != p) {
-            game_->set_turn(p);
+        if (state_->players()->turn() != p) {
+            state_->players()->set_turn(p);
         }
 
         playerEngine.set_next_roll(values);
 
         p->roll();
 
-        game_->ui()->pop_alert();
+        state_->ui()->pop_alert();
 
-        game_->ui()->dice_roll();
+        state_->ui()->dice_roll();
 
-        game_->ui()->refresh();
+        state_->ui()->set_needs_refresh();
     }
 
     //! handle when another player has joined the game
     void ConnectionState::handle_remote_connection_init(Connection *conn, const Packet &packet) {
-        game_->actions()->add_network_player(std::make_shared<Player>(conn, packet));
+        state_->events()->add_network_player(std::make_shared<Player>(conn, packet));
     }
 
     void ConnectionState::handle_player_joined(Connection *conn, const Packet &packet) {
@@ -140,14 +140,14 @@ namespace yahtsee {
 
         std::string id = player["id"];
 
-        if (id != game_->player()->id()) {
+        if (id != state_->players()->self()->id()) {
             std::string name = player["name"];
 
             log::trace("new player found (", name.c_str(), ")");
 
             auto p = std::make_shared<Player>(conn, player);
 
-            game_->actions()->network_player_joined(p);
+            state_->events()->network_player_joined(p);
         }
     }
 
@@ -156,11 +156,11 @@ namespace yahtsee {
 
         std::string id = player["id"];
 
-        if (id != game_->player()->id()) {
-            auto p = game_->find_player_by_id(id);
+        if (id != state_->players()->self()->id()) {
+            auto p = state_->players()->find_by_id(id);
 
             if (p != nullptr) {
-                game_->actions()->network_player_left(p);
+                state_->events()->network_player_left(p);
             }
         }
     }
@@ -168,7 +168,7 @@ namespace yahtsee {
     void ConnectionState::handle_player_turn_finished(Connection *conn, const Packet &packet) {
         std::string id = packet["player_id"];
 
-        auto player = game_->find_player_by_id(id);
+        auto player = state_->players()->find_by_id(id);
 
         if (player == nullptr) {
             log::trace("turn finish: player ", id.c_str(), " not found");
@@ -201,6 +201,6 @@ namespace yahtsee {
             }
         }
 
-        game_->actions()->network_player_finished(player);
+        state_->events()->network_player_finished(player);
     }
 }

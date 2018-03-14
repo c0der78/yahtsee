@@ -1,5 +1,6 @@
 
 #include "game.h"
+#include "game_ui.h"
 
 int main(int argc, char **argv)
 {

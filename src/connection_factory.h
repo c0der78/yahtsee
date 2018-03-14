@@ -10,12 +10,12 @@
 
 namespace yahtsee {
 
-    class GameLogic;
+    class StateManager;
     class Connection;
 
     class ConnectionFactory : public rj::net::socket_factory {
     public:
-        ConnectionFactory(GameLogic *game);
+        ConnectionFactory(StateManager *state);
 
         std::shared_ptr<rj::net::buffered_socket> create_socket(const server_type &server, rj::net::SOCKET sock,
                                                                 const sockaddr_storage &addr);
@@ -25,7 +25,7 @@ namespace yahtsee {
 
     private:
         std::vector<std::shared_ptr<Connection>> connections_;
-        GameLogic *game_;
+        StateManager *state_;
     };
 
 

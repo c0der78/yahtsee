@@ -58,13 +58,14 @@
 				"make"
 			],
 			"git": {
-				"location": "https://github.com/ryjen/imgui-cmake#v1.53"
+				"location": "https://github.com/Reactive-Extensions/RxCpp.git#v4.0.0"
 			},
-			"name": "imgui",
-			"version": "1.53"
+			"name": "rxcpp",
+			"version": "4.0.0"
 		}
 	],
 	"executable": "yahtsee",
 	"name": "yahtsee",
 	"version": "1.0"
 }
+
