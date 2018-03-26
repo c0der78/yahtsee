@@ -3,10 +3,12 @@
 //
 
 #include "state_manager.h"
+#include "game_state.h"
 
 namespace yahtsee {
 
     StateManager::StateManager() : online_(this), events_(this), ui_(this) {
+        state_ = std::make_shared<GameMenu>(this);
     }
 
     void StateManager::reset() {

@@ -6,5 +6,15 @@
 
 namespace yahtsee {
 
+    void GameMenu::render() {
+        //dlg.setText(...)
+        //state_->ui()->alert(dlg);
+    }
 
+    void GameMenu::update() {
+        //
+        // switch(dlg->input()) {
+        //   ...
+        // }
+    }
 }

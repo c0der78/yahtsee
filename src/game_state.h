@@ -14,8 +14,21 @@ namespace yahtsee {
 
     class Player;
     class Connection;
+    class StateManager;
 
     class GameState : public Updatable, public Renderable {
+    public:
+        GameState(StateManager *state) : state_(state) {}
+    protected:
+        StateManager *state_;
+    };
+
+    class GameMenu : public GameState {
+    public:
+        GameMenu(StateManager *state) : GameState(state) {}
+
+        void update();
+        void render();
     };
 
     class WaitingForPlayerState : public GameState {

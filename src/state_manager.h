@@ -15,6 +15,8 @@
 
 namespace yahtsee {
 
+    class GameState;
+
     class StateManager : public GameManager {
     public:
         StateManager();
@@ -36,6 +38,7 @@ namespace yahtsee {
         InputManager input_;
         Multiplayer online_;
         EventManager events_;
+        std::shared_ptr<GameState> state_;
     };
 
 }

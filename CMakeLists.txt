@@ -28,7 +28,7 @@ find_package(Curses REQUIRED)
 find_package(Prep)
 
 if (PREP_FOUND)
-    prep_prefix(DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    prep_init()
 endif()
 
 find_path(ARCHIVE_INCLUDE_DIR archive.h HINTS "/usr/local/opt/libarchive/include")
@@ -42,8 +42,11 @@ add_subdirectory(src)
 add_subdirectory(tests)
 add_subdirectory(resources)
 
+if (PREP_FOUND)
+    add_dependencies(${PROJECT_NAME} ${PREP_INIT_DEPENDENCIES})
+endif()
+
 # Setup testing
 enable_testing()
 
 add_test(${PROJECT_NAME}_test ${PROJECT_BINARY_DIR}/tests/${PROJECT_NAME}_test)
-

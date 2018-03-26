@@ -48,4 +48,5 @@ conanbuildinfo.cmake
 conaninfo.txt
 .idea
 .prep
-cmake-build-debug
+
+cmake-build-*
