@@ -86,7 +86,7 @@ namespace yahtsee {
 
         state_->ui()->set_needs_refresh();
 
-        state_->ui()->flash_alert("It is now " + state_->players()->turn()->name() + "'s turn.");
+        state_->ui()->flash("It is now " + state_->players()->turn()->name() + "'s turn.");
     }
 
     //! handle a recieved player roll packet
@@ -122,8 +122,6 @@ namespace yahtsee {
         playerEngine.set_next_roll(values);
 
         p->roll();
-
-        state_->ui()->pop_alert();
 
         state_->ui()->dice_roll();
 

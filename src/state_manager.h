@@ -5,7 +5,6 @@
 #ifndef YAHTSEE_STATE_MANAGER_H
 #define YAHTSEE_STATE_MANAGER_H
 
-#include "game_manager.h"
 #include "game_logic.h"
 #include "game_ui.h"
 #include "player_manager.h"
@@ -17,9 +16,10 @@ namespace yahtsee {
 
     class GameState;
 
-    class StateManager : public GameManager {
+    class StateManager : public Updatable, public Renderable {
     public:
         StateManager();
+
         void update();
         void render();
         bool is_finished() const;
@@ -31,7 +31,9 @@ namespace yahtsee {
         InputManager *input();
         Multiplayer *online();
         EventManager *events();
+
     private:
+
         GameLogic logic_;
         CursesUi ui_;
         PlayerManager players_;

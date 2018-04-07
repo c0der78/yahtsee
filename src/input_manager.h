@@ -5,15 +5,28 @@
 #ifndef YAHTSEE_INPUT_MANAGER_H
 #define YAHTSEE_INPUT_MANAGER_H
 
-#include "game_manager.h"
+#include "updatable.h"
+#include <string>
 
 namespace yahtsee {
 
-    class InputManager : public Updatable {
+    class Inputer {
     public:
-        void update();
+        virtual int get() const = 0;
     };
 
+    class InputManager : public Updatable {
+    public:
+        InputManager();
+
+        void update();
+
+        int get() const;
+
+    private:
+        int value_;
+        std::unique_ptr<Inputer> input_;
+    };
 }
 
 #endif //YAHTSEE_INPUT_MANAGER_H

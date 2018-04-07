@@ -3,8 +3,26 @@
 //
 
 #include "input_manager.h"
+#include <curses.h>
 
 namespace yahtsee {
 
-    void InputManager::update() {}
+    class CursesInput : public Inputer {
+    public:
+        int get() const {
+            return getch();
+        }
+    };
+
+    InputManager::InputManager() : input_(std::make_unique<CursesInput>()) {
+    }
+
+    void InputManager::update() {
+        value_ = input_->get();
+    }
+
+    int InputManager::get() const {
+        return value_;
+    }
+
 }

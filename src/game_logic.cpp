@@ -10,6 +10,10 @@ namespace yahtsee
         return (flags_ & FINISHED) == 0;
     }
 
+    void GameLogic::enlighten() {
+        flags_ |= FINISHED;
+    }
+
 
     Settings &GameLogic::settings() {
         return settings_;

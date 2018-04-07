@@ -8,7 +8,7 @@
 namespace yahtsee {
 
     StateManager::StateManager() : online_(this), events_(this), ui_(this) {
-        state_ = std::make_shared<GameMenu>(this);
+        state_ = std::make_shared<WelcomeState>(this);
     }
 
     void StateManager::reset() {
@@ -17,11 +17,13 @@ namespace yahtsee {
     }
 
     void StateManager::render() {
+        state_->render();
         ui_.render();
     }
 
     void StateManager::update() {
         input_.update();
+        state_->update();
         ui_.update();
     }
 

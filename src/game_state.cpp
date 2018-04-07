@@ -3,18 +3,27 @@
 //
 
 #include "game_state.h"
+#include "game_ui.h"
+#include "state_manager.h"
 
 namespace yahtsee {
 
-    void GameMenu::render() {
-        //dlg.setText(...)
-        //state_->ui()->alert(dlg);
+    WelcomeState::WelcomeState(StateManager *state) : GameState(state),
+        menu_(state_->ui()->menu()) {
+
+        menu_->add_option("n", "Single Player Game")
+                .add_option("m", "Multiplayer Game")
+                .add_option("s", "Settings")
+                .add_option("x", "Exit", [&](const Menu &menu, const std::string &opt) {
+                    state_->logic()->enlighten();
+                });
     }
 
-    void GameMenu::update() {
-        //
-        // switch(dlg->input()) {
-        //   ...
-        // }
+    void WelcomeState::render() {
+        menu_->render();
+    }
+
+    void WelcomeState::update() {
+        menu_->update();
     }
 }

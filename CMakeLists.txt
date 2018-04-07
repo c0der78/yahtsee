@@ -23,7 +23,15 @@ pkg_search_module(RJHTTP REQUIRED rj_net_http)
 pkg_search_module(RJASYNC REQUIRED rj_net_async)
 pkg_search_module(URIPARSER REQUIRED liburiparser)
 
+set(CURSES_NEED_NCURSES TRUE)
+
 find_package(Curses REQUIRED)
+
+find_library(CURSES_MENU_LIBRARY menu)
+
+if (NOT CURSES_MENU_LIBRARY)
+    message(FATAL "Curses menu extension required")
+endif()
 
 find_package(Prep)
 

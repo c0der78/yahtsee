@@ -15,20 +15,25 @@ namespace yahtsee {
     class Player;
     class Connection;
     class StateManager;
+    class Menu;
 
     class GameState : public Updatable, public Renderable {
     public:
         GameState(StateManager *state) : state_(state) {}
+
     protected:
         StateManager *state_;
     };
 
-    class GameMenu : public GameState {
+    class WelcomeState : public GameState {
     public:
-        GameMenu(StateManager *state) : GameState(state) {}
+        WelcomeState(StateManager *state);
 
         void update();
         void render();
+
+    private:
+        std::shared_ptr<Menu> menu_;
     };
 
     class WaitingForPlayerState : public GameState {

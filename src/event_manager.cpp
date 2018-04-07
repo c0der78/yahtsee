@@ -46,7 +46,7 @@ namespace yahtsee {
         if (!response) {
             log::trace("could not host game ", error.c_str());
 
-            state_->ui()->flash_alert({"Unable to register game at this time.", error});
+            state_->ui()->flash(Dialog("Unable to register game at this time.\n\n" + error));
 
             state_->reset();
 
@@ -62,7 +62,7 @@ namespace yahtsee {
     //! join a game posted in online registry
     void EventManager::join_online_game()
     {
-        state_->ui()->modal_alert("Finding game to join...");
+        state_->ui()->modal(Dialog("Finding game to join..."));
 
         string error;
 
@@ -79,7 +79,7 @@ namespace yahtsee {
         if (!result) {
             log::trace("could not join game ", error.c_str());
 
-            state_->ui()->flash_alert({"Unable to find game to join at this time.", error});
+            state_->ui()->flash(Dialog("Unable to find game to join at this time.\n\n" + error));
 
             state_->reset();
         }
@@ -88,7 +88,7 @@ namespace yahtsee {
     //! join a specific game
     void EventManager::join_game()
     {
-        state_->ui()->modal_alert("Attempting to join game...");
+        state_->ui()->modal(Dialog("Attempting to join game..."));
 
         string error;
 
@@ -113,7 +113,7 @@ namespace yahtsee {
         if (!result) {
             log::trace("could not join game ", error.c_str());
 
-            state_->ui()->flash_alert({"Unable to join game!", error});
+            state_->ui()->flash(Dialog("Unable to join game!\n\n" + error));
 
             state_->reset();
         }
@@ -164,7 +164,7 @@ namespace yahtsee {
             state_->reset();
         }
 
-        state_->ui()->flash_alert(player->name() + " has left the game.");
+        state_->ui()->flash(player->name() + " has left the game.");
 
         // inform the matchmaker a player left
         state_->online()->notify_player_left(player);
@@ -191,7 +191,7 @@ namespace yahtsee {
             state_->reset();
         }
 
-        state_->ui()->flash_alert(p->name() + " has left the game.");
+        state_->ui()->flash(p->name() + " has left the game.");
     }
 
     void EventManager::roll_dice()
@@ -199,7 +199,7 @@ namespace yahtsee {
         auto player = state_->players()->turn();
 
         if (!state_->players()->is_single_player() && player->id() != state_->players()->self()->id()) {
-            state_->ui()->flash_alert("Its not your turn.");
+            state_->ui()->flash(Dialog("Its not your turn."));
             return;
         }
 
@@ -208,7 +208,7 @@ namespace yahtsee {
 
             state_->online()->notify_player_roll(player);
         } else {
-            state_->ui()->flash_alert({"You must choose a score after three rolls.", "Press '?' for help on how to score."});
+            state_->ui()->flash(Dialog("You must choose a score after three rolls.\n\nPress '?' for help on how to score."));
         }
     }
 
@@ -218,7 +218,7 @@ namespace yahtsee {
 
         state_->players()->next_turn();
 
-        state_->ui()->flash_alert("It is now " + state_->players()->turn()->name() + "'s turn.");
+        state_->ui()->flash("It is now " + state_->players()->turn()->name() + "'s turn.");
     }
 
     void EventManager::network_player_finished(const std::shared_ptr<Player> &p)
@@ -226,7 +226,7 @@ namespace yahtsee {
         state_->players()->next_turn();
 
         if (state_->players()->turn()->id() == state_->players()->self()->id()) {
-            state_->ui()->flash_alert("It is now your turn.");
+            state_->ui()->flash(Dialog("It is now your turn."));
         } else {
             state_->ui()->set_needs_refresh();
         }
@@ -295,14 +295,14 @@ namespace yahtsee {
 
             finish_turn();
         } else {
-            state_->ui()->flash_alert("No best score found!");
+            state_->ui()->flash(Dialog("No best score found!"));
         }
     }
 
     void EventManager::game_over()
     {
         if (state_->players()->is_single_player()) {
-            state_->ui()->flash_alert("Game over.");
+            state_->ui()->flash(Dialog("Game over."));
             return;
         }
         std::shared_ptr<Player> winner = nullptr;
@@ -325,13 +325,13 @@ namespace yahtsee {
         }
 
         if (tieGame) {
-            state_->ui()->flash_alert("Tie game!");
+            state_->ui()->flash(Dialog("Tie game!"));
         } else if (winner == state_->players()->self()) {
-            state_->ui()->flash_alert("You win!");
+            state_->ui()->flash(Dialog("You win!"));
         } else {
             char buf[BUFSIZ + 1] = {0};
             snprintf(buf, BUFSIZ, "%s wins with %u points!", winner->name().c_str(), winner->score().total_score());
-            state_->ui()->flash_alert(buf);
+            state_->ui()->flash(Dialog(buf));
         }
     }
 

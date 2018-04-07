@@ -29,6 +29,8 @@ namespace yahtsee {
         // properties
         bool is_thinking() const;
 
+        void enlighten();
+
         Settings &settings();
 
     private:

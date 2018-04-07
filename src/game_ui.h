@@ -6,18 +6,36 @@
 #define YAHTSEE_UI_H
 
 #include <functional>
+#include <unordered_map>
 #include <rj/dice/yaht/scoresheet.h>
 
-#include "alert_box.h"
 #include "renderable.h"
 #include "updatable.h"
 
 
 namespace yahtsee {
 
-    using namespace ui;
-
     class Player;
+
+    class Dialog {
+    public:
+        using Callback = std::function<int(const Dialog &, const std::string &)>;
+        Dialog(const std::string &message);
+        Dialog();
+        Dialog &add_option(const std::string &name, const Callback &value = nullptr);
+    private:
+        std::unordered_map<std::string, Callback> options_;
+        std::string message_;
+    };
+
+    class Menu : public Renderable, public Updatable {
+    public:
+        using Callback = std::function<void(const Menu &, const std::string &)>;
+        Menu();
+        virtual Menu &add_option(const std::string &name, const std::string &description, const Callback &value = nullptr);
+    protected:
+        std::unordered_map<std::string, std::pair<std::string, Callback>> options_;
+    };
 
     class GameUi : public Renderable, public Updatable {
 
@@ -25,21 +43,27 @@ namespace yahtsee {
         /*! a state handler */
         typedef void (GameUi::*Handler)();
 
-        virtual void alert(const AlertInput &input) = 0;
+        virtual void set_needs_refresh() = 0;
 
-        virtual void flash_alert(const AlertInput &input, const std::function<void()> &pop = nullptr) = 0;
+        /*! alerts */
 
-        virtual void modal_alert(const AlertInput &input) = 0;
+        virtual std::shared_ptr<Menu> menu() = 0;
 
-        virtual void pop_alert() = 0;
+        virtual void show(const Dialog &dialog) = 0;
+
+        virtual void flash(const Dialog &dialog, const std::function<void()> &onFinish = nullptr) = 0;
+
+        virtual void modal(const Dialog &dialog) = 0;
+
+        /** these functions candidates for removal **/
+
+        /*! get input from UI */
 
         virtual void already_scored() = 0;
 
         virtual void dice(const std::shared_ptr<Player> &player, int x, int y) = 0;
 
         virtual void help() = 0;
-
-        virtual void menu() = 0;
 
         virtual void ask_name() = 0;
 
@@ -71,11 +95,9 @@ namespace yahtsee {
         virtual void waiting_for_players() = 0;
 
         virtual void joining_game() = 0;
-
-        virtual void set_needs_refresh() = 0;
+        /** end removal candidates **/
 
     };
-
 
     class StateManager;
 
@@ -83,21 +105,29 @@ namespace yahtsee {
     public:
         CursesUi(StateManager *state);
 
-        void alert(const AlertInput &input);
+        ~CursesUi();
 
-        void flash_alert(const AlertInput &input, const std::function<void()> &pop = nullptr);
+        std::shared_ptr<Menu> menu();
 
-        void modal_alert(const AlertInput &input);
+        void show(const Dialog &dialog);
 
-        void pop_alert();
+        void flash(const Dialog &dialog, const std::function<void()> &onFinish = nullptr);
+
+        void modal(const Dialog &dialog);
+
+        void set_needs_refresh();
+
+        void update();
+
+        void render();
+
+        /** removal candidates **/
 
         void already_scored();
 
         void dice(const std::shared_ptr<Player> &player, int x, int y);
 
         void help();
-
-        void menu();
 
         void ask_name();
 
@@ -129,12 +159,8 @@ namespace yahtsee {
         void waiting_for_players();
 
         void joining_game();
+        /** end removal candidates **/
 
-        void set_needs_refresh();
-
-        void update();
-
-        void render();
     private:
         StateManager *state_;
     };
