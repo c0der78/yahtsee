@@ -4,10 +4,6 @@
 
 #include "game.h"
 
-
-using namespace std;
-using namespace rj;
-
 namespace yahtsee {
 
     Game::Game(int seed) : state_() {

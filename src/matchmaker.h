@@ -1,11 +1,11 @@
-#ifndef _MATCHMAKER_H_
-#define _MATCHMAKER_H_
+#ifndef YAHTSEE_MATCHMAKER_H
+#define YAHTSEE_MATCHMAKER_H
 
-#include <rj/dice/yaht/player.h>
-#include <rj/net/socket_server.h>
-#include <rj/net/uri.h>
-#include <rj/net/http/client.h>
-#include <rj/net/async/server.h>
+#include <coda/dice/yaht/player.h>
+#include <coda/net/socket_server.h>
+#include <coda/net/uri.h>
+#include <coda/net/http/client.h>
+#include <coda/net/async/server.h>
 #include <string>
 #include "client.h"
 #include "connection_factory.h"
@@ -75,10 +75,10 @@ namespace yahtsee {
         static const int INVALID = -1;
 
         std::string gameId_;
-        rj::net::http::client api_;
+        coda::net::http::client api_;
         Client client_;
         std::shared_ptr<ConnectionFactory> clientFactory_;
-        rj::net::async::server server_;
+        coda::net::async::server server_;
         int serverPort_;
     };
 

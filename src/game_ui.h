@@ -7,11 +7,10 @@
 
 #include <functional>
 #include <unordered_map>
-#include <rj/dice/yaht/scoresheet.h>
+#include <coda/dice/yaht/scoresheet.h>
 
 #include "renderable.h"
 #include "updatable.h"
-
 
 namespace yahtsee {
 
@@ -83,10 +82,10 @@ namespace yahtsee {
 
         virtual void hosting_game() = 0;
 
-        virtual rj::yaht::scoresheet::value_type upper_scores(int color, const rj::yaht::scoresheet &score, int x, int y) = 0;
+        virtual coda::yaht::scoresheet::value_type upper_scores(int color, const coda::yaht::scoresheet &score, int x, int y) = 0;
 
-        virtual void lower_scores(int color, const rj::yaht::scoresheet &score,
-                                  rj::yaht::scoresheet::value_type lower_score_total, int x, int y) = 0;
+        virtual void lower_scores(int color, const coda::yaht::scoresheet &score,
+                                  coda::yaht::scoresheet::value_type lower_score_total, int x, int y) = 0;
 
         virtual void client_waiting_to_start() = 0;
 
@@ -96,76 +95,15 @@ namespace yahtsee {
 
         virtual void joining_game() = 0;
         /** end removal candidates **/
-
     };
 
     class StateManager;
 
-    class CursesUi : public GameUi {
-    public:
-        CursesUi(StateManager *state);
+    namespace factory {
+        extern std::shared_ptr<GameUi> new_curses_ui(StateManager *state);
+        extern std::shared_ptr<GameUi> new_imgui_ui(StateManager *state);
+    }
 
-        ~CursesUi();
-
-        std::shared_ptr<Menu> menu();
-
-        void show(const Dialog &dialog);
-
-        void flash(const Dialog &dialog, const std::function<void()> &onFinish = nullptr);
-
-        void modal(const Dialog &dialog);
-
-        void set_needs_refresh();
-
-        void update();
-
-        void render();
-
-        /** removal candidates **/
-
-        void already_scored();
-
-        void dice(const std::shared_ptr<Player> &player, int x, int y);
-
-        void help();
-
-        void ask_name();
-
-        void dice_roll();
-
-        void confirm_quit();
-
-        void ask_number_of_players();
-
-        void multiplayer_menu();
-
-        void multiplayer_join();
-
-        void multiplayer_join_game();
-
-        void player_scores();
-
-        void hosting_game();
-
-        rj::yaht::scoresheet::value_type upper_scores(int color, const rj::yaht::scoresheet &score, int x, int y);
-
-        void lower_scores(int color, const rj::yaht::scoresheet &score,
-                                  rj::yaht::scoresheet::value_type lower_score_total, int x, int y);
-
-        void client_waiting_to_start();
-
-        void waiting_for_connections();
-
-        void waiting_for_players();
-
-        void joining_game();
-        /** end removal candidates **/
-
-    private:
-        StateManager *state_;
-    };
-
-    class ImGUi : public GameUi {};
 }
 
 #endif //YAHTSEE_UI_H

@@ -4,14 +4,14 @@
 #include "player.h"
 #include "connection.h"
 #include "connection_factory.h"
-#include <rj/log/log.h>
+#include <coda/log/log.h>
 
 #ifdef UPNPC
 #include <miniupnpc.h>
 #include <upnpcommands.h>
 #endif
 
-using namespace rj;
+using namespace coda;
 
 namespace yahtsee {
 
@@ -263,7 +263,7 @@ namespace yahtsee {
 
         int response = api_.response().code();
 
-        if (response != rj::net::http::OK) {
+        if (response != coda::net::http::OK) {
             if (error) {
                 packet = Packet::parse(api_.response().content());
                 *error = packet["error"];

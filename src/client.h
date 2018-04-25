@@ -1,9 +1,9 @@
 #ifndef YAHTSEE_CLIENT_H
 #define YAHTSEE_CLIENT_H
 
-#include <rj/net/buffered_socket.h>
-#include <rj/net/uri.h>
-#include <rj/net/socket_server.h>
+#include <coda/net/buffered_socket.h>
+#include <coda/net/uri.h>
+#include <coda/net/socket_server.h>
 #include <map>
 #include <thread>
 #include "connection.h"
@@ -28,7 +28,7 @@ namespace yahtsee {
      */
     class Client : public Connection {
     public:
-        Client(rj::net::SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state);
+        Client(coda::net::SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state);
 
         Client();
 

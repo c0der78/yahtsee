@@ -6,11 +6,11 @@
 
 namespace yahtsee
 {
-    bool GameLogic::is_thinking() const {
+    bool GameLogic::is_thinking() const noexcept {
         return (flags_ & FINISHED) == 0;
     }
 
-    void GameLogic::enlighten() {
+    void GameLogic::stop_thinking() noexcept {
         flags_ |= FINISHED;
     }
 

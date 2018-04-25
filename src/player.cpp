@@ -1,8 +1,8 @@
 #include "player.h"
-#include <rj/string/util.h>
+#include <coda/string/util.h>
 #include <random>
 
-using namespace rj;
+using namespace coda;
 using namespace std;
 
 namespace yahtsee {
@@ -37,7 +37,7 @@ namespace yahtsee {
     }
 
     Player::Player(const string &name)
-            : yaht::player(&playerEngine), connection_(NULL), id_(rj::uuid::generate()), name_(name) {
+            : yaht::player(&playerEngine), connection_(NULL), id_(coda::uuid::generate()), name_(name) {
     }
 
     Player::Player(Connection *conn, const string &id, const string &name)

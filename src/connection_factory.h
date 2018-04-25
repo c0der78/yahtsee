@@ -6,18 +6,18 @@
 #define YAHTSEE_CONNECTION_FACTORY_H
 
 #include <memory>
-#include <rj/net/socket_factory.h>
+#include <coda/net/socket_factory.h>
 
 namespace yahtsee {
 
     class StateManager;
     class Connection;
 
-    class ConnectionFactory : public rj::net::socket_factory {
+    class ConnectionFactory : public coda::net::socket_factory {
     public:
         ConnectionFactory(StateManager *state);
 
-        std::shared_ptr<rj::net::buffered_socket> create_socket(const server_type &server, rj::net::SOCKET sock,
+        std::shared_ptr<coda::net::buffered_socket> create_socket(const server_type &server, coda::net::SOCKET sock,
                                                                 const sockaddr_storage &addr);
 
         // perform an operation on each connection

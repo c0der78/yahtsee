@@ -36,6 +36,14 @@ namespace yahtsee {
         std::shared_ptr<Menu> menu_;
     };
 
+    class NewSinglePlayerState : public GameState {
+    public:
+        NewSinglePlayerState(StateManager *state);
+
+        void update();
+        void render();
+    };
+
     class WaitingForPlayerState : public GameState {
     private:
 

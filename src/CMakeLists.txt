@@ -5,8 +5,9 @@ add_executable(${PROJECT_NAME} main.cpp game.cpp game.h game_ui.cpp game_ui.h cl
         state_manager.cpp state_manager.h input_manager.cpp input_manager.h renderable.h updatable.h
         player_manager.cpp player_manager.h)
 
-target_link_libraries(${PROJECT_NAME} imgui imgui_demo rj_log rj_net rj_net_http rj_net_async rj_dice rj_string
-        ${URIPARSER_LIBRARIES} ${OpenGL_LIBRARIES} ${CURSES_LIBRARIES} ${CURSES_MENU_LIBRARY})
+target_link_libraries(${PROJECT_NAME} imgui imgui_demo ${LIBLOG_LIBRARIES} ${LIBNET_LIBRARIES} ${LIBNETHTTP_LIBRARIES}
+        ${LIBNETASYNC_LIBRARIES} ${LIBDICE_LIBRARIES} ${LIBSTR_LIBRARIES}
+        ${LIBURIPARSER_LIBRARIES} ${OpenGL_LIBRARIES} ${CURSES_LIBRARIES} ${CURSES_MENU_LIBRARY})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 

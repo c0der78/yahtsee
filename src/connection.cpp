@@ -1,12 +1,12 @@
 #include "connection.h"
 #include "client.h"
 #include "game.h"
-#include <rj/log/log.h>
+#include <coda/log/log.h>
 #include "player.h"
 #include "connection_state.h"
 
-using namespace rj;
-using namespace rj::net;
+using namespace coda;
+using namespace coda::net;
 
 namespace yahtsee {
 

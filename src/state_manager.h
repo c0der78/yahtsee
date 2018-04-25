@@ -26,16 +26,18 @@ namespace yahtsee {
         void reset();
 
         GameLogic *logic();
-        GameUi *ui();
+        std::shared_ptr<GameUi> ui();
         PlayerManager *players();
         InputManager *input();
         Multiplayer *online();
         EventManager *events();
 
+        void set(const std::shared_ptr<GameState> &value);
+
     private:
 
         GameLogic logic_;
-        CursesUi ui_;
+        std::shared_ptr<GameUi> ui_;
         PlayerManager players_;
         InputManager input_;
         Multiplayer online_;

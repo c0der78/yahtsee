@@ -27,9 +27,9 @@ namespace yahtsee {
     public:
 
         // properties
-        bool is_thinking() const;
+        bool is_thinking() const noexcept;
 
-        void enlighten();
+        void stop_thinking() noexcept;
 
         Settings &settings();
 

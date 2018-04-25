@@ -6,9 +6,9 @@
 #include "game.h"
 #include "player.h"
 #include "state_manager.h"
-#include <rj/log/log.h>
+#include <coda/log/log.h>
 
-using namespace rj;
+using namespace coda;
 
 namespace yahtsee {
 

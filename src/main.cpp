@@ -8,7 +8,7 @@ int main(int argc, char **argv)
     int seed = 0;
 
     if (argc > 1) {
-        // custom seeding for better functional testing
+        // custom seeding for better testing
         seed = atoi(argv[1]);
     } else {
         seed = time(NULL);

@@ -6,7 +6,7 @@
 #define YAHTSEE_GAMEACTION_H
 
 #include <memory>
-#include <rj/dice/yaht/scoresheet.h>
+#include <coda/dice/yaht/scoresheet.h>
 #include <fruit/fruit.h>
 
 namespace yahtsee {
@@ -35,7 +35,7 @@ namespace yahtsee {
 
         void select_die(const std::shared_ptr<Player> &player, int d);
 
-        void lower_score(const std::shared_ptr<Player> &player, rj::yaht::scoresheet::type type);
+        void lower_score(const std::shared_ptr<Player> &player, coda::yaht::scoresheet::type type);
 
         void score(const std::shared_ptr<Player> &player, int n);
 

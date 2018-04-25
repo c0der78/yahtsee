@@ -1,13 +1,13 @@
 #include "connection_state.h"
 
-#include <rj/log/log.h>
+#include <coda/log/log.h>
 #include <vector>
 
 #include "client.h"
 #include "game.h"
 #include "player.h"
 
-using namespace rj;
+using namespace coda;
 
 namespace yahtsee {
 
@@ -101,7 +101,7 @@ namespace yahtsee {
 
         std::vector <Packet> roll = packet["roll"];
 
-        std::queue <rj::die::value_type> values;
+        std::queue <coda::die::value_type> values;
 
         for (size_t i = 0; i < roll.size(); i++) {
             auto inner = roll[i];

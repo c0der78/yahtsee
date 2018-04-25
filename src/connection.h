@@ -6,7 +6,7 @@
 #define YAHTSEE_CONNECTION_H
 
 #include <nlohmann/json.hpp>
-#include <rj/net/buffered_socket.h>
+#include <coda/net/buffered_socket.h>
 
 namespace yahtsee {
 
@@ -16,11 +16,11 @@ namespace yahtsee {
     /*!
      * A connection is a remote user connected to this host instance
      */
-    class Connection : public rj::net::buffered_socket {
+    class Connection : public coda::net::buffered_socket {
     public:
         typedef nlohmann::json Packet;
 
-        Connection(rj::net::SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state );
+        Connection(coda::net::SOCKET sock, const sockaddr_storage &addr, const std::shared_ptr<ConnectionState> &state );
 
         Connection();
 

@@ -15,8 +15,8 @@ namespace yahtsee {
 
     ConnectionFactory::ConnectionFactory(StateManager *state) : state_(state) {}
 
-    std::shared_ptr<rj::net::buffered_socket> ConnectionFactory::create_socket(const server_type &server,
-                                                                                rj::net::SOCKET sock,
+    std::shared_ptr<coda::net::buffered_socket> ConnectionFactory::create_socket(const server_type &server,
+                                                                                coda::net::SOCKET sock,
                                                                        const sockaddr_storage &addr) {
 
         auto state = std::make_shared<ConnectionState>(state_);

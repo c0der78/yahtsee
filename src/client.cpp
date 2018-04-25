@@ -1,11 +1,11 @@
 #include "client.h"
-#include <rj/string/util.h>
-#include <rj/log/log.h>
+#include <coda/string/util.h>
+#include <coda/log/log.h>
 #include "game.h"
 #include "player.h"
 
-using namespace rj;
-using namespace rj::net;
+using namespace coda;
+using namespace coda::net;
 
 namespace yahtsee {
 
