@@ -8,7 +8,7 @@
 
 namespace yahtsee {
 
-    WelcomeState::WelcomeState(StateManager *state) : GameState(state) {
+    WelcomeState::WelcomeState(StateManager *state) : GameState(state), menu_(state->ui()->menu()) {
 
         menu_->add_option("n", "Single Player Game", [&](const Menu &menu, const std::string &opt) {
                     state_->set(std::make_shared<NewSinglePlayerState>(state_));

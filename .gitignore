@@ -50,3 +50,4 @@ conaninfo.txt
 .prep
 
 cmake-build-*
+.DS_Store

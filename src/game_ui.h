@@ -16,24 +16,46 @@ namespace yahtsee {
 
     class Player;
 
+    namespace impl {
+        template<typename T>
+        class Option {
+        public:
+            using Callback = std::function<void(const T &, const std::string &)>;
+
+            Option(T *owner, const std::string &description, const Callback &callback = nullptr) : owner_(owner),
+                    description_(description), callback_(callback) {}
+
+            std::string description() const { return description_; }
+
+            Callback callback() const { return callback_; }
+
+        private:
+            T *owner_;
+            std::string description_;
+            Callback callback_;
+        };
+    }
+
     class Dialog {
     public:
-        using Callback = std::function<int(const Dialog &, const std::string &)>;
+        using Option = impl::Option<Dialog>;
         Dialog(const std::string &message);
         Dialog();
-        Dialog &add_option(const std::string &name, const Callback &value = nullptr);
+        Dialog &add_option(const std::string &key, const std::shared_ptr<Option> &option);
+        Dialog &add_option(const std::string &key, const std::string &description, const Option::Callback &callback = nullptr);
     private:
-        std::unordered_map<std::string, Callback> options_;
+        std::unordered_map<std::string, std::shared_ptr<Option>> options_;
         std::string message_;
     };
 
     class Menu : public Renderable, public Updatable {
     public:
-        using Callback = std::function<void(const Menu &, const std::string &)>;
+        using Option = impl::Option<Menu>;
         Menu();
-        virtual Menu &add_option(const std::string &name, const std::string &description, const Callback &value = nullptr);
+        virtual Menu &add_option(const std::string &key, const std::shared_ptr<Option> &option);
+        Menu &add_option(const std::string &key, const std::string &description, const Option::Callback &callback = nullptr);
     protected:
-        std::unordered_map<std::string, std::pair<std::string, Callback>> options_;
+        std::unordered_map<std::string, std::shared_ptr<Option>> options_;
     };
 
     class GameUi : public Renderable, public Updatable {

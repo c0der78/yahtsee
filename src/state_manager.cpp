@@ -17,14 +17,14 @@ namespace yahtsee {
     }
 
     void StateManager::render() {
-        state_->render();
         ui_->render();
+        state_->render();
     }
 
     void StateManager::update() {
         input_.update();
-        state_->update();
         ui_->update();
+        state_->update();
     }
 
     bool StateManager::is_finished() const {

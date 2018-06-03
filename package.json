@@ -45,7 +45,7 @@
 			"version": "4.0.0",
 			"build_system": ["cmake", "make"],
 			"git": {
-				"location": "https://github.com/Reactive-Extensions/RxCpp.git#v4.0.0"
+				"location": "https://github.com/ReactiveX/RxCpp.git"
 			}
 		},
 		{
