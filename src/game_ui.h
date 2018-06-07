@@ -25,7 +25,7 @@ namespace yahtsee {
             Option(T *owner, const std::string &description, const Callback &callback = nullptr) : owner_(owner),
                     description_(description), callback_(callback) {}
 
-            std::string description() const { return description_; }
+            const std::string &description() const { return description_; }
 
             Callback callback() const { return callback_; }
 

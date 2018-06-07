@@ -12,6 +12,7 @@ namespace yahtsee {
 
     class Inputer {
     public:
+        virtual ~Inputer() {}
         virtual int get() const = 0;
     };
 

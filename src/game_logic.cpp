@@ -6,6 +6,9 @@
 
 namespace yahtsee
 {
+    GameLogic::GameLogic() : flags_(0) {
+    }
+
     bool GameLogic::is_thinking() const noexcept {
         return (flags_ & FINISHED) == 0;
     }

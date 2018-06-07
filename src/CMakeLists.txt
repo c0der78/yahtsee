@@ -1,3 +1,5 @@
+link_directories(${LIBURIPARSER_LIBRARY_DIRS})
+
 add_executable(${PROJECT_NAME} main.cpp game.cpp game.h game_ui.cpp game_ui.h client.cpp client.h matchmaker.cpp matchmaker.h
         connection.cpp connection.h connection.h connection_factory.cpp connection_factory.h player.cpp player.h
         connection_state.cpp connection_state.h event_manager.cpp event_manager.h game_logic.cpp
@@ -8,6 +10,7 @@ add_executable(${PROJECT_NAME} main.cpp game.cpp game.h game_ui.cpp game_ui.h cl
 target_link_libraries(${PROJECT_NAME} imgui imgui_demo ${LIBLOG_LIBRARIES} ${LIBNET_LIBRARIES} ${LIBNETHTTP_LIBRARIES}
         ${LIBNETASYNC_LIBRARIES} ${LIBDICE_LIBRARIES} ${LIBSTR_LIBRARIES}
         ${LIBURIPARSER_LIBRARIES} ${OpenGL_LIBRARIES} ${CURSES_LIBRARIES} ${CURSES_MENU_LIBRARY})
+
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 

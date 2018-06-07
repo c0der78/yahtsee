@@ -7,7 +7,6 @@
 
 #include <memory>
 #include <coda/dice/yaht/scoresheet.h>
-#include <fruit/fruit.h>
 
 namespace yahtsee {
 

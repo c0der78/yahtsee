@@ -2,7 +2,6 @@
 #define YAHTSEE_CONNECTION_STATE_H
 
 #include <nlohmann/json.hpp>
-#include <fruit/fruit.h>
 
 namespace yahtsee {
     class Connection;
@@ -12,13 +11,10 @@ namespace yahtsee {
     class ConnectionState {
     public:
         using Packet = nlohmann::json;
-        using Inject =
 
         ConnectionState(StateManager *state);
 
-        ConnectionState(StateManager *state);
-
-        void handle(Connection *conn, const Packet &packet);
+       void handle(Connection *conn, const Packet &packet);
 
     private:
 

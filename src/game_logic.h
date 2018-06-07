@@ -26,6 +26,8 @@ namespace yahtsee {
 
     public:
 
+        GameLogic();
+
         // properties
         bool is_thinking() const noexcept;
 

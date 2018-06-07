@@ -86,6 +86,12 @@ namespace yahtsee
         public:
             Menu(InputManager *input) : input_(input) {}
 
+            Menu(const Menu &) = delete;
+            Menu(Menu &&) = default;
+
+            Menu &operator=(const Menu &) = delete;
+            Menu &operator=(Menu &&) = default;
+
             ~Menu() {
                 if (menu_ != nullptr) {
                     unpost_menu(menu_);
@@ -102,11 +108,7 @@ namespace yahtsee
             }
 
             void render() {
-                if (menu_ == nullptr) {
-                    init();
-                    menu_driver(menu_, REQ_FIRST_ITEM);
-                }
-                post_menu(menu_);
+                init_if_needed();
                 wrefresh(window_);
             }
 
@@ -148,16 +150,24 @@ namespace yahtsee
                 }
             }
         private:
+            void init_if_needed() {
+                if (menu_ != nullptr) {
+                    return;
+                }
+                init();
+                menu_driver(menu_, REQ_FIRST_ITEM);
+                post_menu(menu_);
+            }
+
             void init() {
                 size_ = options_.size();
-                items_ = (ITEM **) calloc(size_ + 1, sizeof(ITEM *));
+                items_ = (ITEM **) calloc(size_+1, sizeof(ITEM *));
                 int i = 0;
-
                 const int height = size_ + 4;
                 int width = 0;
 
                 for (auto &entry : options_) {
-                    auto descr = entry.second->description();
+                    auto &descr = entry.second->description();
                     auto item = new_item(entry.first.c_str(), descr.c_str());
                     
                      if (item == nullptr) {
@@ -170,9 +180,10 @@ namespace yahtsee
                         width = descr.size();
                     }
                 }
-                width += 8; // for border, space and mark
+                items_[i] = nullptr;
 
-                items_[size_] = nullptr;
+                width += 20; // for border, space and mark
+
                 menu_ = new_menu(items_);
 
                 /* Set fore ground and back ground of the menu */
@@ -191,7 +202,7 @@ namespace yahtsee
                 mvwaddch(window_, 2, 0, ACS_LTEE);
                 mvwhline(window_, 2, 1, ACS_HLINE, width-2);
                 mvwaddch(window_, 2, width-1, ACS_RTEE);
-                refresh();
+                wrefresh(window_);
             }
 
             void print_in_middle(WINDOW *win, int starty, int startx, int width, const char *string, chtype color)
@@ -251,8 +262,9 @@ namespace yahtsee
                 init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
             }
 
-            wborder(window_, L'|', L'|', L'-', L'-', L'⎾', L'⏋', L'⎿', L'⏌');
-    
+            //wborder(window_, L'|', L'|', L'-', L'-', L'⎾', L'⏋', L'⎿', L'⏌');
+            wborder(window_, '|', '|', '-', '-', '+', '+', '+', '+');
+
             struct sigaction sa;
             memset(&sa, 0, sizeof(struct sigaction));
             sa.sa_handler = handle_winch;
