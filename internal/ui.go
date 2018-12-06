@@ -1,30 +1,33 @@
 package internal
 
 import (
-	"fmt"
-	"github.com/inkyblackness/imgui-go"
+	"github.com/ryjen/imgui-go"
+	"micrantha.com/yahtsee/internal/views"
 	"time"
 )
 
 type Ui struct {
 	graphics *Graphics
 	context *imgui.Context
-	counter int
-	showDemo bool
+	views []View
 }
 
 func NewUi() *Ui {
 	return &Ui{}
 }
 
-func (ui *Ui) Init() error {
+func (ui *Ui) Add(view View) {
+	ui.views = append(ui.views, view)
+}
+
+func (ui *Ui) Init(config *Config) error {
 	if ui.graphics != nil {
 		return nil
 	}
 
 	ui.context = imgui.CreateContext(nil)
 
-	window, err := NewWindow(1280, 720, "Yahtsee")
+	window, err := NewWindow(config.Defaults.Width, config.Defaults.Height, config.Title)
 
 	if err != nil {
 		return err
@@ -32,12 +35,27 @@ func (ui *Ui) Init() error {
 
 	ui.graphics = NewGraphics(window)
 
+	menu := &views.MenuCallbacks{
+		OnGameExit: func() {
+			config.Over = true
+		},
+		OnGameNew: func() {
+			ui.Add(views.NewNewGameView())
+		},
+	}
+
+	ui.Add(views.NewMenuView(menu))
+
+	ui.Add(views.NewDemoView())
+
+	ui.Add(views.NewBoardView(ui.graphics.textures.Dice))
+
 	return nil
 }
 
 func (ui *Ui) Close() {
-	ui.context.Destroy()
 	ui.graphics.Close()
+	ui.context.Destroy()
 }
 
 func (ui *Ui) IsOpen() bool {
@@ -46,31 +64,17 @@ func (ui *Ui) IsOpen() bool {
 
 func (ui *Ui) Update() {
 	ui.graphics.Update()
+
+	for _, view := range ui.views {
+		view.Update()
+	}
 }
 
 func (ui *Ui) Render() {
 	ui.graphics.NewFrame()
 
-
-	// 1. Show a simple window.
-	// Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
-	{
-		imgui.Text("Hello, world!")
-
-		imgui.Checkbox("Demo Window", &ui.showDemo)
-
-		if imgui.Button("Button") {
-			ui.counter++
-		}
-		imgui.SameLine()
-		imgui.Text(fmt.Sprintf("counter = %d", ui.counter))
-
-	}
-
-	// 3. Show the ImGui demo window. Most of the sample code is in imgui.ShowDemoWindow().
-	// Read its code to learn more about Dear ImGui!
-	if ui.showDemo {
-		imgui.ShowDemoWindow(&ui.showDemo)
+	for _, view := range ui.views {
+		view.Render()
 	}
 
 	ui.graphics.Clear()

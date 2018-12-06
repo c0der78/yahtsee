@@ -1,22 +1,29 @@
 package internal
 
 import (
+	"fmt"
+	"github.com/raedatoui/glutils"
+	"github.com/ryjen/imgui-go"
 	"math"
 	"unsafe"
 
-	"github.com/go-gl/gl/v3.2-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
-	"github.com/inkyblackness/imgui-go"
 )
 
 var clearColor imgui.Vec4
 
 type Window = glfw.Window
 
+type Textures struct {
+	Dice []imgui.TextureID
+}
+
 type Graphics struct {
 	window           *Window
 	time             float64
 	mouseJustPressed [3]bool
+	textures		 *Textures
 
 	glslVersion            string
 	fontTexture            uint32
@@ -31,6 +38,7 @@ type Graphics struct {
 	vboHandle              uint32
 	elementsHandle         uint32
 }
+
 
 func NewWindow(width int, height int, title string) (*Window, error) {
 
@@ -61,9 +69,9 @@ func NewWindow(width int, height int, title string) (*Window, error) {
 }
 
 func (impl *Graphics) Close() {
-	glfw.Terminate()
-	impl.window.Destroy()
 	impl.Shutdown()
+	impl.window.Destroy()
+	glfw.Terminate()
 }
 
 func (impl *Graphics) Update() {
@@ -84,7 +92,7 @@ func NewGraphics(window *glfw.Window) *Graphics {
 	}
 
 	io := imgui.CurrentIO()
-	// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
+
 	io.KeyMap(int(imgui.KeyTab), int(glfw.KeyTab))
 	io.KeyMap(int(imgui.KeyLeftArrow), int(glfw.KeyLeft))
 	io.KeyMap(int(imgui.KeyRightArrow), int(glfw.KeyRight))
@@ -109,13 +117,12 @@ func NewGraphics(window *glfw.Window) *Graphics {
 
 	impl.installCallbacks()
 
+	impl.createDeviceObjects()
+
 	return impl
 }
 
 func (impl *Graphics) NewFrame() {
-	if impl.fontTexture == 0 {
-		impl.createDeviceObjects()
-	}
 
 	io := imgui.CurrentIO()
 	// Setup display size (every frame to accommodate for window resizing)
@@ -209,10 +216,33 @@ void main()
 
 	impl.createFontsTexture()
 
+	impl.textures = NewTextures()
+
 	// Restore modified GL state
 	gl.BindTexture(gl.TEXTURE_2D, uint32(lastTexture))
 	gl.BindBuffer(gl.ARRAY_BUFFER, uint32(lastArrayBuffer))
 	gl.BindVertexArray(uint32(lastVertexArray))
+}
+
+func NewTextures() *Textures {
+
+	impl := &Textures{}
+
+	glfw.LoadTexture2D()
+
+	for i := 1; i <= 6; i++ {
+		fileName := fmt.Sprintf("assets/Die%d.png", i)
+
+		tex, err := glutils.NewTexture(gl.REPEAT, gl.REPEAT, gl.LINEAR, gl.LINEAR,
+			fileName)
+
+		if err != nil {
+			panic(err)
+		}
+		impl.Dice = append(impl.Dice, imgui.TextureID(tex))
+	}
+
+	return impl
 }
 
 func (impl *Graphics) createFontsTexture() {
