@@ -64,7 +64,7 @@ func (view *BoardView) Render() {
 		imgui.EndChild()
 	}
 
-	if (imgui.BeginChild("Lower")) {
+	if imgui.BeginChild("Lower") {
 
 		//imgui.Columns(3)
 

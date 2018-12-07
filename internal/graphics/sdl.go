@@ -2,10 +2,8 @@ package graphics
 
 import (
 	"errors"
-	"github.com/banthar/Go-SDL/gfx"
 	"github.com/banthar/Go-SDL/sdl"
 	"github.com/ryjen/imgui-go"
-	"time"
 )
 
 const (
@@ -17,7 +15,6 @@ const (
 type SDL struct {
 	opengl
 	window *sdl.Surface
-	fps *gfx.FPSmanager
 	time uint32
 	showing bool
 }
@@ -25,13 +22,12 @@ type SDL struct {
 func NewSDL() *SDL {
 	return &SDL{
 		opengl: openGL(),
-		fps: gfx.NewFramerate(),
 	}
 }
 
 func (impl *SDL) Start(width int, height int, title string) error {
 
-	errno := sdl.Init(sdl.INIT_VIDEO|sdl.INIT_TIMER)
+	errno := sdl.Init(sdl.INIT_VIDEO)
 
 	if errno != 0 {
 		return errors.New(sdl.GetError())
@@ -97,7 +93,9 @@ func (impl *SDL) NewFrame() {
 
 	// Setup time step
 	currentTime := sdl.GetTicks()
-	//io.SetDeltaTime(float32(currentTime - impl.time) / 1000)
+	if impl.time > 0 {
+		io.SetDeltaTime(float32(currentTime - impl.time))
+	}
 	impl.time = currentTime
 
 	imgui.NewFrame()
@@ -118,13 +116,13 @@ func (impl *SDL) Render(data imgui.DrawData) {
 	displayWidth, displayHeight := impl.window.W, impl.window.H
 	display := imgui.Vec2{X: float32(displayWidth), Y: float32(displayHeight) }
 
-	fbWidth, fbHeight := impl.window.Clip_rect.W, impl.window.Clip_rect.H
+	fbWidth, fbHeight := impl.getViewPort()
 	fb := imgui.Vec2{X: float32(fbWidth), Y: float32(fbHeight) }
 
 	impl.renderGL(data, display, fb)
 
 	sdl.GL_SwapBuffers()
-	sdl.Delay(uint32(time.Millisecond * 25))
+	sdl.Delay(25)
 }
 
 func (impl *SDL) Update() {

@@ -1,5 +1,6 @@
 package graphics
 
+import "C"
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/ryjen/imgui-go"
@@ -41,6 +42,16 @@ func (impl *opengl) startGL(width int, height int) error {
 	impl.createDeviceObjects()
 
 	return nil
+}
+
+func (impl *opengl) getViewPort() (int32, int32) {
+	size := [4]int32{}
+
+	p := (*int32)(unsafe.Pointer(&size))
+
+	gl.GetIntegerv(gl.VIEWPORT, p)
+
+	return size[2], size[3]
 }
 
 func (impl *opengl) renderGL(drawData imgui.DrawData, display imgui.Vec2, fb imgui.Vec2) {
