@@ -11,11 +11,10 @@ type Score struct {}
 
 type BoardView struct {
 	history []*Score
-	diceTextures []imgui.TextureID
 }
 
-func NewBoardView(diceTextures []imgui.TextureID) *BoardView {
-	view := &BoardView{nil, diceTextures }
+func NewBoardView() *BoardView {
+	view := &BoardView{nil}
 
 	view.history = append(view.history, &Score{})
 
@@ -44,9 +43,7 @@ func (view *BoardView) Render() {
 
 		imgui.SameLine()
 
-		imgui.Text("Aces")
-		imgui.Image(view.diceTextures[0], imgui.Vec2{12,12})
-		imgui.Text("= 1")
+		imgui.Text("Aces = 1")
 
 		imgui.NextColumn()
 

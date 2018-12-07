@@ -15,7 +15,9 @@ func NewDemoView() *DemoView {
 }
 
 func (view *DemoView) Hello() {
-	imgui.Begin("Hello")
+	if !imgui.Begin("Hello") {
+		return
+	}
 
 	imgui.Text("Hello, world!")
 

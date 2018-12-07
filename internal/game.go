@@ -1,6 +1,9 @@
 package internal
 
-import "runtime"
+import (
+	"log"
+	"runtime"
+)
 
 type Game struct {
 	ui *Ui
@@ -16,9 +19,13 @@ func NewGame() *Game {
 
 func (game *Game) Start() error {
 
-	runtime.LockOSThread()
+	err := game.config.Load()
 
-	game.config.Load()
+	if err != nil {
+		log.Print("Warning: ", err)
+	}
+
+	runtime.LockOSThread()
 
 	return game.ui.Init(game.config)
 }

@@ -2,18 +2,30 @@ package internal
 
 import (
 	"github.com/ryjen/imgui-go"
+	"micrantha.com/yahtsee/internal/graphics"
 	"micrantha.com/yahtsee/internal/views"
-	"time"
 )
 
+type Graphics interface {
+	Update()
+	NewFrame()
+	Render(data imgui.DrawData)
+	Start(width int, height int, title string) error
+	Stop()
+	Showing() bool
+}
+
 type Ui struct {
-	graphics *Graphics
+	graphics Graphics
 	context *imgui.Context
 	views []View
 }
 
 func NewUi() *Ui {
-	return &Ui{}
+	return &Ui{
+		graphics: graphics.NewSDL(),
+		context: imgui.CreateContext(nil),
+	}
 }
 
 func (ui *Ui) Add(view View) {
@@ -21,19 +33,12 @@ func (ui *Ui) Add(view View) {
 }
 
 func (ui *Ui) Init(config *Config) error {
-	if ui.graphics != nil {
-		return nil
-	}
 
-	ui.context = imgui.CreateContext(nil)
-
-	window, err := NewWindow(config.Defaults.Width, config.Defaults.Height, config.Title)
+	err := ui.graphics.Start(config.Defaults.Width, config.Defaults.Height, config.Title)
 
 	if err != nil {
 		return err
 	}
-
-	ui.graphics = NewGraphics(window)
 
 	menu := &views.MenuCallbacks{
 		OnGameExit: func() {
@@ -48,18 +53,18 @@ func (ui *Ui) Init(config *Config) error {
 
 	ui.Add(views.NewDemoView())
 
-	ui.Add(views.NewBoardView(ui.graphics.textures.Dice))
+	ui.Add(views.NewBoardView())
 
 	return nil
 }
 
 func (ui *Ui) Close() {
-	ui.graphics.Close()
+	ui.graphics.Stop()
 	ui.context.Destroy()
 }
 
 func (ui *Ui) IsOpen() bool {
-	return !ui.graphics.window.ShouldClose()
+	return ui.graphics.Showing()
 }
 
 func (ui *Ui) Update() {
@@ -71,18 +76,14 @@ func (ui *Ui) Update() {
 }
 
 func (ui *Ui) Render() {
+
 	ui.graphics.NewFrame()
 
 	for _, view := range ui.views {
 		view.Render()
 	}
 
-	ui.graphics.Clear()
-
 	imgui.Render()
 
 	ui.graphics.Render(imgui.RenderedDrawData())
-
-	ui.graphics.window.SwapBuffers()
-	<- time.After(time.Millisecond * 25)
 }

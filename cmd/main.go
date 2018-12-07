@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"micrantha.com/yahtsee/internal"
 )
 
@@ -8,9 +9,14 @@ func main() {
 
 	game := internal.NewGame()
 
-	game.Start()
+	err := game.Start()
+
+	if err != nil {
+		log.Print(err)
+	}
 
 	for !game.IsOver() {
+
 		game.Update()
 
 		game.Render()

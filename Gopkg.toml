@@ -35,3 +35,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/raedatoui/glutils"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/banthar/Go-SDL"

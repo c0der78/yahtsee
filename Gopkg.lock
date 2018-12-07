@@ -3,8 +3,14 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/banthar/Go-SDL"
+  packages = ["gfx","sdl"]
+  revision = "e9b5408a8e7eac0758773e7a092629af105a9e2b"
+
+[[projects]]
+  branch = "master"
   name = "github.com/go-gl/gl"
-  packages = ["v3.2-core/gl","v4.1-core/gl"]
+  packages = ["v4.1-core/gl"]
   revision = "55b76b7df9d25d70b63e31a767f47158292b85d8"
 
 [[projects]]
@@ -15,37 +21,13 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/go-gl/mathgl"
-  packages = ["mgl32","mgl64"]
-  revision = "cdf14b6b8f8a4a1bfb003dd5119205c5f711d85a"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/raedatoui/assimp"
-  packages = ["."]
-  revision = "d76592e15eb9f8477761b0dcba004ff0c52c6723"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/raedatoui/glutils"
-  packages = ["."]
-  revision = "7cd8d44edb49ec3afcdeedb5f5b0256de90e95e2"
-
-[[projects]]
-  branch = "master"
   name = "github.com/ryjen/imgui-go"
   packages = ["."]
   revision = "ee445d8d129e241343516de8cd034853c48458d7"
 
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/image"
-  packages = ["math/f32","math/f64"]
-  revision = "cd38e8056d9b27bb2f265effa37fb0ea6b8a7f0f"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bb9a9663f46502288cf116e985484d7dce8b742b525e29c81f0a12d9c353546f"
+  inputs-digest = "3a0d86a3dd7478680326bc19c3dc09af500983e135e9a4a9ee585b7cfd2803f8"
   solver-name = "gps-cdcl"
   solver-version = 1
