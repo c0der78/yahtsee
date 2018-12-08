@@ -6,39 +6,26 @@ import (
 	"micrantha.com/yahtsee/internal/views"
 )
 
-type Graphics interface {
-	Update()
-	NewFrame()
-	Render(data imgui.DrawData)
-	Start(width int, height int, title string) error
-	Stop()
-	Showing() bool
-}
+const MainWindowID = "MainWindow"
 
 type Ui struct {
-	graphics Graphics
-	context *imgui.Context
-	views []View
+	graphics graphics.Graphics
+	context  *imgui.Context
+	views    []views.View
 }
 
 func NewUi() *Ui {
 	return &Ui{
-		graphics: graphics.NewSDL(),
-		context: imgui.CreateContext(nil),
+		graphics: graphics.NewGLFW(),
+		context:  imgui.CreateContext(nil),
 	}
 }
 
-func (ui *Ui) Add(view View) {
+func (ui *Ui) Add(view views.View) {
 	ui.views = append(ui.views, view)
 }
 
-func (ui *Ui) Init(config *Config) error {
-
-	err := ui.graphics.Start(config.Defaults.Width, config.Defaults.Height, config.Title)
-
-	if err != nil {
-		return err
-	}
+func (ui *Ui) loadViews(config *Config) error {
 
 	menu := &views.MenuCallbacks{
 		OnGameExit: func() {
@@ -51,11 +38,30 @@ func (ui *Ui) Init(config *Config) error {
 
 	ui.Add(views.NewMenuView(menu))
 
-	ui.Add(views.NewDemoView())
+	//ui.Add(views.NewDemoView())
 
 	ui.Add(views.NewBoardView())
 
+	ui.Add(views.NewSideView())
+
 	return nil
+}
+
+func (ui *Ui) Init(config *Config) error {
+
+	err := ui.graphics.Start(config.Defaults.Width, config.Defaults.Height, config.Title)
+
+	if err != nil {
+		return err
+	}
+
+	err = graphics.Textures.Load(ui.graphics)
+
+	if err != nil {
+		return err
+	}
+
+	return ui.loadViews(config)
 }
 
 func (ui *Ui) Close() {
@@ -68,6 +74,7 @@ func (ui *Ui) IsOpen() bool {
 }
 
 func (ui *Ui) Update() {
+
 	ui.graphics.Update()
 
 	for _, view := range ui.views {
@@ -79,9 +86,16 @@ func (ui *Ui) Render() {
 
 	ui.graphics.NewFrame()
 
-	for _, view := range ui.views {
-		view.Render()
+	if imgui.BeginV(MainWindowID, nil,
+		imgui.WindowFlagsAlwaysAutoResize|imgui.WindowFlagsNoTitleBar|
+			imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoMove) {
+
+		for _, view := range ui.views {
+			view.Render()
+		}
 	}
+
+	imgui.End()
 
 	imgui.Render()
 

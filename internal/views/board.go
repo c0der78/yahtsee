@@ -3,31 +3,45 @@ package views
 import (
 	"fmt"
 	"github.com/ryjen/imgui-go"
+	"micrantha.com/yahtsee/internal/yahtsee"
+	"strconv"
 )
 
-const BoardViewId = "BoardView"
+const (
+	// BoardViewID The id of the board view
+	BoardViewID = "BoardView"
+)
 
-type Score struct {}
+var BoardSize = imgui.Vec2{ X:float32(650), Y:float32(415) }
 
+// BoardView A view of the score sheet
 type BoardView struct {
-	history []*Score
+	history []*yahtsee.Score
 }
 
+// NewBoardView Creates a new board view
 func NewBoardView() *BoardView {
 	view := &BoardView{nil}
 
-	view.history = append(view.history, &Score{})
+	view.history = append(view.history, &yahtsee.Score{})
 
 	return view
 }
 
-func (view *BoardView) Render() {
-	if !imgui.Begin(BoardViewId) {
-		return
-	}
+// CurrentScore gets the current score from the history
+func (view *BoardView) CurrentScore() *yahtsee.Score {
+	return view.history[0]
+}
 
-	if imgui.BeginChild("Upper") {
-		imgui.Columns(3)
+// Render displays the board view
+func (view *BoardView) Render() {
+
+
+	if imgui.BeginChildV(BoardViewID, BoardSize, false, imgui.WindowFlagsAlwaysAutoResize) {
+
+		imgui.ColumnsV(3, "Upper", true)
+
+		imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{X: float32(10), Y: float32(10)})
 
 		imgui.Text(fmt.Sprintf("Game #%d", len(view.history)))
 
@@ -41,39 +55,35 @@ func (view *BoardView) Render() {
 
 		imgui.NextColumn()
 
-		imgui.SameLine()
+		selected := yahtsee.Max
 
-		imgui.Text("Aces = 1")
+		for i := yahtsee.Aces; i <= yahtsee.Yahtsee; i++ {
 
-		imgui.NextColumn()
+			imgui.Separator()
 
-		imgui.Text("Count and add only aces")
+			imgui.Text(yahtsee.ScoreNames[i])
 
-		imgui.NextColumn()
+			imgui.NextColumn()
 
-		imgui.NextColumn()
+			imgui.Text(yahtsee.ScoreHelp[i])
 
-		imgui.Text("Twos ⚁ = 2")
+			imgui.NextColumn()
 
-		imgui.NextColumn()
+			if imgui.SelectableV(
+				strconv.FormatInt(int64(view.CurrentScore().Get(i)), 10),
+				selected == i, 0, imgui.Vec2{}) {
+			}
 
-		imgui.Text("Count and add only twos")
+			imgui.NextColumn()
+		}
 
-		imgui.NextColumn()
-
-		imgui.EndChild()
+		imgui.PopStyleVar()
 	}
 
-	if imgui.BeginChild("Lower") {
-
-		//imgui.Columns(3)
-
-		imgui.EndChild()
-	}
-
-	imgui.End()
+	imgui.EndChild()
 }
 
+// Update updates logic in the board view
 func (view *BoardView) Update() {
 
 }

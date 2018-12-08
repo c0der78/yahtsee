@@ -10,57 +10,65 @@ type MenuCallbacks struct {
 type MenuView struct {
 	callbacks *MenuCallbacks
 	showAbout bool
+	showDemo bool
 }
 
 func NewMenuView(callbacks *MenuCallbacks) *MenuView {
 	return &MenuView{
 		callbacks: callbacks,
 		showAbout:	false,
+		showDemo: false,
 	}
 }
 
 func (view *MenuView) Render() {
 
-	if !imgui.BeginMainMenuBar() {
-		return
-	}
+	if imgui.BeginMainMenuBar() {
 
-	if imgui.BeginMenu("Game") {
+		if imgui.BeginMenu("Game") {
 
-		if imgui.MenuItemV("New", "N", false, true) {
-			view.callbacks.OnGameNew()
+			if imgui.MenuItemV("New", "N", false, true) {
+				view.callbacks.OnGameNew()
+			}
+
+			if imgui.MenuItemV("Exit", "X", false, true) {
+				view.callbacks.OnGameExit()
+			}
+
+			imgui.EndMenu()
 		}
 
-		if imgui.MenuItemV("Exit", "X", false, true) {
-			view.callbacks.OnGameExit()
+		if imgui.BeginMenu("Help") {
+			if imgui.MenuItemV("About", "A", false, true) {
+				view.showAbout = true
+			}
+
+			if imgui.MenuItemV("Demo", "D", false, true) {
+				view.showDemo = true
+			}
+
+			imgui.EndMenu()
 		}
-
-		imgui.EndMenu()
 	}
-
-	if imgui.BeginMenu("Help") {
-		if imgui.MenuItemV("About", "A", false, true) {
-			view.showAbout = true
-		}
-
-		imgui.EndMenu()
-	}
-
 	imgui.EndMainMenuBar()
 
 	if view.showAbout {
 		view.About()
 	}
+
+	if view.showDemo {
+		imgui.ShowDemoWindow(&view.showDemo)
+	}
 }
 
 func (view *MenuView) About() {
-	if !imgui.Begin("About") {
+	if !imgui.BeginPopupModal("About") {
 		return
 	}
 
 	imgui.Text("Yahtsee v0.1.0")
 
-	imgui.End()
+	imgui.EndPopup()
 }
 
 func (view *MenuView) Update() {}

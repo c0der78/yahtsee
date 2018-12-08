@@ -1,8 +1,10 @@
 package graphics
 
 import (
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/ryjen/imgui-go"
+	"image"
 	"math"
 	"time"
 )
@@ -207,4 +209,25 @@ func (impl *GLFW) keyChange(window *glfw.Window, key glfw.Key, scancode int, act
 func (impl *GLFW) charChange(window *glfw.Window, char rune) {
 	io := imgui.CurrentIO()
 	io.AddInputCharacters(string(char))
+}
+
+func (impl *GLFW) LoadImage(rgba *image.RGBA) (imgui.TextureID, error) {
+	var textureID uint32
+
+	gl.GenTextures(1, &textureID)
+
+	gl.BindTexture(gl.TEXTURE_2D, textureID)
+
+	pixels := gl.Ptr(rgba.Pix)
+
+	size := rgba.Rect.Size()
+
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(size.X), int32(size.Y),
+		0, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+	gl.GenerateMipmap(gl.TEXTURE_2D)
+
+	gl.BindTexture(gl.TEXTURE_2D, 0)
+
+	return imgui.TextureID(textureID), nil
 }

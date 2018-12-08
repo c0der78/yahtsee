@@ -12,15 +12,13 @@ func NewNewGameView() *NewGameView {
 
 func (view *NewGameView) Render() {
 
-	if !imgui.Begin("New Game") {
-		return
+	if imgui.BeginPopupModal("New Game") {
+
+		imgui.LabelText("What is your name?", "")
+
+		imgui.Button("Create")
 	}
-
-	imgui.LabelText("What is your name?", "")
-
-	imgui.Button("Create")
-
-	imgui.End()
+	imgui.EndPopup()
 }
 
 func (view *NewGameView) Update() {

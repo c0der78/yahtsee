@@ -52,3 +52,4 @@ conaninfo.txt
 cmake-build-*
 .DS_Store
 vendor
+imgui.ini

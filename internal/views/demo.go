@@ -5,6 +5,8 @@ import (
 	"github.com/ryjen/imgui-go"
 )
 
+const DemoViewId = "DemoView"
+
 type DemoView struct {
 	showDemo bool
 	counter int
@@ -15,21 +17,19 @@ func NewDemoView() *DemoView {
 }
 
 func (view *DemoView) Hello() {
-	if !imgui.Begin("Hello") {
-		return
+	if imgui.BeginChild(DemoViewId) {
+
+		imgui.Text("Hello, world!")
+
+		imgui.Checkbox("Demo Window", &view.showDemo)
+
+		if imgui.Button("Button") {
+			view.counter++
+		}
+		imgui.SameLine()
+		imgui.Text(fmt.Sprintf("counter = %d", view.counter))
 	}
-
-	imgui.Text("Hello, world!")
-
-	imgui.Checkbox("Demo Window", &view.showDemo)
-
-	if imgui.Button("Button") {
-		view.counter++
-	}
-	imgui.SameLine()
-	imgui.Text(fmt.Sprintf("counter = %d", view.counter))
-
-	imgui.End()
+	imgui.EndChild()
 }
 
 func (view *DemoView) Render() {

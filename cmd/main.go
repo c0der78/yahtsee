@@ -12,7 +12,7 @@ func main() {
 	err := game.Start()
 
 	if err != nil {
-		log.Print(err)
+		log.Fatal(err)
 	}
 
 	for !game.IsOver() {
