@@ -25,7 +25,7 @@ func (ui *Ui) Add(view views.View) {
 	ui.views = append(ui.views, view)
 }
 
-func (ui *Ui) loadViews(config *Config) error {
+func (ui *Ui) loadViews(config *Config)  {
 
 	menu := &views.MenuCallbacks{
 		OnGameExit: func() {
@@ -43,11 +43,11 @@ func (ui *Ui) loadViews(config *Config) error {
 	ui.Add(views.NewBoardView())
 
 	ui.Add(views.NewSideView())
-
-	return nil
 }
 
 func (ui *Ui) Init(config *Config) error {
+
+	graphics.Fonts.Load()
 
 	err := ui.graphics.Start(config.Defaults.Width, config.Defaults.Height, config.Title)
 
@@ -61,7 +61,10 @@ func (ui *Ui) Init(config *Config) error {
 		return err
 	}
 
-	return ui.loadViews(config)
+
+	ui.loadViews(config)
+
+	return nil
 }
 
 func (ui *Ui) Close() {

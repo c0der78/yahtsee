@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"github.com/ryjen/imgui-go"
 	"micrantha.com/yahtsee/internal/graphics"
 )
@@ -17,11 +18,22 @@ func (view *DiceView) Render() {
 
 	if imgui.BeginChild(DiceViewID) {
 
-		texture := graphics.Textures.Get(graphics.Die1)
+		imgui.PushFont(graphics.Fonts.Get(graphics.FontAwesomeLarge))
 
-		size := imgui.Vec2{X: float32(texture.Width), Y: float32(texture.Height)}
+		imgui.Text(fmt.Sprintf("Ace %c", graphics.FontAwesomeDie1))
+		imgui.Text(string(graphics.FontAwesomeDie2))
+		imgui.Text(string(graphics.FontAwesomeDie3))
+		imgui.Text(string(graphics.FontAwesomeDie4))
+		imgui.Text(string(graphics.FontAwesomeDie5))
+		imgui.Text(string(graphics.FontAwesomeDie6))
 
-		imgui.Image(texture.Id, size)
+		imgui.PopFont()
+
+		//texture := graphics.Textures.Get(graphics.Die1)
+		//
+		//size := imgui.Vec2{X: float32(texture.Width), Y: float32(texture.Height)}
+		//
+		//imgui.Image(texture.Id, size)
 	}
 	imgui.EndChild()
 }

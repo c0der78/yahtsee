@@ -3,12 +3,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/banthar/Go-SDL"
-  packages = ["sdl"]
-  revision = "e9b5408a8e7eac0758773e7a092629af105a9e2b"
-
-[[projects]]
-  branch = "master"
   name = "github.com/go-gl/gl"
   packages = ["v4.1-core/gl"]
   revision = "55b76b7df9d25d70b63e31a767f47158292b85d8"
@@ -41,7 +35,7 @@
   branch = "master"
   name = "github.com/ryjen/imgui-go"
   packages = ["."]
-  revision = "ee445d8d129e241343516de8cd034853c48458d7"
+  revision = "547bd648c1ff34c157da1126b6ca2c78ad9b07d5"
 
 [[projects]]
   branch = "master"
@@ -52,6 +46,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "035b27e7ed6554a248c3fd28b025e151519ff8ead8e51241dfd6eaacbfce4bb0"
+  inputs-digest = "c4b145f013c0168828d13293e37480411c0bd61144e4ba8a3dc53afb0f904993"
   solver-name = "gps-cdcl"
   solver-version = 1
