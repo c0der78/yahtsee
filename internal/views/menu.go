@@ -16,7 +16,7 @@ type MenuView struct {
 func NewMenuView(callbacks *MenuCallbacks) *MenuView {
 	return &MenuView{
 		callbacks: callbacks,
-		showAbout:	false,
+		showAbout: false,
 		showDemo: false,
 	}
 }
@@ -34,7 +34,6 @@ func (view *MenuView) Render() {
 			if imgui.MenuItemV("Exit", "X", false, true) {
 				view.callbacks.OnGameExit()
 			}
-
 			imgui.EndMenu()
 		}
 
@@ -46,10 +45,10 @@ func (view *MenuView) Render() {
 			if imgui.MenuItemV("Demo", "D", false, true) {
 				view.showDemo = true
 			}
-
 			imgui.EndMenu()
 		}
 	}
+
 	imgui.EndMainMenuBar()
 
 	if view.showAbout {

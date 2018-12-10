@@ -38,9 +38,7 @@ func (ui *Ui) loadViews(config *Config)  {
 
 	ui.Add(views.NewMenuView(menu))
 
-	//ui.Add(views.NewDemoView())
-
-	ui.Add(views.NewBoardView())
+	ui.Add(views.NewSheetView())
 
 	ui.Add(views.NewSideView())
 }
@@ -93,9 +91,13 @@ func (ui *Ui) Render() {
 		imgui.WindowFlagsAlwaysAutoResize|imgui.WindowFlagsNoTitleBar|
 			imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoMove) {
 
+		imgui.PushFont(graphics.Fonts.Get(graphics.FontAwesome))
+
 		for _, view := range ui.views {
 			view.Render()
 		}
+
+		imgui.PopFont()
 	}
 
 	imgui.End()

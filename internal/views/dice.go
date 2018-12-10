@@ -1,39 +1,103 @@
 package views
 
 import (
-	"fmt"
 	"github.com/ryjen/imgui-go"
 	"micrantha.com/yahtsee/internal/graphics"
+	"micrantha.com/yahtsee/internal/yahtsee"
+	"time"
 )
 
-const DiceViewID = "DiceView"
+const diceViewID = "DiceView"
 
-type DiceView struct {}
+var diceViewSize = imgui.Vec2{X: 200, Y: 170}
+
+type DiceView struct {
+	currentRoll yahtsee.Roll
+	selectedDice yahtsee.Roll
+}
+
+var diceTextures = [6]graphics.TextureTypes {
+	graphics.Die1,
+	graphics.Die2,
+	graphics.Die3,
+	graphics.Die4,
+	graphics.Die5,
+	graphics.Die6,
+}
+
+var selectedTextures = [6]graphics.TextureTypes {
+	graphics.Die1,
+	graphics.Die2,
+	graphics.Die3,
+	graphics.Die4,
+	graphics.Die5,
+	graphics.Die6,
+}
 
 func NewDiceView() *DiceView {
-	return &DiceView{}
+	return &DiceView{
+		currentRoll: yahtsee.Shake(),
+		selectedDice: yahtsee.Roll{},
+	}
+}
+
+func (view *DiceView) showDie(pos int) {
+
+	var texture *graphics.Texture
+
+	die := view.selectedDice[pos]
+
+	if die == 0 {
+
+		die = view.currentRoll[pos]
+
+		texture = graphics.Textures.Get(diceTextures[die-1])
+
+	} else {
+		texture = graphics.Textures.Get(selectedTextures[die-1])
+	}
+
+	size := imgui.Vec2{X: float32(48), Y: float32(48)}
+
+	imgui.Image(texture.Id, size)
+
+	//if imgui.ImageButton(texture.Id, size) {
+	//	view.selectedDice[pos] = die
+	//}
 }
 
 func (view *DiceView) Render() {
+	if imgui.BeginChildV(diceViewID, diceViewSize, true, 0) {
 
-	if imgui.BeginChild(DiceViewID) {
+		imgui.SameLineV(12, 0)
 
-		imgui.PushFont(graphics.Fonts.Get(graphics.FontAwesomeLarge))
+		imgui.BeginGroup()
 
-		imgui.Text(fmt.Sprintf("Ace %c", graphics.FontAwesomeDie1))
-		imgui.Text(string(graphics.FontAwesomeDie2))
-		imgui.Text(string(graphics.FontAwesomeDie3))
-		imgui.Text(string(graphics.FontAwesomeDie4))
-		imgui.Text(string(graphics.FontAwesomeDie5))
-		imgui.Text(string(graphics.FontAwesomeDie6))
+		imgui.ColumnsV(3, "DiceTextures", false)
 
-		imgui.PopFont()
+		for i := 0; i < len(view.currentRoll); i++ {
+			view.showDie(i)
 
-		//texture := graphics.Textures.Get(graphics.Die1)
-		//
-		//size := imgui.Vec2{X: float32(texture.Width), Y: float32(texture.Height)}
-		//
-		//imgui.Image(texture.Id, size)
+			imgui.NextColumn()
+			imgui.NextColumn()
+		}
+
+		imgui.EndGroup()
+	}
+	imgui.EndChild()
+
+	if imgui.BeginChildV("DiceActions", imgui.Vec2{X: 200, Y: 20 }, false, 0) {
+
+		imgui.SameLineV(50, 0)
+
+		if imgui.ButtonV("Roll", imgui.Vec2{X: 100, Y: 20}) {
+			go func() {
+				for i := 0; i < 15; i++ {
+					view.currentRoll = yahtsee.Shake()
+					time.Sleep(time.Millisecond * 100)
+				}
+			}()
+		}
 	}
 	imgui.EndChild()
 }

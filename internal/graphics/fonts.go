@@ -39,7 +39,7 @@ func (fonts *FontMap) Load() {
 
 	fonts.values[FontDefault] = font
 
-	font = atlas.AddFontFromFileTTF("assets/fontawesome.otf", 13)
+	font = atlas.AddFontFromFileTTF("assets/fontawesome.otf", 14)
 
 	fonts.values[FontAwesome] = font
 

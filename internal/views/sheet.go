@@ -7,21 +7,18 @@ import (
 	"strconv"
 )
 
-const (
-	// BoardViewID The id of the board view
-	BoardViewID = "BoardView"
-)
+const sheetViewID = "SheetView"
 
-var BoardSize = imgui.Vec2{ X:float32(650), Y:float32(415) }
+var sheetViewSize = imgui.Vec2{ X:float32(650), Y:float32(440) }
 
-// BoardView A view of the score sheet
-type BoardView struct {
+// SheetView A view of the score sheet
+type SheetView struct {
 	history []*yahtsee.Score
 }
 
-// NewBoardView Creates a new board view
-func NewBoardView() *BoardView {
-	view := &BoardView{nil}
+// NewSheetView Creates a new board view
+func NewSheetView() *SheetView {
+	view := &SheetView{nil}
 
 	view.history = append(view.history, &yahtsee.Score{})
 
@@ -29,15 +26,14 @@ func NewBoardView() *BoardView {
 }
 
 // CurrentScore gets the current score from the history
-func (view *BoardView) CurrentScore() *yahtsee.Score {
+func (view *SheetView) CurrentScore() *yahtsee.Score {
 	return view.history[0]
 }
 
 // Render displays the board view
-func (view *BoardView) Render() {
+func (view *SheetView) Render() {
 
-
-	if imgui.BeginChildV(BoardViewID, BoardSize, false, imgui.WindowFlagsAlwaysAutoResize) {
+	if imgui.BeginChildV(sheetViewID, sheetViewSize, false, imgui.WindowFlagsAlwaysAutoResize) {
 
 		imgui.ColumnsV(3, "Upper", true)
 
@@ -84,6 +80,6 @@ func (view *BoardView) Render() {
 }
 
 // Update updates logic in the board view
-func (view *BoardView) Update() {
+func (view *SheetView) Update() {
 
 }
