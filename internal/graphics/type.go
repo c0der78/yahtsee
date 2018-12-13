@@ -14,4 +14,3 @@ type Graphics interface {
 	Showing() bool
 	LoadImage(rgba *image.RGBA) (imgui.TextureID, error)
 }
-

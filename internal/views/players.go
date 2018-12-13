@@ -2,9 +2,9 @@ package views
 
 import "github.com/ryjen/imgui-go"
 
-const playersViewId = "PlayersView"
+const playersViewId = "Players"
 
-var playersViewSize = imgui.Vec2{X: 200, Y: 80 }
+var playersViewSize = imgui.Vec2{X: 200, Y: 80}
 
 type PlayersView struct {
 	OnSelect func()
@@ -12,27 +12,23 @@ type PlayersView struct {
 
 func NewPlayersView() *PlayersView {
 	return &PlayersView{
-		OnSelect: func(){},
+		OnSelect: func() {},
 	}
 }
 
 func (view *PlayersView) Render() {
 
-	if imgui.BeginChildV(playersViewId, playersViewSize, true, imgui.WindowFlagsMenuBar) {
+	imgui.SetNextWindowPos(imgui.Vec2{X: 700, Y: 40})
+	imgui.SetNextWindowSize(playersViewSize)
 
-		if imgui.BeginMenuBar() {
-			if imgui.BeginMenu("Players") {
-				imgui.EndMenu()
-			}
-			imgui.EndMenuBar()
-		}
+	if imgui.Begin(playersViewId) {
 
 		if imgui.Selectable("You") {
 			view.OnSelect()
 		}
 	}
 
-	imgui.EndChild()
+	imgui.End()
 }
 
 func (view *PlayersView) Update() {

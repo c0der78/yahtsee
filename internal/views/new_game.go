@@ -3,7 +3,6 @@ package views
 import "github.com/ryjen/imgui-go"
 
 type NewGameView struct {
-
 }
 
 func NewNewGameView() *NewGameView {

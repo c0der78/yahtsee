@@ -10,15 +10,15 @@ var sideViewSize = imgui.Vec2{
 
 type SideView struct {
 	players *PlayersView
-	dice *DiceView
-	chat *ChatView
+	dice    *DiceView
+	chat    *ChatView
 }
 
 func NewSideView() *SideView {
 	return &SideView{
 		players: NewPlayersView(),
-		dice: NewDiceView(),
-		chat: NewChatView(),
+		dice:    NewDiceView(),
+		chat:    NewChatView(),
 	}
 }
 
@@ -26,10 +26,12 @@ func (view *SideView) Render() {
 
 	imgui.SameLine()
 
-	if imgui.BeginChildV(sideViewID, sideViewSize, false, imgui.WindowFlagsAlwaysAutoResize) {
+	if imgui.BeginChildV(sideViewID, sideViewSize, false, 0) {
 
 		view.players.Render()
+		imgui.Spacing()
 		view.dice.Render()
+		imgui.Spacing()
 		view.chat.Render()
 	}
 

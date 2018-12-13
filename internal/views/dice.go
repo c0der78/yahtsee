@@ -7,16 +7,25 @@ import (
 	"time"
 )
 
-const diceViewID = "DiceView"
+const (
+	diceViewID     = "Shaker"
+	diceRollID     = "DiceRoll"
+	diceTexturesID = "DiceTextures"
+	alertMaxRoll   = "No More Rolls"
+)
 
-var diceViewSize = imgui.Vec2{X: 200, Y: 170}
+const maxRollPerTurn = 3
+
+var diceViewSize = imgui.Vec2{X: 200, Y: 250}
+
+var diceViewPos = imgui.Vec2{X: 700, Y: 140}
 
 type DiceView struct {
 	currentRoll [yahtsee.DiePerRoll]*Die
-	rollCount int
+	rollCount   int
 }
 
-var diceTextures = [6]graphics.TextureTypes {
+var diceTextures = [6]graphics.TextureTypes{
 	graphics.Die1,
 	graphics.Die2,
 	graphics.Die3,
@@ -26,8 +35,8 @@ var diceTextures = [6]graphics.TextureTypes {
 }
 
 type Die struct {
-	texture graphics.TextureTypes
-	value int
+	texture  graphics.TextureTypes
+	value    int
 	selected bool
 }
 
@@ -35,7 +44,7 @@ func NewDiceView() *DiceView {
 
 	view := &DiceView{
 		currentRoll: [yahtsee.DiePerRoll]*Die{},
-		rollCount: 0,
+		rollCount:   1,
 	}
 
 	view.Shake()
@@ -44,64 +53,101 @@ func NewDiceView() *DiceView {
 }
 
 func (view *DiceView) Shake() {
+
+	// update views a shake of the dice
 	for i, roll := range yahtsee.Shake() {
+
+		// skip selected dice
+		if view.currentRoll[i] != nil && view.currentRoll[i].selected {
+			continue
+		}
+
 		view.currentRoll[i] = &Die{
-			value: roll,
+			value:   roll,
 			texture: diceTextures[roll-1],
 		}
 	}
 }
 
 func (view *DiceView) Render() {
-	if imgui.BeginChildV(diceViewID, diceViewSize, true, 0) {
 
-		imgui.ColumnsV(3, "DiceTextures", false)
+	imgui.SetNextWindowPos(diceViewPos)
+	imgui.SetNextWindowSize(diceViewSize)
 
-		for _, die := range view.currentRoll {
+	if imgui.Begin(diceViewID) {
 
-			size := imgui.Vec2{X: float32(48), Y: float32(48)}
+		imgui.SetNextWindowPos(imgui.Vec2{X: 717, Y: 170})
 
-			texture := graphics.Textures.Get(die.texture)
+		if imgui.BeginChildV("View", imgui.Vec2{X: 170, Y: 170}, false, 0) {
 
-			if imgui.ImageButtonV(texture.Id, size, imgui.Vec2{X: 0, Y: 0}, imgui.Vec2{X: 1, Y: 1},
-				0, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) {
-				die.selected = true
-			}
+			imgui.ColumnsV(3, diceTexturesID, false)
 
-			imgui.NextColumn()
-			imgui.NextColumn()
-		}
-	}
-	imgui.EndChild()
+			for i, die := range view.currentRoll {
 
-	if imgui.BeginChildV("DiceActions", imgui.Vec2{X: 200, Y: 20 }, false, 0) {
+				size := imgui.Vec2{X: float32(48), Y: float32(48)}
 
-		imgui.SameLineV(50, 0)
+				texture := graphics.Textures.Get(die.texture)
 
-		if imgui.ButtonV("Roll", imgui.Vec2{X: 100, Y: 20}) {
-			if view.rollCount < 3 {
+				imgui.PushID(string(i))
 
-				view.rollCount++
+				if imgui.ImageButtonV(texture.Id, size, imgui.Vec2{X: 0, Y: 0}, imgui.Vec2{X: 1, Y: 1},
+					0, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) {
+					die.selected = true
+				}
 
-				go func() {
-					for i := 0; i < 15; i++ {
-						view.Shake()
-						time.Sleep(time.Millisecond * 100)
-					}
-				}()
+				imgui.PopID()
+
+				imgui.NextColumn()
+				imgui.NextColumn()
 			}
 		}
-		if view.rollCount >= 3 {
+		imgui.EndChild()
 
-			if imgui.BeginPopupModal("Alert") {
+		if imgui.BeginChild("Actions") {
 
-				imgui.Text("A turn is allowed only 3 rolls to score")
+			imgui.SameLineV(45, 0)
+
+			if imgui.ButtonV("Roll", imgui.Vec2{X: 100, Y: 30}) {
+				if view.rollCount >= maxRollPerTurn {
+					imgui.OpenPopup(alertMaxRoll)
+				} else {
+					view.rollCount++
+
+					go func() {
+						for i := 0; i < 15; i++ {
+							view.Shake()
+							time.Sleep(time.Millisecond * 100)
+						}
+					}()
+				}
+			}
+
+			if imgui.BeginPopupModalV(alertMaxRoll, nil,
+				imgui.WindowFlagsNoMove|imgui.WindowFlagsNoResize|imgui.WindowFlagsNoCollapse) {
+
+				imgui.Spacing()
+				imgui.Spacing()
+
+				imgui.Text("A turn is allowed only 3 rolls.")
+
+				imgui.Spacing()
+				imgui.Spacing()
+				imgui.Spacing()
+
+				imgui.SameLineV(50, 0)
+
+				if imgui.ButtonV("OK", imgui.Vec2{X: 100, Y: 30}) {
+					imgui.CloseCurrentPopup()
+				}
 
 				imgui.EndPopup()
 			}
 		}
+
+		imgui.EndChild()
 	}
-	imgui.EndChild()
+	imgui.End()
+
 }
 
 func (view *DiceView) Update() {

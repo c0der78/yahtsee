@@ -4,4 +4,3 @@ type View interface {
 	Render()
 	Update()
 }
-

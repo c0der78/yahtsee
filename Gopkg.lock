@@ -35,7 +35,7 @@
   branch = "master"
   name = "github.com/ryjen/imgui-go"
   packages = ["."]
-  revision = "547bd648c1ff34c157da1126b6ca2c78ad9b07d5"
+  revision = "8a06e075609d4a334caab7896bc13e2afcef49ea"
 
 [[projects]]
   branch = "master"

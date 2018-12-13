@@ -31,8 +31,8 @@ var texturePaths = []string{
 }
 
 type Texture struct {
-	Id imgui.TextureID
-	Width int
+	Id     imgui.TextureID
+	Width  int
 	Height int
 }
 
@@ -78,4 +78,3 @@ func (textureMap *TextureMap) Load(impl Graphics) error {
 func (textureMap *TextureMap) Get(texture TextureTypes) *Texture {
 	return textureMap.values[texture]
 }
-

@@ -23,7 +23,7 @@ type FontMap struct {
 	values map[FontTypes]imgui.Font
 }
 
-var Fonts = &FontMap {
+var Fonts = &FontMap{
 	values: make(map[FontTypes]imgui.Font),
 }
 

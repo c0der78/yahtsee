@@ -10,23 +10,25 @@ import (
 
 type Defaults struct {
 	Height int
-	Width int
+	Width  int
 }
 
 type Config struct {
-	Title string `json:title`
+	Title    string   `json:title`
 	Defaults Defaults `json:defaults`
-	Over bool `json:ignore`
+	Over     bool     `json:ignore`
+	Seed     int64    `json:seed`
 }
 
 func NewConfig() *Config {
 	return &Config{
-		Title: strings.ToTitle(os.Args[0]),
+		Title: strings.ToTitle("Yahtsee"),
 		Defaults: Defaults{
-			Width: 1280,
-			Height: 720,
+			Width:  920,
+			Height: 540,
 		},
 		Over: false,
+		Seed: 0,
 	}
 }
 

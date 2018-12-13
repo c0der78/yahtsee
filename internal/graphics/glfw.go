@@ -59,7 +59,7 @@ func (impl *GLFW) Showing() bool {
 }
 
 func NewGLFW() *GLFW {
-	return &GLFW {
+	return &GLFW{
 		opengl: openGL(),
 	}
 }
@@ -67,7 +67,7 @@ func NewGLFW() *GLFW {
 func (impl *GLFW) Start(width int, height int, title string) error {
 
 	window, err := newWindow(width, height, title)
-	
+
 	if err != nil {
 		return err
 	}
@@ -146,17 +146,16 @@ func (impl *GLFW) Render(data imgui.DrawData) {
 	impl.clearGL()
 
 	displayWidth, displayHeight := impl.window.GetSize()
-	display := imgui.Vec2{X: float32(displayWidth), Y: float32(displayHeight) }
+	display := imgui.Vec2{X: float32(displayWidth), Y: float32(displayHeight)}
 
 	fbWidth, fbHeight := impl.window.GetFramebufferSize()
-	fb := imgui.Vec2{X: float32(fbWidth), Y: float32(fbHeight) }
+	fb := imgui.Vec2{X: float32(fbWidth), Y: float32(fbHeight)}
 
 	impl.renderGL(data, display, fb)
 
 	impl.window.SwapBuffers()
-	<- time.After(time.Millisecond * 25)
+	<-time.After(time.Millisecond * 25)
 }
-
 
 func (impl *GLFW) installCallbacks() {
 	impl.window.SetMouseButtonCallback(impl.mouseButtonChange)

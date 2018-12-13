@@ -7,9 +7,7 @@ import (
 	"strconv"
 )
 
-const sheetViewID = "SheetView"
-
-var sheetViewSize = imgui.Vec2{ X:float32(650), Y:float32(440) }
+var sheetViewSize = imgui.Vec2{X: float32(650), Y: float32(480)}
 
 // SheetView A view of the score sheet
 type SheetView struct {
@@ -33,8 +31,19 @@ func (view *SheetView) CurrentScore() *yahtsee.Score {
 // Render displays the board view
 func (view *SheetView) Render() {
 
-	if imgui.BeginChildV(sheetViewID, sheetViewSize, false, imgui.WindowFlagsAlwaysAutoResize) {
+	imgui.SetNextWindowPos(imgui.Vec2{X: 20, Y: 40})
+	imgui.SetNextWindowSize(sheetViewSize)
 
+	sheetViewID := fmt.Sprintf("Game #%d", len(view.history))
+
+	if imgui.BeginV(sheetViewID, nil, imgui.WindowFlagsMenuBar) {
+
+		if imgui.BeginMenuBar() {
+			if imgui.BeginMenu("You") {
+				imgui.EndMenu()
+			}
+			imgui.EndMenuBar()
+		}
 		imgui.ColumnsV(3, "Upper", true)
 
 		imgui.PushStyleVarVec2(imgui.StyleVarItemSpacing, imgui.Vec2{X: float32(10), Y: float32(10)})
@@ -76,7 +85,7 @@ func (view *SheetView) Render() {
 		imgui.PopStyleVar()
 	}
 
-	imgui.EndChild()
+	imgui.End()
 }
 
 // Update updates logic in the board view

@@ -10,7 +10,7 @@ import (
 var clearColor imgui.Vec4
 
 type opengl struct {
-	glslVersion			   string
+	glslVersion            string
 	fontTexture            uint32
 	shaderHandle           uint32
 	vertHandle             uint32
@@ -31,7 +31,7 @@ func openGL() opengl {
 }
 
 func (impl *opengl) startGL(width int, height int) error {
-	err :=  gl.Init()
+	err := gl.Init()
 
 	if err != nil {
 		return err
@@ -206,8 +206,6 @@ func (impl *opengl) renderGL(drawData imgui.DrawData, display imgui.Vec2, fb img
 
 }
 
-
-
 func (impl *opengl) createDeviceObjects() {
 	// Backup GL state
 	var lastTexture int32
@@ -300,7 +298,6 @@ func (impl *opengl) createFontsTexture() {
 	gl.BindTexture(gl.TEXTURE_2D, uint32(lastTexture))
 }
 
-
 func (impl *opengl) invalidateDeviceObjects() {
 	if impl.vboHandle != 0 {
 		gl.DeleteBuffers(1, &impl.vboHandle)
@@ -341,7 +338,7 @@ func (impl *opengl) invalidateDeviceObjects() {
 
 func (impl *opengl) clearGL() {
 	gl.ClearColor(clearColor.X, clearColor.Y, clearColor.Z, clearColor.W)
-	gl.Clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 func (impl *opengl) stopGL() {

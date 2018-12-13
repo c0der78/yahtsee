@@ -2,11 +2,13 @@ package internal
 
 import (
 	"log"
+	"math/rand"
 	"runtime"
+	"time"
 )
 
 type Game struct {
-	ui *Ui
+	ui     *Ui
 	config *Config
 }
 
@@ -23,6 +25,12 @@ func (game *Game) Start() error {
 
 	if err != nil {
 		log.Print("Warning: ", err)
+	}
+
+	if game.config.Seed > 0 {
+		rand.Seed(game.config.Seed)
+	} else {
+		rand.Seed(time.Now().Unix())
 	}
 
 	runtime.LockOSThread()

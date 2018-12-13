@@ -25,7 +25,7 @@ func (ui *Ui) Add(view views.View) {
 	ui.views = append(ui.views, view)
 }
 
-func (ui *Ui) loadViews(config *Config)  {
+func (ui *Ui) loadViews(config *Config) {
 
 	menu := &views.MenuCallbacks{
 		OnGameExit: func() {
@@ -37,10 +37,10 @@ func (ui *Ui) loadViews(config *Config)  {
 	}
 
 	ui.Add(views.NewMenuView(menu))
-
+	ui.Add(views.NewPlayersView())
+	ui.Add(views.NewDiceView())
+	ui.Add(views.NewChatView())
 	ui.Add(views.NewSheetView())
-
-	ui.Add(views.NewSideView())
 }
 
 func (ui *Ui) Init(config *Config) error {
@@ -58,7 +58,6 @@ func (ui *Ui) Init(config *Config) error {
 	if err != nil {
 		return err
 	}
-
 
 	ui.loadViews(config)
 
@@ -87,20 +86,13 @@ func (ui *Ui) Render() {
 
 	ui.graphics.NewFrame()
 
-	if imgui.BeginV(MainWindowID, nil,
-		imgui.WindowFlagsAlwaysAutoResize|imgui.WindowFlagsNoTitleBar|
-			imgui.WindowFlagsNoCollapse|imgui.WindowFlagsNoMove) {
+	imgui.PushFont(graphics.Fonts.Get(graphics.FontAwesome))
 
-		imgui.PushFont(graphics.Fonts.Get(graphics.FontAwesome))
-
-		for _, view := range ui.views {
-			view.Render()
-		}
-
-		imgui.PopFont()
+	for _, view := range ui.views {
+		view.Render()
 	}
 
-	imgui.End()
+	imgui.PopFont()
 
 	imgui.Render()
 

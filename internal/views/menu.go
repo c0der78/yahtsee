@@ -3,21 +3,21 @@ package views
 import "github.com/ryjen/imgui-go"
 
 type MenuCallbacks struct {
-	OnGameNew func()
+	OnGameNew  func()
 	OnGameExit func()
 }
 
 type MenuView struct {
 	callbacks *MenuCallbacks
 	showAbout bool
-	showDemo bool
+	showDemo  bool
 }
 
 func NewMenuView(callbacks *MenuCallbacks) *MenuView {
 	return &MenuView{
 		callbacks: callbacks,
 		showAbout: false,
-		showDemo: false,
+		showDemo:  false,
 	}
 }
 

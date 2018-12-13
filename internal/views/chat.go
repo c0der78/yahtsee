@@ -2,11 +2,13 @@ package views
 
 import "github.com/ryjen/imgui-go"
 
-const chatViewID = "ChatView"
+const chatViewID = "Chat"
 
-var chatViewSize = imgui.Vec2{X: 200, Y: 110 }
+var chatViewSize = imgui.Vec2{X: 200, Y: 110}
 
-type ChatView struct {}
+var chatViewPos = imgui.Vec2{X: 700, Y: 400}
+
+type ChatView struct{}
 
 func NewChatView() *ChatView {
 	return &ChatView{}
@@ -14,19 +16,14 @@ func NewChatView() *ChatView {
 
 func (view *ChatView) Render() {
 
-	if imgui.BeginChildV(chatViewID, chatViewSize, true, imgui.WindowFlagsMenuBar) {
+	imgui.SetNextWindowPos(chatViewPos)
+	imgui.SetNextWindowSize(chatViewSize)
 
-		if imgui.BeginMenuBar() {
-
-			if imgui.BeginMenu("Chat") {
-				imgui.EndMenu()
-			}
-			imgui.EndMenuBar()
-		}
+	if imgui.Begin(chatViewID) {
 
 	}
 
-	imgui.EndChild()
+	imgui.End()
 }
 
 func (view *ChatView) Update() {
