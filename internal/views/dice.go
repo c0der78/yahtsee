@@ -9,7 +9,6 @@ import (
 
 const (
 	diceViewID     = "Shaker"
-	diceRollID     = "DiceRoll"
 	diceTexturesID = "DiceTextures"
 	alertMaxRoll   = "No More Rolls"
 )

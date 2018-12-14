@@ -16,8 +16,9 @@ func (view *NewGameView) Render() {
 		imgui.LabelText("What is your name?", "")
 
 		imgui.Button("Create")
+
+		imgui.EndPopup()
 	}
-	imgui.EndPopup()
 }
 
 func (view *NewGameView) Update() {

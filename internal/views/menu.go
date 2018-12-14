@@ -61,13 +61,21 @@ func (view *MenuView) Render() {
 }
 
 func (view *MenuView) About() {
-	if !imgui.BeginPopupModal("About") {
-		return
+	if imgui.BeginPopupModal("About") {
+
+		imgui.Spacing()
+		imgui.Text("Yahtsee v0.1.0")
+		imgui.Spacing()
+
+		if imgui.Button("OK") {
+			view.showAbout = false
+			imgui.CloseCurrentPopup()
+		}
+
+		imgui.EndPopup()
 	}
 
-	imgui.Text("Yahtsee v0.1.0")
-
-	imgui.EndPopup()
+	imgui.OpenPopup("About")
 }
 
 func (view *MenuView) Update() {}

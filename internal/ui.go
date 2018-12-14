@@ -6,8 +6,6 @@ import (
 	"micrantha.com/yahtsee/internal/views"
 )
 
-const MainWindowID = "MainWindow"
-
 type Ui struct {
 	graphics graphics.Graphics
 	context  *imgui.Context

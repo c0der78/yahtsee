@@ -9,16 +9,22 @@ import (
 
 var sheetViewSize = imgui.Vec2{X: float32(650), Y: float32(480)}
 
+var sheetViewPos = imgui.Vec2{X: 20, Y: 40}
+
+type history = []*yahtsee.Score
+
 // SheetView A view of the score sheet
 type SheetView struct {
-	history []*yahtsee.Score
+	history history
 }
 
 // NewSheetView Creates a new board view
 func NewSheetView() *SheetView {
-	view := &SheetView{nil}
-
-	view.history = append(view.history, &yahtsee.Score{})
+	view := &SheetView{
+		history: history{
+			&yahtsee.Score{},
+		},
+	}
 
 	return view
 }
@@ -31,7 +37,7 @@ func (view *SheetView) CurrentScore() *yahtsee.Score {
 // Render displays the board view
 func (view *SheetView) Render() {
 
-	imgui.SetNextWindowPos(imgui.Vec2{X: 20, Y: 40})
+	imgui.SetNextWindowPos(sheetViewPos)
 	imgui.SetNextWindowSize(sheetViewSize)
 
 	sheetViewID := fmt.Sprintf("Game #%d", len(view.history))
@@ -77,6 +83,8 @@ func (view *SheetView) Render() {
 			if imgui.SelectableV(
 				strconv.FormatInt(int64(view.CurrentScore().Get(i)), 10),
 				selected == i, 0, imgui.Vec2{}) {
+
+					view.CurrentScore().Set(i, )
 			}
 
 			imgui.NextColumn()
