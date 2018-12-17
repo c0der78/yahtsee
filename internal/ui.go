@@ -34,11 +34,13 @@ func (ui *Ui) loadViews(config *Config) {
 		},
 	}
 
+	shaker := views.NewDiceView()
+
 	ui.Add(views.NewMenuView(menu))
 	ui.Add(views.NewPlayersView())
-	ui.Add(views.NewDiceView())
+	ui.Add(shaker)
 	ui.Add(views.NewChatView())
-	ui.Add(views.NewSheetView())
+	ui.Add(views.NewSheetView(shaker))
 }
 
 func (ui *Ui) Init(config *Config) error {

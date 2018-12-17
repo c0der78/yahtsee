@@ -68,6 +68,15 @@ func (view *DiceView) Shake() {
 	}
 }
 
+func (view *DiceView) CurrentRoll() yahtsee.Roll {
+	roll := yahtsee.Roll{}
+
+	for i, die := range view.currentRoll {
+		roll[i] = die.value
+	}
+	return roll
+}
+
 func (view *DiceView) Render() {
 
 	imgui.SetNextWindowPos(diceViewPos)
@@ -89,9 +98,17 @@ func (view *DiceView) Render() {
 
 				imgui.PushID(string(i))
 
+				var color imgui.Vec4
+
+				if die.selected {
+					color = imgui.Vec4{X: 0, Y: 230, Z: 0, W: 230}
+				} else {
+					color = imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0}
+				}
+
 				if imgui.ImageButtonV(texture.Id, size, imgui.Vec2{X: 0, Y: 0}, imgui.Vec2{X: 1, Y: 1},
-					0, imgui.Vec4{X: 0, Y: 0, Z: 0, W: 0}, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) {
-					die.selected = true
+					0, color, imgui.Vec4{X: 1, Y: 1, Z: 1, W: 1}) {
+					die.selected = !die.selected
 				}
 
 				imgui.PopID()

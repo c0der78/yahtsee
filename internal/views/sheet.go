@@ -16,14 +16,16 @@ type history = []*yahtsee.Score
 // SheetView A view of the score sheet
 type SheetView struct {
 	history history
+	shaker *DiceView
 }
 
 // NewSheetView Creates a new board view
-func NewSheetView() *SheetView {
+func NewSheetView(shaker *DiceView) *SheetView {
 	view := &SheetView{
 		history: history{
 			&yahtsee.Score{},
 		},
+		shaker: shaker,
 	}
 
 	return view
@@ -80,14 +82,21 @@ func (view *SheetView) Render() {
 
 			imgui.NextColumn()
 
+			imgui.PushID(string(i))
+
 			if imgui.SelectableV(
 				strconv.FormatInt(int64(view.CurrentScore().Get(i)), 10),
-				selected == i, 0, imgui.Vec2{}) {
-
-					view.CurrentScore().Set(i, )
+				view.CurrentScore().Get(i) > 0, 0, imgui.Vec2{}) {
+				selected = i
 			}
 
+			imgui.PopID()
+
 			imgui.NextColumn()
+		}
+
+		if selected < yahtsee.Max {
+			view.CurrentScore().Set(selected, view.shaker.CurrentRoll())
 		}
 
 		imgui.PopStyleVar()
