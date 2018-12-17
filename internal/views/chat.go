@@ -4,7 +4,7 @@ import "github.com/ryjen/imgui-go"
 
 const chatViewID = "Chat"
 
-var chatViewSize = imgui.Vec2{X: 200, Y: 110}
+var chatViewSize = imgui.Vec2{X: 200, Y: 120}
 
 var chatViewPos = imgui.Vec2{X: 700, Y: 400}
 

@@ -4,7 +4,7 @@ import "github.com/ryjen/imgui-go"
 
 const playersViewId = "Players"
 
-var playersViewSize = imgui.Vec2{X: 200, Y: 80}
+var playersViewSize = imgui.Vec2{X: 200, Y: 90}
 
 type PlayersView struct {
 	OnSelect func()
