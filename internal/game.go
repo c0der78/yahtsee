@@ -3,6 +3,7 @@ package internal
 import (
 	"log"
 	"math/rand"
+	"micrantha.com/yahtsee/internal/states"
 	"runtime"
 	"time"
 )
@@ -10,12 +11,14 @@ import (
 type Game struct {
 	ui     *Ui
 	config *Config
+	state  *states.State
 }
 
 func NewGame() *Game {
 	return &Game{
 		NewUi(),
 		NewConfig(),
+		states.New(),
 	}
 }
 
@@ -35,7 +38,7 @@ func (game *Game) Start() error {
 
 	runtime.LockOSThread()
 
-	return game.ui.Init(game.config)
+	return game.ui.Init(game.state, game.config)
 }
 
 func (game *Game) IsOver() bool {

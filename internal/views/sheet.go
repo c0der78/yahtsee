@@ -3,6 +3,8 @@ package views
 import (
 	"fmt"
 	"github.com/ryjen/imgui-go"
+	"micrantha.com/yahtsee/internal/events"
+	"micrantha.com/yahtsee/internal/states"
 	"micrantha.com/yahtsee/internal/yahtsee"
 	"strconv"
 )
@@ -16,16 +18,16 @@ type history = []*yahtsee.Score
 // SheetView A view of the score sheet
 type SheetView struct {
 	history history
-	shaker *DiceView
+	state *states.State
 }
 
 // NewSheetView Creates a new board view
-func NewSheetView(shaker *DiceView) *SheetView {
+func NewSheetView(state *states.State) *SheetView {
 	view := &SheetView{
 		history: history{
-			&yahtsee.Score{},
+			yahtsee.NewScore(),
 		},
-		shaker: shaker,
+		state: state,
 	}
 
 	return view
@@ -84,10 +86,15 @@ func (view *SheetView) Render() {
 
 			imgui.PushID(string(i))
 
-			if imgui.SelectableV(
-				strconv.FormatInt(int64(view.CurrentScore().Get(i)), 10),
-				view.CurrentScore().Get(i) > 0, 0, imgui.Vec2{}) {
-				selected = i
+			score := view.CurrentScore().Get(i)
+
+			if score > -1 {
+				imgui.Text(strconv.FormatInt(int64(score), 10))
+			} else {
+				if imgui.SelectableV("",
+					false, 0, imgui.Vec2{}) {
+					selected = i
+				}
 			}
 
 			imgui.PopID()
@@ -96,7 +103,8 @@ func (view *SheetView) Render() {
 		}
 
 		if selected < yahtsee.Max {
-			view.CurrentScore().Set(selected, view.shaker.CurrentRoll())
+			events.Bus().Emit(events.ScoreEventID, events.NewScoreEvent(selected))
+			view.CurrentScore().Set(selected, view.state.CurrentRoll)
 		}
 
 		imgui.PopStyleVar()

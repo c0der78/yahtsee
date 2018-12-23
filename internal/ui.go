@@ -3,6 +3,7 @@ package internal
 import (
 	"github.com/ryjen/imgui-go"
 	"micrantha.com/yahtsee/internal/graphics"
+	"micrantha.com/yahtsee/internal/states"
 	"micrantha.com/yahtsee/internal/views"
 )
 
@@ -23,7 +24,7 @@ func (ui *Ui) Add(view views.View) {
 	ui.views = append(ui.views, view)
 }
 
-func (ui *Ui) loadViews(config *Config) {
+func (ui *Ui) loadViews(state *states.State, config *Config) {
 
 	menu := &views.MenuCallbacks{
 		OnGameExit: func() {
@@ -34,16 +35,14 @@ func (ui *Ui) loadViews(config *Config) {
 		},
 	}
 
-	shaker := views.NewDiceView()
-
 	ui.Add(views.NewMenuView(menu))
 	ui.Add(views.NewPlayersView())
-	ui.Add(shaker)
+	ui.Add(views.NewDiceView(state))
 	ui.Add(views.NewChatView())
-	ui.Add(views.NewSheetView(shaker))
+	ui.Add(views.NewSheetView(state))
 }
 
-func (ui *Ui) Init(config *Config) error {
+func (ui *Ui) Init(state *states.State, config *Config) error {
 
 	graphics.Fonts.Load()
 
@@ -59,7 +58,7 @@ func (ui *Ui) Init(config *Config) error {
 		return err
 	}
 
-	ui.loadViews(config)
+	ui.loadViews(state, config)
 
 	return nil
 }
